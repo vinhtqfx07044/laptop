@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi" xml:lang="vi">
+
+<head th:replace="~{fragments/head :: commonHead('Tạo/Chỉnh sửa Yêu cầu', true)}"></head>
+
+<body class="d-flex flex-column min-vh-100">
+    <div th:insert="~{fragments/header :: header}"></div>
+
+    <main class="container flex-grow-1 mt-4">
+        <div class="row">
+            <div class="col-12">
+                <!-- Header with ID and timestamps -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="mb-1" th:text="${request.id != null ? 'Chỉnh sửa Yêu cầu' : 'Tạo Yêu cầu mới'}">Tạo/Chỉnh
+                        sửa Yêu cầu</h1>
+                    <div th:if="${request.id != null}">
+                        <button type="button" class="btn btn-outline-primary" onclick="validateAndOpenModal()">
+                            <i class="fas fa-save me-2"></i>Lưu thay đổi
+                        </button>
+                        <a th:href="@{'/staff/requests/view/' + ${request.id}}" class="btn btn-outline-info ms-2">
+                            <i class="fas fa-eye me-2"></i>Xem chi tiết
+                        </a>
+                        <a th:href="@{/staff/requests/list}" class="btn btn-outline-danger ms-2">
+                            <i class="fas fa-times me-2"></i>Hủy
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Form -->
+                <form th:action="@{${requestUri}}" th:object="${request}" method="post" enctype="multipart/form-data"
+                    id="requestForm" class="needs-validation" novalidate>
+
+                    <!-- Include request info cards fragment -->
+                    <div th:insert="~{fragments/request-info :: requestInfoCards(${request}, true, ${isStaff})}"></div>
+
+                    <!-- Service Items Card - Basic Structure Only -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Hạng mục sửa chữa</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Test: Add search inputs only -->
+                            <div class="row mb-3"
+                                th:classappend="${request.status != null and request.status.locked} ? 'd-none' : ''">
+                                <div class="col-md-5">
+                                    <label for="serviceInput" class="form-label">Tìm và chọn dịch vụ</label>
+                                    <input type="text" id="serviceInput" class="form-control"
+                                        th:disabled="${request.status != null and request.status.locked}"
+                                        placeholder="Gõ để tìm dịch vụ..." list="serviceList" autocomplete="off">
+                                    <datalist id="serviceList">
+                                        <!-- Options will be populated dynamically -->
+                                    </datalist>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="newQty" class="form-label">Số lượng</label>
+                                    <input id="newQty" type="number" value="1" min="1" class="form-control"
+                                        th:disabled="${request.status != null and request.status.locked}" />
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="newDisc" class="form-label">Giảm giá (VNĐ)</label>
+                                    <input id="newDisc" type="number" value="0" min="0" step="1000" class="form-control"
+                                        th:disabled="${request.status != null and request.status.locked}" />
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button type="button" onclick="addItem()" class="btn btn-outline-success"
+                                        th:disabled="${request.status != null and request.status.locked}">
+                                        <i class="fas fa-plus me-2"></i>Thêm
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-bordered" id="itemsTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 30%">Tên dịch vụ</th>
+                                            <th style="width: 10%">Số lượng</th>
+                                            <th style="width: 15%">Giá gốc</th>
+                                            <th style="width: 15%">Giảm giá</th>
+                                            <th style="width: 8%">VAT%</th>
+                                            <th style="width: 15%">Thành tiền</th>
+                                            <th style="width: 7%">Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Items will be added dynamically by JavaScript -->
+                                        <!-- Locked warning inline in table -->
+                                        <tr th:if="${request.status != null and request.status.locked}">
+                                            <td colspan="7" class="text-center text-warning bg-light">
+                                                <i class="fas fa-lock me-2"></i>
+                                                Phiếu đã được khóa - Không thể chỉnh sửa hạng mục
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Total directly below table -->
+                            <div class="row mt-3">
+                                <div class="col-md-4 ms-auto">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="fw-bold">Tổng cộng:</span>
+                                                <h4 class="text-primary mb-0" id="totalAmount">0 ₫</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Images Card -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Hình ảnh</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Hiển thị ảnh hiện tại ở TRÊN (nếu có) -->
+                            <div th:if="${request.images != null and !request.images.empty}" class="mb-3">
+                                <h6>Hình ảnh hiện tại:</h6>
+                                <div class="row">
+                                    <div th:each="image : ${request.images}" class="col-md-3 mb-2">
+                                        <div class="card">
+                                            <img th:src="@{'/images/' + ${request.id} + '/' + ${image.filename}}"
+                                                class="card-img-top" style="height: 150px; object-fit: cover;" />
+                                            <div class="card-body p-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="toDelete"
+                                                        th:value="${image.filename}" />
+                                                    <label class="form-check-label">Xóa ảnh này</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Upload mới ở DƯỚI -->
+                            <div class="mb-3">
+                                <label for="newImages" class="form-label">Tải lên hình ảnh (Tối đa <span
+                                        th:text="${maxImages}">5</span> ảnh JPEG/PNG, mỗi ảnh ≤ 20MB)</label>
+                                <input id="newImages" type="file" name="newImages" class="form-control" multiple
+                                    accept="image/jpeg,image/jpg,image/png,image/gif" />
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- Submit buttons -->
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-outline-primary" onclick="validateAndOpenModal()">
+                            <i class="fas fa-save me-2"></i>Lưu thay đổi
+                        </button>
+                        <a th:if="${request.id != null}" th:href="@{'/staff/requests/view/' + ${request.id}}"
+                            class="btn btn-outline-info ms-2">
+                            <i class="fas fa-eye me-2"></i>Xem chi tiết
+                        </a>
+                        <a th:href="@{/staff/requests/list}" class="btn btn-outline-danger ms-2">
+                            <i class="fas fa-times me-2"></i>Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="confirmModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Xác nhận lưu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <textarea id="confirmNote" class="form-control" rows="2"
+                        placeholder="Ghi chú (tùy chọn)"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-outline-primary" onclick="submitForm();">Lưu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:insert="~{fragments/footer :: footer}"></div>
+
+    <!-- Pass server data to JavaScript -->
+    <script th:inline="javascript">
+        window.serverItems = /*[[${request.items}]]*/[];
+        window.isRequestLocked = /*[[${request.status != null and request.status.locked}]]*/ false;
+    </script>
+
+    <!-- Include external JS files -->
+    <script th:src="@{/js/global.js}"></script>
+    <script th:src="@{/js/request-edit.js}"></script>
+
+</body>
+
+</html>

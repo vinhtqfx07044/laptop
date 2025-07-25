@@ -1,0 +1,88 @@
+package com.laptoprepair.entity;
+
+import com.laptoprepair.enums.RequestStatus;
+import com.laptoprepair.util.TimeZoneUtil;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.*;
+
+@Entity
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class Request extends BaseEntity {
+
+    @NotBlank(message = "Tên khách hàng là bắt buộc")
+    @Size(min = 3, max = 100, message = "Tên khách hàng phải có từ 3-100 ký tự")
+    private String name;
+
+    @NotBlank(message = "Số điện thoại là bắt buộc")
+    @Pattern(regexp = "0\\d{9}", message = "Số điện thoại phải có 10 chữ số và bắt đầu bằng 0")
+    private String phone;
+
+    @Email(message = "Email không đúng định dạng")
+    private String email;
+
+    private String address;
+    private String brandModel;
+
+    @NotNull(message = "Ngày hẹn là bắt buộc")
+    private LocalDateTime appointmentDate;
+
+    @NotBlank(message = "Mô tả tình trạng thiết bị là bắt buộc")
+    @Size(min = 10, max = 1000, message = "Mô tả phải có từ 10-1000 ký tự")
+    private String description;
+
+    @Enumerated(EnumType.STRING)
+    private RequestStatus status = RequestStatus.SCHEDULED;
+
+    private LocalDateTime completedAt;
+
+    private BigDecimal total = BigDecimal.ZERO;
+
+    @OneToMany(mappedBy = "request",
+               cascade = CascadeType.ALL,
+               orphanRemoval = true)
+    private List<RequestItem> items = new ArrayList<>();
+
+    @OneToMany(mappedBy = "request",
+               cascade = CascadeType.ALL,
+               orphanRemoval = true)
+    private List<RequestHistory> history = new ArrayList<>();
+
+    @OneToMany(mappedBy = "request",
+               cascade = CascadeType.ALL,
+               orphanRemoval = true)
+    private List<RequestImage> images = new ArrayList<>();
+
+
+    @PrePersist
+    protected void prePersist() {
+        super.prePersist();
+        total = calculateTotal();
+    }
+
+    @PreUpdate
+    protected void preUpdate() {
+        super.preUpdate();
+        total = calculateTotal();
+    }
+
+    public BigDecimal getTotal() {
+        return calculateTotal();
+    }
+
+    private BigDecimal calculateTotal(){
+        if (items == null || items.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        return items.stream()
+                .map(RequestItem::getLineTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+}
