@@ -1,4 +1,4 @@
-package com.laptoprepair.web;
+package com.laptoprepair.service;
 
 public interface AuthService {
     boolean isStaff();

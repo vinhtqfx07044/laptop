@@ -4,9 +4,9 @@ import com.laptoprepair.entity.ServiceItem;
 import com.laptoprepair.exception.CSVImportException;
 import com.laptoprepair.exception.NotFoundException;
 import com.laptoprepair.repository.ServiceItemRepository;
+import com.laptoprepair.service.MappingService;
 import com.laptoprepair.service.ServiceItemService;
 import com.laptoprepair.validation.ServiceItemValidator;
-import com.laptoprepair.csv.ServiceItemCsvParser;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +35,7 @@ public class ServiceItemServiceImpl implements ServiceItemService {
 
     private final ServiceItemRepository serviceItemRepository;
     private final ServiceItemValidator serviceItemValidator;
-    private final ServiceItemCsvParser csvParser;
+    private final MappingService mappingService;
 
     @Override
     public ServiceItem create(ServiceItem serviceItem) {
@@ -87,7 +87,7 @@ public class ServiceItemServiceImpl implements ServiceItemService {
             int rowNumber = 1;
             for (CSVRecord csvRecord : parser) {
                 rowNumber++;
-                ServiceItem serviceItem = csvParser.parse(csvRecord, rowNumber);
+                ServiceItem serviceItem = mappingService.parseCSVRecord(csvRecord, rowNumber);
                 serviceItemRepository.findByName(serviceItem.getName()).ifPresent(existing -> {
                     serviceItem.setId(existing.getId());
                     serviceItem.setCreatedAt(existing.getCreatedAt());

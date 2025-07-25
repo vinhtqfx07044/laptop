@@ -10,8 +10,10 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.view.RedirectView;
 
+import com.laptoprepair.utils.AppConstants;
+
 import jakarta.servlet.http.HttpServletRequest;
-import com.laptoprepair.common.AppConstants;
+
 import java.util.List;
 
 @ControllerAdvice

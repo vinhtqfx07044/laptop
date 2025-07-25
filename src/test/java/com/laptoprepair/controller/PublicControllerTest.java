@@ -1,7 +1,8 @@
 package com.laptoprepair.controller;
 
+import com.laptoprepair.service.AuthService;
 import com.laptoprepair.service.RequestService;
-import com.laptoprepair.web.AuthService;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

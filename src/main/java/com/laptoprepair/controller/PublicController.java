@@ -1,8 +1,10 @@
 package com.laptoprepair.controller;
 
 import com.laptoprepair.entity.Request;
+import com.laptoprepair.service.AuthService;
 import com.laptoprepair.service.RequestService;
-import com.laptoprepair.web.AuthService;
+import com.laptoprepair.utils.AppConstants;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -12,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import jakarta.validation.Valid;
 
-import com.laptoprepair.common.AppConstants;
 import java.util.UUID;
 
 @Controller

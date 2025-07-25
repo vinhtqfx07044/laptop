@@ -1,15 +1,17 @@
-package com.laptoprepair.io;
+package com.laptoprepair.service.impl;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.laptoprepair.service.FileStorageService;
 
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.UUID;
 
 @Service
-public class DefaultFileStorageService implements FileStorageService {
+public class FileStorageServiceImpl implements FileStorageService {
 
     @Value("${upload.dir:uploads}")
     private String uploadDir;

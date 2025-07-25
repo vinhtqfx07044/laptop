@@ -1,4 +1,4 @@
-package com.laptoprepair.io;
+package com.laptoprepair.service;
 
 import org.springframework.web.multipart.MultipartFile;
 

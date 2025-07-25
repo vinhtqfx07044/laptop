@@ -5,16 +5,20 @@ import com.laptoprepair.entity.RequestItem;
 import com.laptoprepair.entity.RequestHistory;
 import com.laptoprepair.entity.RequestImage;
 import com.laptoprepair.entity.ServiceItem;
+import com.laptoprepair.exception.CSVImportException;
 import com.laptoprepair.exception.NotFoundException;
 import com.laptoprepair.exception.ValidationException;
 import com.laptoprepair.repository.ServiceItemRepository;
 import com.laptoprepair.service.MappingService;
+import com.laptoprepair.utils.AppConstants;
+import com.laptoprepair.validation.ServiceItemValidator;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.csv.CSVRecord;
 import org.springframework.beans.BeanUtils;
-import com.laptoprepair.common.AppConstants;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -22,6 +26,7 @@ import java.util.List;
 public class MappingServiceImpl implements MappingService {
 
     private final ServiceItemRepository serviceItemRepository;
+    private final ServiceItemValidator serviceItemValidator;
 
     @Override
     public void snapshotServiceItems(List<RequestItem> items) {
@@ -114,5 +119,48 @@ public class MappingServiceImpl implements MappingService {
         BeanUtils.copyProperties(source, newHistory, "id", "request");
         newHistory.setRequest(target);
         return newHistory;
+    }
+
+    public ServiceItem parseCSVRecord(CSVRecord csvRecord, int rowNumber) throws CSVImportException {
+        ServiceItem serviceItem = new ServiceItem();
+
+        try {
+            // Parse name
+            String name = csvRecord.get("name");
+            serviceItemValidator.validateCSVName(name, rowNumber);
+            serviceItem.setName(name.trim());
+
+            // Parse price
+            BigDecimal price = new BigDecimal(csvRecord.get("price"));
+            serviceItemValidator.validateCSVPrice(price, rowNumber);
+            serviceItem.setPrice(price);
+
+            // Parse vatRate
+            BigDecimal vatRate = new BigDecimal(csvRecord.get("vatRate"));
+            serviceItemValidator.validateCSVVatRate(vatRate, rowNumber);
+            serviceItem.setVatRate(vatRate);
+
+            // Parse warrantyDays
+            int warrantyDays = Integer.parseInt(csvRecord.get("warrantyDays"));
+            serviceItemValidator.validateCSVWarrantyDays(warrantyDays, rowNumber);
+            serviceItem.setWarrantyDays(warrantyDays);
+
+            // Parse active (default to true if not specified or invalid)
+            String activeStr = csvRecord.get("active");
+            serviceItem.setActive(parseActiveField(activeStr));
+
+            return serviceItem;
+        } catch (NumberFormatException e) {
+            throw new CSVImportException("Dữ liệu số không hợp lệ", rowNumber);
+        } catch (IllegalArgumentException e) {
+            throw new CSVImportException("Cột không tồn tại trong file CSV", rowNumber);
+        }
+    }
+
+    private boolean parseActiveField(String activeStr) {
+        if (activeStr != null && !activeStr.trim().isEmpty()) {
+            return Boolean.parseBoolean(activeStr.trim());
+        }
+        return true; // Default to active
     }
 }

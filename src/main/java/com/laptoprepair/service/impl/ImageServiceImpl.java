@@ -3,9 +3,9 @@ package com.laptoprepair.service.impl;
 import com.laptoprepair.entity.Request;
 import com.laptoprepair.entity.RequestImage;
 import com.laptoprepair.exception.ValidationException;
+import com.laptoprepair.service.FileStorageService;
 import com.laptoprepair.service.ImageService;
 import com.laptoprepair.validation.ImageValidator;
-import com.laptoprepair.io.FileStorageService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

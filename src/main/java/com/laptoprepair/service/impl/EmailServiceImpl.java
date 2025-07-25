@@ -2,6 +2,7 @@ package com.laptoprepair.service.impl;
 
 import com.laptoprepair.entity.Request;
 import com.laptoprepair.service.EmailService;
+import com.laptoprepair.utils.AppConstants;
 
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -12,7 +13,6 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
-import com.laptoprepair.common.AppConstants;
 import java.util.List;
 
 @Service

@@ -1,11 +1,13 @@
-package com.laptoprepair.web;
+package com.laptoprepair.service.impl;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.laptoprepair.service.AuthService;
+
 @Service
-public class DefaultAuthService implements AuthService {
+public class AuthServiceImpl implements AuthService {
 
     @Override
     public boolean isStaff() {

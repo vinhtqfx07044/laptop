@@ -3,9 +3,9 @@ package com.laptoprepair.service.impl;
 import com.laptoprepair.entity.Request;
 import com.laptoprepair.entity.RequestHistory;
 import com.laptoprepair.entity.RequestItem;
+import com.laptoprepair.service.AuthService;
 import com.laptoprepair.service.HistoryService;
-import com.laptoprepair.common.TimeProvider;
-import com.laptoprepair.web.AuthService;
+import com.laptoprepair.utils.TimeProvider;
 
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;

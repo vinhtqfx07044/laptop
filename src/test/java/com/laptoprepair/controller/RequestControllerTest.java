@@ -2,7 +2,7 @@ package com.laptoprepair.controller;
 
 import com.laptoprepair.entity.Request;
 import com.laptoprepair.service.RequestService;
-import com.laptoprepair.web.RequestFormPopulator;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,9 +28,6 @@ class RequestControllerTest {
     @Mock
     private RequestService requestService;
 
-    @Mock
-    private RequestFormPopulator formPopulator;
-
     @InjectMocks
     private RequestController requestController;
 
@@ -53,12 +50,13 @@ class RequestControllerTest {
 
     @Test
     void createForm_ShouldPopulateModelAndReturnFormView() throws Exception {
+        ReflectionTestUtils.setField(requestController, "maxImagesPerRequest", 5);
         mockMvc = MockMvcBuilders.standaloneSetup(requestController).build();
 
         mockMvc.perform(get("/staff/requests/create"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("staff/request-form"));
-
-        verify(formPopulator).populateForCreate(any(), any());
+                .andExpect(view().name("staff/request-form"))
+                .andExpect(model().attributeExists("request"))
+                .andExpect(model().attributeExists("maxImages"));
     }
 }

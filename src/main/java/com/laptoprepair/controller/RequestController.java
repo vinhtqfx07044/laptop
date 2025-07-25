@@ -3,7 +3,8 @@ package com.laptoprepair.controller;
 import com.laptoprepair.entity.Request;
 import com.laptoprepair.enums.RequestStatus;
 import com.laptoprepair.service.RequestService;
-import com.laptoprepair.web.RequestFormPopulator;
+import com.laptoprepair.utils.AppConstants;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,7 +18,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import jakarta.servlet.http.HttpServletRequest;
-import com.laptoprepair.common.AppConstants;
+
 import java.util.UUID;
 
 @Controller
@@ -26,10 +27,12 @@ import java.util.UUID;
 public class RequestController {
 
     private final RequestService requestService;
-    private final RequestFormPopulator formPopulator;
 
     @Value("${app.pagination.default-page-size.requests}")
     private int defaultPageSize;
+
+    @Value("${app.upload.max-images-per-request}")
+    private int maxImagesPerRequest;
 
     @GetMapping("/list")
     public String list(
@@ -52,7 +55,7 @@ public class RequestController {
 
     @GetMapping("/create")
     public String createForm(Model model, HttpServletRequest request) {
-        formPopulator.populateForCreate(model, request);
+        populateForCreate(model, request);
         return AppConstants.VIEW_STAFF_REQUEST_FORM;
     }
 
@@ -66,7 +69,7 @@ public class RequestController {
             return "redirect:/staff/requests/view/" + id;
         }
 
-        formPopulator.populateForEdit(existingRequest, model, request);
+        populateForEdit(existingRequest, model, request);
         return AppConstants.VIEW_STAFF_REQUEST_FORM;
     }
 
@@ -88,7 +91,7 @@ public class RequestController {
             RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
-            formPopulator.populateForCreate(model, request);
+            populateForCreate(model, request);
             model.addAttribute(AppConstants.ATTR_REQUEST, incomingRequest); // Override with form data
             return AppConstants.VIEW_STAFF_REQUEST_FORM;
         }
@@ -112,7 +115,7 @@ public class RequestController {
         if (bindingResult.hasErrors()) {
             // Load full request from DB when validation fails
             Request existingRequest = requestService.findById(id);
-            formPopulator.populateForEdit(existingRequest, model, request);
+            populateForEdit(existingRequest, model, request);
             model.addAttribute(AppConstants.ATTR_REQUEST, incomingRequest); // Override with form data
             return AppConstants.VIEW_STAFF_REQUEST_FORM;
         }
@@ -120,6 +123,25 @@ public class RequestController {
         Request updated = requestService.update(id, incomingRequest, newImages, toDelete, note);
         redirectAttributes.addFlashAttribute("successMessage", "Yêu cầu đã được cập nhật thành công!");
         return "redirect:/staff/requests/edit/" + updated.getId();
+    }
+
+    private void populateForCreate(Model model, HttpServletRequest request) {
+        model.addAttribute(AppConstants.ATTR_REQUEST, new Request());
+        addCommonAttributes(model, request);
+    }
+
+    private void populateForEdit(Request existing, Model model, HttpServletRequest request) {
+        model.addAttribute(AppConstants.ATTR_REQUEST, existing);
+        addCommonAttributes(model, request);
+
+        // Add locked status for form controls
+        boolean isLocked = existing.getStatus() != null && existing.getStatus().isLocked();
+        model.addAttribute("locked", isLocked);
+    }
+
+    private void addCommonAttributes(Model model, HttpServletRequest request) {
+        model.addAttribute("requestUri", request.getRequestURI());
+        model.addAttribute("maxImages", maxImagesPerRequest);
     }
 
 }

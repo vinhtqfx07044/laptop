@@ -1,4 +1,4 @@
-package com.laptoprepair.common;
+package com.laptoprepair.utils;
 
 public final class AppConstants {
     private AppConstants() {

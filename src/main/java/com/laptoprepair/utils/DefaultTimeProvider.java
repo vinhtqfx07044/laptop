@@ -1,4 +1,4 @@
-package com.laptoprepair.common;
+package com.laptoprepair.utils;
 
 import org.springframework.stereotype.Component;
 

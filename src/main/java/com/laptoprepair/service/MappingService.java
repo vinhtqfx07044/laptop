@@ -2,6 +2,9 @@ package com.laptoprepair.service;
 
 import com.laptoprepair.entity.Request;
 import com.laptoprepair.entity.RequestItem;
+import com.laptoprepair.entity.ServiceItem;
+import com.laptoprepair.exception.CSVImportException;
+import org.apache.commons.csv.CSVRecord;
 import java.util.List;
 
 public interface MappingService {
@@ -16,4 +19,9 @@ public interface MappingService {
      * This ensures price/name consistency even if master data changes
      */
     void snapshotServiceItems(List<RequestItem> items);
+
+    /**
+     * Parses a CSV record into a ServiceItem entity
+     */
+    ServiceItem parseCSVRecord(CSVRecord csvRecord, int rowNumber) throws CSVImportException;
 }

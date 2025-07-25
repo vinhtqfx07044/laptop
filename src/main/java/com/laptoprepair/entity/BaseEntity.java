@@ -1,11 +1,12 @@
 package com.laptoprepair.entity;
 
-import com.laptoprepair.common.DefaultTimeProvider;
 import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import com.laptoprepair.utils.DefaultTimeProvider;
 
 @MappedSuperclass
 @Data

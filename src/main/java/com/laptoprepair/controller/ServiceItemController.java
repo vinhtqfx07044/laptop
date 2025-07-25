@@ -3,6 +3,7 @@ package com.laptoprepair.controller;
 import com.laptoprepair.entity.ServiceItem;
 import com.laptoprepair.exception.CSVImportException;
 import com.laptoprepair.service.ServiceItemService;
+import com.laptoprepair.utils.AppConstants;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -17,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import lombok.RequiredArgsConstructor;
 
-import com.laptoprepair.common.AppConstants;
 import java.util.UUID;
 
 @Controller
