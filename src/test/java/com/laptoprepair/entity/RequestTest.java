@@ -23,19 +23,19 @@ class RequestTest {
     @Test
     void getTotal_WithMultipleItems_ShouldSumLineTotals() {
         Request request = new Request();
-        
+
         RequestItem item1 = new RequestItem();
         item1.setPrice(BigDecimal.valueOf(100));
         item1.setQuantity(1);
         item1.setDiscount(BigDecimal.ZERO);
         item1.setVatRate(BigDecimal.valueOf(0.1));
-        
+
         RequestItem item2 = new RequestItem();
         item2.setPrice(BigDecimal.valueOf(200));
         item2.setQuantity(2);
         item2.setDiscount(BigDecimal.ZERO);
         item2.setVatRate(BigDecimal.valueOf(0.1));
-        
+
         List<RequestItem> items = List.of(item1, item2);
         request.setItems(items);
 

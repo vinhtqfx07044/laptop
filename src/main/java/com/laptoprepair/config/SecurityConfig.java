@@ -37,15 +37,15 @@ public class SecurityConfig {
     };
 
     // Cho phép tất cả truy cập
-public static final String LOGIN_PATH = "/login";
+    public static final String LOGIN_PATH = "/login";
 
-// Cho phép tất cả truy cập
-private static final String[] PERMIT_ALL = {
-    "/", "/h2-console/**", LOGIN_PATH, "/logout", "/error",
-    "/css/**", "/js/**", "/favicon.ico",
-    "/images/**", // allow image access
-    "/public/**", // all public endpoints including request detail
-};
+    // Cho phép tất cả truy cập
+    private static final String[] PERMIT_ALL = {
+            "/", "/h2-console/**", LOGIN_PATH, "/logout", "/error",
+            "/css/**", "/js/**", "/favicon.ico",
+            "/images/**", // allow image access
+            "/public/**", // all public endpoints including request detail
+    };
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -62,7 +62,8 @@ private static final String[] PERMIT_ALL = {
                         .failureUrl("/login?error")
                         .permitAll())
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((request, response, authException) -> response.sendRedirect(LOGIN_PATH)))
+                        .authenticationEntryPoint(
+                                (request, response, authException) -> response.sendRedirect(LOGIN_PATH)))
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/")
