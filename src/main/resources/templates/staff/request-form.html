@@ -123,12 +123,15 @@
                                     <div th:each="image : ${request.images}" class="col-md-3 mb-2">
                                         <div class="card">
                                             <img th:src="@{'/images/' + ${request.id} + '/' + ${image.filename}}"
-                                                class="card-img-top" style="height: 150px; object-fit: cover;" th:alt="${'Hình ảnh ' + image.filename}"/>
+                                                class="card-img-top" style="height: 150px; object-fit: cover;"
+                                                th:alt="${'Hình ảnh ' + image.filename}" />
                                             <div class="card-body p-2">
                                                 <div class="form-check">
                                                     <input class="form-check-input" type="checkbox" name="toDelete"
-                                                        th:id="${'deleteImage-' + image.filename}" th:value="${image.filename}" />
-                                                    <label class="form-check-label" th:for="${'deleteImage-' + image.filename}">Xóa ảnh này</label>
+                                                        th:id="${'deleteImage-' + image.filename}"
+                                                        th:value="${image.filename}" />
+                                                    <label class="form-check-label"
+                                                        th:for="${'deleteImage-' + image.filename}">Xóa ảnh này</label>
                                                 </div>
                                             </div>
                                         </div>

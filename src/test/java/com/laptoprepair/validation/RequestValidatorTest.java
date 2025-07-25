@@ -59,7 +59,7 @@ class RequestValidatorTest {
     void validateStatusTransition_WithInvalidTransition_ShouldThrowValidationException() {
         Request existing = new Request();
         existing.setStatus(RequestStatus.COMPLETED);
-        
+
         Request incoming = new Request();
         incoming.setStatus(RequestStatus.IN_PROGRESS);
 
@@ -84,10 +84,10 @@ class RequestValidatorTest {
         Request existing = new Request();
         existing.setStatus(RequestStatus.COMPLETED);
         existing.setItems(List.of());
-        
+
         Request incoming = new Request();
         incoming.setItems(List.of());
-        
+
         when(historyService.areItemsEqual(existing.getItems(), incoming.getItems())).thenReturn(false);
 
         assertThatThrownBy(() -> requestValidator.validateNoItemModificationWhenLocked(existing, incoming))
