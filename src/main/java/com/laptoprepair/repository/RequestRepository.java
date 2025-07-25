@@ -14,10 +14,10 @@ import java.util.UUID;
 
 public interface RequestRepository extends JpaRepository<Request, UUID> {
 
-    @Query("SELECT r FROM Request r " +
-           "LEFT JOIN FETCH r.items " +
-           "WHERE r.id = :id")
-    Optional<Request> findByIdWithDetails(@Param("id") UUID id);
+       @Query("SELECT r FROM Request r " +
+                     "LEFT JOIN FETCH r.items " +
+                     "WHERE r.id = :id")
+       Optional<Request> findByIdWithDetails(@Param("id") UUID id);
 
        @Query("SELECT r FROM Request r " +
                      "WHERE (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%',:search,'%')) OR CAST(r.id AS string) LIKE %:search%) "

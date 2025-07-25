@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.web.SecurityFilterChain;
 
 import java.util.ArrayList;
@@ -36,12 +37,15 @@ public class SecurityConfig {
     };
 
     // Cho phép tất cả truy cập
-    private static final String[] PERMIT_ALL = {
-            "/", "/h2-console/**", "/login", "/logout", "/error",
-            "/css/**", "/js/**", "/favicon.ico",
-            "/images/**", // allow image access
-            "/public/**", // all public endpoints including request detail
-    };
+public static final String LOGIN_PATH = "/login";
+
+// Cho phép tất cả truy cập
+private static final String[] PERMIT_ALL = {
+    "/", "/h2-console/**", LOGIN_PATH, "/logout", "/error",
+    "/css/**", "/js/**", "/favicon.ico",
+    "/images/**", // allow image access
+    "/public/**", // all public endpoints including request detail
+};
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -52,21 +56,19 @@ public class SecurityConfig {
                         .requestMatchers("/staff/**").hasRole("STAFF") // staff only
                         .anyRequest().authenticated())
                 .formLogin(form -> form
-                        .loginPage("/login")
-                        .loginProcessingUrl("/login")
+                        .loginPage(LOGIN_PATH)
+                        .loginProcessingUrl(LOGIN_PATH)
                         .defaultSuccessUrl(defaultSuccessUrl, true)
                         .failureUrl("/login?error")
                         .permitAll())
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((request, response, authException) -> {
-                            response.sendRedirect("/login");
-                        }))
+                        .authenticationEntryPoint((request, response, authException) -> response.sendRedirect(LOGIN_PATH)))
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/")
                         .permitAll())
                 .csrf(csrf -> csrf.disable())
-                .headers(headers -> headers.frameOptions().sameOrigin())
+                .headers(headers -> headers.frameOptions(Customizer.withDefaults()))
                 .build();
     }
 

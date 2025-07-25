@@ -43,7 +43,8 @@ public class RequestItem extends BaseEntity {
 
     @Override
     public String toString() {
-        return String.format("RequestItem(id=%s,serviceItemId=%s,name=%s,price=%s,vat=%s,warranty=%d,qty=%d,discount=%s)",
+        return String.format(
+                "RequestItem(id=%s,serviceItemId=%s,name=%s,price=%s,vat=%s,warranty=%d,qty=%d,discount=%s)",
                 getId(),
                 serviceItemId,
                 name,
@@ -55,18 +56,20 @@ public class RequestItem extends BaseEntity {
     }
 
     private String normalizeBigDecimal(BigDecimal value) {
-        if (value == null) return "null";
+        if (value == null)
+            return "null";
         return value.stripTrailingZeros().toPlainString();
     }
 
-    private BigDecimal calculateSubtotal(){
-        if (price == null) return BigDecimal.ZERO;
-        
+    private BigDecimal calculateSubtotal() {
+        if (price == null)
+            return BigDecimal.ZERO;
+
         BigDecimal safeDiscount = discount != null ? discount : BigDecimal.ZERO;
         BigDecimal safeVatRate = vatRate != null ? vatRate : BigDecimal.ZERO;
-        
+
         BigDecimal net = price.subtract(safeDiscount)
-                              .multiply(BigDecimal.valueOf(quantity));
+                .multiply(BigDecimal.valueOf(quantity));
         return net.add(net.multiply(safeVatRate));
     }
 }

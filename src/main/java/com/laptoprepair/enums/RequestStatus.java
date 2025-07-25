@@ -26,33 +26,34 @@ public enum RequestStatus {
     public String getBadgeClass() {
         return "badge " + badgeClass;
     }
-    
+
     public String getDisplayName() {
         return value;
     }
 
     public boolean canTransitionTo(RequestStatus newStatus) {
-        if (this == newStatus) return true;
-        
+        if (this == newStatus)
+            return true;
+
         switch (this) {
             case COMPLETED:
                 return false;
-            
+
             case SCHEDULED:
                 return newStatus == QUOTED || newStatus == CANCELLED;
-                
+
             case APPROVE_QUOTED:
                 return newStatus == IN_PROGRESS || newStatus == CANCELLED;
-                
+
             case QUOTED:
                 return newStatus == APPROVE_QUOTED || newStatus == CANCELLED;
-                
+
             case IN_PROGRESS:
                 return newStatus == COMPLETED || newStatus == CANCELLED;
-                
+
             case CANCELLED:
                 return false;
-                
+
             default:
                 return true;
         }

@@ -1,6 +1,3 @@
-// Global functions available to all pages
-
-
 //Global logout function
 function doLogout() {
     if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {

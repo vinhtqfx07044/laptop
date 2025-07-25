@@ -7,5 +7,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.UUID;
 
 public interface RequestUpdater {
-    Request updateExisting(UUID id, Request incomingRequest, MultipartFile[] images, String[] toDelete, String note) throws ValidationException;
+    Request updateExisting(UUID id, Request incomingRequest, MultipartFile[] images, String[] toDelete, String note)
+            throws ValidationException;
 }

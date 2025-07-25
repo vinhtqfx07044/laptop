@@ -35,8 +35,10 @@ public class RequestUpdaterImpl implements RequestUpdater {
 
     @Override
     @Transactional
-    public Request updateExisting(UUID id, Request incomingRequest, MultipartFile[] newImages, String[] imagesToDelete, String note) throws ValidationException {
-        StringBuilder noteBuilder = new StringBuilder((note != null && !note.trim().isEmpty()) ? "Ghi chú: " + note.trim() + "\n" : "");
+    public Request updateExisting(UUID id, Request incomingRequest, MultipartFile[] newImages, String[] imagesToDelete,
+            String note) throws ValidationException {
+        StringBuilder noteBuilder = new StringBuilder(
+                (note != null && !note.trim().isEmpty()) ? "Ghi chú: " + note.trim() + "\n" : "");
 
         // Load existing request to get current images
         Request existingRequest = reqRepo.findByIdWithDetails(id)
@@ -44,7 +46,8 @@ public class RequestUpdaterImpl implements RequestUpdater {
         incomingRequest.setImages(new ArrayList<>(existingRequest.getImages()));
 
         // Process images (uploads and deletions)
-        List<RequestImage> currentImages = imageService.updateRequestServiceImages(incomingRequest, newImages, imagesToDelete);
+        List<RequestImage> currentImages = imageService.updateRequestServiceImages(incomingRequest, newImages,
+                imagesToDelete);
         incomingRequest.setImages(new ArrayList<>(currentImages));
 
         requestValidator.validateEditable(existingRequest);
@@ -57,7 +60,8 @@ public class RequestUpdaterImpl implements RequestUpdater {
         mappingService.copyRequestFields(archivedRequest, existingRequest, true);
 
         // Set completion date if status is changing to COMPLETED
-        if (existingRequest.getStatus() != RequestStatus.COMPLETED && incomingRequest.getStatus() == RequestStatus.COMPLETED) {
+        if (existingRequest.getStatus() != RequestStatus.COMPLETED
+                && incomingRequest.getStatus() == RequestStatus.COMPLETED) {
             incomingRequest.setCompletedAt(timeProvider.now());
         }
 

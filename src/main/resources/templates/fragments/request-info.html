@@ -12,27 +12,27 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-md-3">
-                    <label class="form-label fw-bold">Mã phiếu</label>
-                    <p class="form-control-plaintext">
+                    <label for="requestId" class="form-label fw-bold">Mã phiếu</label>
+                    <p id="requestId" class="form-control-plaintext">
                         <code th:text="${request.id}"></code>
                     </p>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label fw-bold">Ngày cập nhật</label>
-                    <p class="form-control-plaintext" th:if="${request.updatedAt}">
+                    <label for="updatedAt" class="form-label fw-bold">Ngày cập nhật</label>
+                    <p id="updatedAt" class="form-control-plaintext" th:if="${request.updatedAt}">
                         <span th:text="${#temporals.format(request.updatedAt, 'dd/MM/yyyy HH:mm')}"></span>
                     </p>
                     <p class="form-control-plaintext text-muted" th:unless="${request.updatedAt}">Chưa có</p>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label fw-bold">Ngày hoàn thành</label>
-                    <p class="form-control-plaintext" th:if="${request.completedAt}">
+                    <label for="completedAt" class="form-label fw-bold">Ngày hoàn thành</label>
+                    <p id="completedAt" class="form-control-plaintext" th:if="${request.completedAt}">
                         <span th:text="${#temporals.format(request.completedAt, 'dd/MM/yyyy HH:mm')}"></span>
                     </p>
                     <p class="form-control-plaintext text-muted" th:unless="${request.completedAt}">Chưa có</p>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label fw-bold">Trạng thái</label>
+                    <label for="status" class="form-label fw-bold">Trạng thái</label>
                     <!-- Edit mode: dropdown -->
                     <div th:if="${isEditMode}" class="mb-3">
                         <select id="status" th:field="*{status}" class="form-select">

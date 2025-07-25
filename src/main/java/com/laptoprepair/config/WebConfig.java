@@ -12,13 +12,13 @@ import java.time.format.DateTimeFormatter;
 public class WebConfig implements WebMvcConfigurer {
 
     @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+    public void addResourceHandlers(@org.springframework.lang.NonNull ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/images/**")
                 .addResourceLocations("file:uploads/");
     }
-    
+
     @Override
-    public void addFormatters(FormatterRegistry registry) {
+    public void addFormatters(@org.springframework.lang.NonNull FormatterRegistry registry) {
         DateTimeFormatterRegistrar registrar = new DateTimeFormatterRegistrar();
         // Format for datetime-local input (ISO format)
         registrar.setDateTimeFormatter(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));

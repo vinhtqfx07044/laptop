@@ -11,6 +11,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.view.RedirectView;
 
 import jakarta.servlet.http.HttpServletRequest;
+import com.laptoprepair.common.AppConstants;
 import java.util.List;
 
 @ControllerAdvice
@@ -52,7 +53,7 @@ public class GlobalExceptionHandler {
                 .toList();
 
         if (errors.size() == 1) {
-            attrs.addFlashAttribute("errorMessage", errors.get(0));
+            attrs.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE, errors.get(0));
         } else {
             attrs.addFlashAttribute("errorMessages", errors);
         }
@@ -85,7 +86,7 @@ public class GlobalExceptionHandler {
     private RedirectView createRedirectWithError(String errorMessage,
             HttpServletRequest request,
             RedirectAttributes attrs) {
-        attrs.addFlashAttribute("errorMessage", errorMessage);
+        attrs.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE, errorMessage);
         return createRedirectView(request);
     }
 

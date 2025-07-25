@@ -36,6 +36,7 @@ public class ServiceItemServiceImpl implements ServiceItemService {
     private final ServiceItemRepository serviceItemRepository;
     private final ServiceItemValidator serviceItemValidator;
     private final ServiceItemCsvParser csvParser;
+    private final ServiceItemService self; // Self-inject to handle @Transactional calls
 
     @Override
     public ServiceItem create(ServiceItem serviceItem) {
@@ -52,7 +53,7 @@ public class ServiceItemServiceImpl implements ServiceItemService {
 
     @Override
     public ServiceItem update(UUID id, ServiceItem incomingServiceItem) {
-        ServiceItem existingServiceItem = findById(id);
+        ServiceItem existingServiceItem = self.findById(id);
 
         serviceItemValidator.validateUniqueNameOnUpdate(id, incomingServiceItem.getName());
 
@@ -106,7 +107,6 @@ public class ServiceItemServiceImpl implements ServiceItemService {
         }
     }
 
-
     @Override
     @Transactional(readOnly = true)
     public byte[] exportCSV() {
@@ -132,7 +132,6 @@ public class ServiceItemServiceImpl implements ServiceItemService {
             return "Error exporting".getBytes(StandardCharsets.UTF_8);
         }
     }
-
 
     private byte[] addUtf8Bom(String content) {
         byte[] bom = { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF }; // UTF-8 BOM

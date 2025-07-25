@@ -23,7 +23,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ImageServiceImpl implements ImageService {
 
-    @Value("${upload.max-images-per-request}")
+    @Value("${app.upload.max-images-per-request}")
     private int maxImagesPerRequest;
 
     private final ImageValidator imageValidator;
@@ -51,9 +51,9 @@ public class ImageServiceImpl implements ImageService {
     }
 
     @Override
-    public List<RequestImage> uploadImages(UUID requestId, List<RequestImage> currentImages, MultipartFile[] newImages, Request request)
+    public List<RequestImage> uploadImages(UUID requestId, List<RequestImage> currentImages, MultipartFile[] newImages,
+            Request request)
             throws ValidationException {
-
         if (newImages == null || newImages.length == 0) {
             return currentImages;
         }
@@ -77,7 +77,6 @@ public class ImageServiceImpl implements ImageService {
                 imageValidator.validateImageFileSizeAndFormat(file);
                 try {
                     String filename = fileStorageService.save(requestId, file);
-                    
                     RequestImage requestImage = new RequestImage();
                     requestImage.setFilename(filename);
                     requestImage.setRequest(request);

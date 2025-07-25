@@ -33,10 +33,10 @@ public class DefaultFileStorageService implements FileStorageService {
         String contentType = file.getContentType();
         String extension = contentType != null && contentType.equals("image/png") ? ".png" : ".jpg";
         String filename = UUID.randomUUID() + extension;
-        
+
         Path requestDir = Paths.get(uploadDir, requestId.toString());
         Path imagePath = requestDir.resolve(filename);
-        
+
         Files.copy(file.getInputStream(), imagePath, StandardCopyOption.REPLACE_EXISTING);
         return filename;
     }

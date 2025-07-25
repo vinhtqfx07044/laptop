@@ -17,6 +17,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import jakarta.servlet.http.HttpServletRequest;
+import com.laptoprepair.common.AppConstants;
 import java.util.UUID;
 
 @Controller
@@ -27,7 +28,7 @@ public class RequestController {
     private final RequestService requestService;
     private final RequestFormPopulator formPopulator;
 
-    @Value("${pagination.default-page-size.requests}")
+    @Value("${app.pagination.default-page-size.requests}")
     private int defaultPageSize;
 
     @GetMapping("/list")
@@ -52,7 +53,7 @@ public class RequestController {
     @GetMapping("/create")
     public String createForm(Model model, HttpServletRequest request) {
         formPopulator.populateForCreate(model, request);
-        return "staff/request-form";
+        return AppConstants.VIEW_STAFF_REQUEST_FORM;
     }
 
     @GetMapping("/edit/{id}")
@@ -66,13 +67,13 @@ public class RequestController {
         }
 
         formPopulator.populateForEdit(existingRequest, model, request);
-        return "staff/request-form";
+        return AppConstants.VIEW_STAFF_REQUEST_FORM;
     }
 
     @GetMapping("/view/{id}")
     public String view(@PathVariable UUID id, Model model) {
         Request existingRequest = requestService.findById(id);
-        model.addAttribute("request", existingRequest);
+        model.addAttribute(AppConstants.ATTR_REQUEST, existingRequest);
         model.addAttribute("isStaff", true);
         return "staff/request-detail";
     }
@@ -88,8 +89,8 @@ public class RequestController {
 
         if (bindingResult.hasErrors()) {
             formPopulator.populateForCreate(model, request);
-            model.addAttribute("request", incomingRequest); // Override with form data
-            return "staff/request-form";
+            model.addAttribute(AppConstants.ATTR_REQUEST, incomingRequest); // Override with form data
+            return AppConstants.VIEW_STAFF_REQUEST_FORM;
         }
 
         Request saved = requestService.create(incomingRequest, newImages, note);
@@ -112,14 +113,13 @@ public class RequestController {
             // Load full request from DB when validation fails
             Request existingRequest = requestService.findById(id);
             formPopulator.populateForEdit(existingRequest, model, request);
-            model.addAttribute("request", incomingRequest); // Override with form data
-            return "staff/request-form";
+            model.addAttribute(AppConstants.ATTR_REQUEST, incomingRequest); // Override with form data
+            return AppConstants.VIEW_STAFF_REQUEST_FORM;
         }
 
         Request updated = requestService.update(id, incomingRequest, newImages, toDelete, note);
         redirectAttributes.addFlashAttribute("successMessage", "Yêu cầu đã được cập nhật thành công!");
         return "redirect:/staff/requests/edit/" + updated.getId();
     }
-
 
 }

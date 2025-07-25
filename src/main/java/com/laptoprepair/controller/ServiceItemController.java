@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import lombok.RequiredArgsConstructor;
 
+import com.laptoprepair.common.AppConstants;
 import java.util.UUID;
 
 @Controller
@@ -25,7 +26,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ServiceItemController {
 
-    @Value("${pagination.default-page-size.service-items}")
+    @Value("${app.pagination.default-page-size.service-items}")
     private int defaultPageSize;
 
     private final ServiceItemService serviceItemService;
@@ -62,7 +63,7 @@ public class ServiceItemController {
     public String importCSV(@RequestParam("file") MultipartFile file)
             throws CSVImportException {
         serviceItemService.importCSV(file);
-        return "redirect:/staff/service-items";
+        return AppConstants.REDIRECT_STAFF_SERVICE_ITEMS;
     }
 
     @PostMapping("/create")
@@ -73,7 +74,7 @@ public class ServiceItemController {
             return list(0, null, null, null, model);
         }
         serviceItemService.create(serviceItem);
-        return "redirect:/staff/service-items";
+        return AppConstants.REDIRECT_STAFF_SERVICE_ITEMS;
     }
 
     @PostMapping("/update/{id}")
@@ -85,7 +86,7 @@ public class ServiceItemController {
             return list(0, null, null, null, model);
         }
         serviceItemService.update(id, serviceItem);
-        return "redirect:/staff/service-items";
+        return AppConstants.REDIRECT_STAFF_SERVICE_ITEMS;
     }
 
     @GetMapping("/search")

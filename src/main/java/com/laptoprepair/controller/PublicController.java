@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import jakarta.validation.Valid;
 
+import com.laptoprepair.common.AppConstants;
 import java.util.UUID;
 
 @Controller
@@ -57,7 +58,7 @@ public class PublicController {
 
     @GetMapping("/submit")
     public String submitForm(Model model) {
-        model.addAttribute("request", new Request());
+        model.addAttribute(AppConstants.ATTR_REQUEST, new Request());
         return "public/request-submit";
     }
 
@@ -67,13 +68,14 @@ public class PublicController {
             Model model,
             RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("request", request);
+            model.addAttribute(AppConstants.ATTR_REQUEST, request);
             return "public/request-submit";
         }
 
         Request saved = requestService.publicCreate(request);
-        redirectAttributes.addFlashAttribute("successMessage", 
-                "Yêu cầu đã được gửi thành công! <a href='/public/request/" + saved.getId() + "'>Xem chi tiết tại đây</a>");
+        redirectAttributes.addFlashAttribute("successMessage",
+                "Yêu cầu đã được gửi thành công! <a href='/public/request/" + saved.getId()
+                        + "'>Xem chi tiết tại đây</a>");
         return "redirect:/submit";
     }
 
@@ -89,10 +91,9 @@ public class PublicController {
     @GetMapping("/public/request/{id}")
     public String publicRequestDetail(@PathVariable UUID id, Model model) {
         Request request = requestService.findById(id);
-        model.addAttribute("request", request);
+        model.addAttribute(AppConstants.ATTR_REQUEST, request);
         model.addAttribute("isStaff", false);
         return "staff/request-detail";
     }
-
 
 }

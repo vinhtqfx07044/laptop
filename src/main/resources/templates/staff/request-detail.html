@@ -97,6 +97,7 @@
                                             <span class="fw-bold">Tổng cộng:</span>
                                             <h4 class="text-primary mb-0"
                                                 th:text="${#numbers.formatDecimal(request.total, 0, 'COMMA', 0, 'POINT')} + ' ₫'">
+                                                0 ₫
                                             </h4>
                                         </div>
                                     </div>
@@ -115,9 +116,12 @@
                         <div class="row">
                             <div th:each="image : ${request.images}" class="col-md-3 mb-2">
                                 <div class="card">
-                                    <img th:src="@{'/images/' + ${request.id} + '/' + ${image.filename}}" class="card-img-top"
-                                        style="height: 150px; object-fit: cover; cursor: pointer;"
-                                        onclick="showImageModal(this.src)" alt="Hình ảnh yêu cầu" />
+                                    <button type="button" class="btn p-0" 
+                                            th:onclick="'showImageModal(\'' + @{'/images/' + ${request.id} + '/' + ${image.filename}} + '\')'">
+                                        <img th:src="@{'/images/' + ${request.id} + '/' + ${image.filename}}"
+                                            class="card-img-top" style="height: 150px; object-fit: cover;"
+                                            th:alt="${'Hình ảnh ' + image.filename}"/>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -191,7 +195,7 @@
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body text-center">
-                                <img id="modalImage" class="img-fluid" />
+                                <img id="modalImage" class="img-fluid" alt="Hình ảnh xem trước" />
                             </div>
                         </div>
                     </div>

@@ -32,11 +32,12 @@ public class RequestCreatorImpl implements RequestCreator {
 
     @Override
     @Transactional
-    public Request createNew(Request incomingRequest, MultipartFile[] newImages, String note) throws ValidationException {
+    public Request createNew(Request incomingRequest, MultipartFile[] newImages, String note)
+            throws ValidationException {
         StringBuilder noteBuilder = new StringBuilder("Tạo mới yêu cầu");
-        
+
         if (note != null && !note.trim().isEmpty()) {
-             noteBuilder.append("\nGhi chú: "+ note.trim());
+            noteBuilder.append("\nGhi chú: " + note.trim());
         }
 
         incomingRequest.setStatus(RequestStatus.SCHEDULED);
@@ -47,7 +48,8 @@ public class RequestCreatorImpl implements RequestCreator {
         Request savedRequest = reqRepo.save(incomingRequest);
 
         // Process images if provided
-        List<RequestImage> images = imageService.uploadImages(savedRequest.getId(), new ArrayList<>(), newImages, savedRequest);
+        List<RequestImage> images = imageService.uploadImages(savedRequest.getId(), new ArrayList<>(), newImages,
+                savedRequest);
         savedRequest.setImages(new ArrayList<>(images));
         savedRequest = reqRepo.save(savedRequest);
 

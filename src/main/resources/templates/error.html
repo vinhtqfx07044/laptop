@@ -12,7 +12,7 @@
                 <div class="card border-0 shadow">
                     <div class="card-body text-center py-5">
                         <i class="fas fa-exclamation-triangle text-warning display-1 mb-3"></i>
-                        <h2 class="mb-3" th:text="${errorMessage ?: 'Đã xảy ra lỗi'}"></h2>
+                        <h2 class="mb-3" th:text="${errorMessage ?: 'Đã xảy ra lỗi'}">Đã xảy ra lỗi</h2>
                         <p class="text-muted mb-4" th:text="'Mã lỗi: ' + (${status} ?: '500')"></p>
 
                         <a href="/" class="btn btn-outline-primary me-2">Về trang chủ</a>

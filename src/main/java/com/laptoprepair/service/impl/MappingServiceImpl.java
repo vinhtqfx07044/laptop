@@ -12,6 +12,7 @@ import com.laptoprepair.service.MappingService;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import com.laptoprepair.common.AppConstants;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -96,7 +97,7 @@ public class MappingServiceImpl implements MappingService {
 
     private RequestItem copyRequestItem(RequestItem source, Request target) {
         RequestItem newItem = new RequestItem();
-        BeanUtils.copyProperties(source, newItem, "id", "request");
+        BeanUtils.copyProperties(source, newItem, "id", AppConstants.ATTR_REQUEST);
         newItem.setRequest(target);
         return newItem;
     }

@@ -9,7 +9,7 @@ import java.util.List;
 
 @Component
 public class ImageValidator {
-    @Value("${upload.max-images-per-request}")
+    @Value("${app.upload.max-images-per-request}")
     private int maxImages;
 
     public void validateMaxImagesPerRequest(List<String> existingImages, MultipartFile[] newImages) {
