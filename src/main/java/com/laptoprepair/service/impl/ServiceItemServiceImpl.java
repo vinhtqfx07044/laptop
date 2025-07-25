@@ -6,6 +6,7 @@ import com.laptoprepair.exception.NotFoundException;
 import com.laptoprepair.repository.ServiceItemRepository;
 import com.laptoprepair.service.ServiceItemService;
 import com.laptoprepair.validation.ServiceItemValidator;
+import com.laptoprepair.csv.ServiceItemCsvParser;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +35,7 @@ public class ServiceItemServiceImpl implements ServiceItemService {
 
     private final ServiceItemRepository serviceItemRepository;
     private final ServiceItemValidator serviceItemValidator;
+    private final ServiceItemCsvParser csvParser;
 
     @Override
     public ServiceItem create(ServiceItem serviceItem) {
@@ -86,7 +87,7 @@ public class ServiceItemServiceImpl implements ServiceItemService {
             int rowNumber = 1;
             for (CSVRecord csvRecord : parser) {
                 rowNumber++;
-                ServiceItem serviceItem = parseCSVRecord(csvRecord, rowNumber);
+                ServiceItem serviceItem = csvParser.parse(csvRecord, rowNumber);
                 serviceItemRepository.findByName(serviceItem.getName()).ifPresent(existing -> {
                     serviceItem.setId(existing.getId());
                     serviceItem.setCreatedAt(existing.getCreatedAt());
@@ -105,41 +106,6 @@ public class ServiceItemServiceImpl implements ServiceItemService {
         }
     }
 
-    private ServiceItem parseCSVRecord(CSVRecord csvRecord, int rowNumber) throws CSVImportException {
-        ServiceItem serviceItem = new ServiceItem();
-
-        try {
-            // Parse name
-            String name = csvRecord.get("name");
-            serviceItemValidator.validateCSVName(name, rowNumber);
-            serviceItem.setName(name.trim());
-
-            // Parse price
-            BigDecimal price = new BigDecimal(csvRecord.get("price"));
-            serviceItemValidator.validateCSVPrice(price, rowNumber);
-            serviceItem.setPrice(price);
-
-            // Parse vatRate
-            BigDecimal vatRate = new BigDecimal(csvRecord.get("vatRate"));
-            serviceItemValidator.validateCSVVatRate(vatRate, rowNumber);
-            serviceItem.setVatRate(vatRate);
-
-            // Parse warrantyDays
-            int warrantyDays = Integer.parseInt(csvRecord.get("warrantyDays"));
-            serviceItemValidator.validateCSVWarrantyDays(warrantyDays, rowNumber);
-            serviceItem.setWarrantyDays(warrantyDays);
-
-            // Parse active (default to true if not specified or invalid)
-            String activeStr = csvRecord.get("active");
-            serviceItem.setActive(parseActiveField(activeStr));
-
-            return serviceItem;
-        } catch (NumberFormatException e) {
-            throw new CSVImportException("Dữ liệu số không hợp lệ", rowNumber);
-        } catch (IllegalArgumentException e) {
-            throw new CSVImportException("Cột không tồn tại trong file CSV", rowNumber);
-        }
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -167,12 +133,6 @@ public class ServiceItemServiceImpl implements ServiceItemService {
         }
     }
 
-    private boolean parseActiveField(String activeStr) {
-        if (activeStr != null && !activeStr.trim().isEmpty()) {
-            return Boolean.parseBoolean(activeStr.trim());
-        }
-        return true; // Default to active
-    }
 
     private byte[] addUtf8Bom(String content) {
         byte[] bom = { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF }; // UTF-8 BOM

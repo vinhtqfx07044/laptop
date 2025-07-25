@@ -11,6 +11,7 @@ import com.laptoprepair.repository.ServiceItemRepository;
 import com.laptoprepair.service.MappingService;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,15 +27,14 @@ public class MappingServiceImpl implements MappingService {
         if (items == null || items.isEmpty()) {
             return;
         }
-        
-        for (RequestItem item : items) {          
+
+        for (RequestItem item : items) {
             ServiceItem serviceItem = serviceItemRepository.findByIdAndActive(item.getServiceItemId())
                     .orElseThrow(() -> new NotFoundException("Không tìm dịch vụ sửa chửa: " + item.getName()));
-            
-            item.setName(serviceItem.getName());
-            item.setPrice(serviceItem.getPrice());
-            item.setVatRate(serviceItem.getVatRate());
-            
+
+            // Sử dụng BeanUtils để copy các thuộc tính từ ServiceItem sang RequestItem
+            BeanUtils.copyProperties(serviceItem, item, "id", "serviceItemId", "active", "createdAt", "updatedAt");
+
             if (item.getDiscount().compareTo(item.getPrice()) > 0) {
                 throw new ValidationException("Giảm giá vượt quá giá gốc: " + item.getName());
             }
@@ -43,70 +43,75 @@ public class MappingServiceImpl implements MappingService {
 
     @Override
     public Request copyRequestFields(Request target, Request source, boolean deepCopyCollections) {
-        target.setName(source.getName());
-        target.setPhone(source.getPhone());
-        target.setEmail(source.getEmail());
-        target.setAddress(source.getAddress());
-        target.setBrandModel(source.getBrandModel());
-        target.setAppointmentDate(source.getAppointmentDate());
-        target.setDescription(source.getDescription());
-        target.setStatus(source.getStatus());
-        
+        // Copy tất cả thuộc tính đơn giản, loại trừ collections và các thuộc tính không
+        // cần thiết
+        BeanUtils.copyProperties(source, target, "id", "items", "images", "history",
+                "createdAt", "updatedAt", "createdBy", "updatedBy");
+
         if (deepCopyCollections) {
             // For cloning - deep copy collections to avoid reference issues
-            if (source.getItems() != null) {
-                target.setItems(source.getItems().stream()
-                    .map(item -> {
-                        RequestItem newItem = new RequestItem();
-                        newItem.setServiceItemId(item.getServiceItemId());
-                        newItem.setName(item.getName());
-                        newItem.setPrice(item.getPrice());
-                        newItem.setVatRate(item.getVatRate());
-                        newItem.setWarrantyDays(item.getWarrantyDays());
-                        newItem.setQuantity(item.getQuantity());
-                        newItem.setDiscount(item.getDiscount());
-                        newItem.setRequest(target);
-                        return newItem;
-                    }).toList());
-            }
-            if (source.getImages() != null) {
-                target.setImages(source.getImages().stream()
-                    .map(image -> {
-                        RequestImage newImage = new RequestImage();
-                        newImage.setFilename(image.getFilename());
-                        newImage.setRequest(target);
-                        return newImage;
-                    }).toList());
-            }
-            if (source.getHistory() != null) {
-                target.setHistory(source.getHistory().stream()
-                    .map(history -> {
-                        RequestHistory newHistory = new RequestHistory();
-                        newHistory.setChanges(history.getChanges());
-                        newHistory.setCreatedAt(history.getCreatedAt());
-                        newHistory.setCreatedBy(history.getCreatedBy());
-                        newHistory.setRequest(target);
-                        return newHistory;
-                    }).toList());
-            }
+            copyCollectionsDeep(source, target);
         } else {
             // For updating - proper collection management to avoid orphan removal issues
-            if (source.getItems() != null) {
-                target.getItems().clear();
-                source.getItems().forEach(item -> {
-                    item.setRequest(target);
-                    target.getItems().add(item);
-                });
-            }
-            if (source.getImages() != null) {
-                target.getImages().clear();
-                source.getImages().forEach(image -> {
-                    image.setRequest(target);
-                    target.getImages().add(image);
-                });
-            }
+            copyCollectionsShallow(source, target);
         }
-        
+
         return target;
+    }
+
+    private void copyCollectionsDeep(Request source, Request target) {
+        if (source.getItems() != null) {
+            target.setItems(source.getItems().stream()
+                    .map(item -> copyRequestItem(item, target))
+                    .toList());
+        }
+        if (source.getImages() != null) {
+            target.setImages(source.getImages().stream()
+                    .map(image -> copyRequestImage(image, target))
+                    .toList());
+        }
+        if (source.getHistory() != null) {
+            target.setHistory(source.getHistory().stream()
+                    .map(history -> copyRequestHistory(history, target))
+                    .toList());
+        }
+    }
+
+    private void copyCollectionsShallow(Request source, Request target) {
+        if (source.getItems() != null) {
+            target.getItems().clear();
+            source.getItems().forEach(item -> {
+                item.setRequest(target);
+                target.getItems().add(item);
+            });
+        }
+        if (source.getImages() != null) {
+            target.getImages().clear();
+            source.getImages().forEach(image -> {
+                image.setRequest(target);
+                target.getImages().add(image);
+            });
+        }
+    }
+
+    private RequestItem copyRequestItem(RequestItem source, Request target) {
+        RequestItem newItem = new RequestItem();
+        BeanUtils.copyProperties(source, newItem, "id", "request");
+        newItem.setRequest(target);
+        return newItem;
+    }
+
+    private RequestImage copyRequestImage(RequestImage source, Request target) {
+        RequestImage newImage = new RequestImage();
+        BeanUtils.copyProperties(source, newImage, "id", "request");
+        newImage.setRequest(target);
+        return newImage;
+    }
+
+    private RequestHistory copyRequestHistory(RequestHistory source, Request target) {
+        RequestHistory newHistory = new RequestHistory();
+        BeanUtils.copyProperties(source, newHistory, "id", "request");
+        newHistory.setRequest(target);
+        return newHistory;
     }
 }

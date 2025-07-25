@@ -3,6 +3,7 @@ package com.laptoprepair.controller;
 import com.laptoprepair.entity.Request;
 import com.laptoprepair.enums.RequestStatus;
 import com.laptoprepair.service.RequestService;
+import com.laptoprepair.web.RequestFormPopulator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,12 +25,10 @@ import java.util.UUID;
 public class RequestController {
 
     private final RequestService requestService;
+    private final RequestFormPopulator formPopulator;
 
     @Value("${pagination.default-page-size.requests}")
     private int defaultPageSize;
-
-    @Value("${upload.max-images-per-request}")
-    private int maxImagesPerRequest;
 
     @GetMapping("/list")
     public String list(
@@ -52,7 +51,7 @@ public class RequestController {
 
     @GetMapping("/create")
     public String createForm(Model model, HttpServletRequest request) {
-        setupRequestForm(model, new Request(), request);
+        formPopulator.populateForCreate(model, request);
         return "staff/request-form";
     }
 
@@ -66,7 +65,7 @@ public class RequestController {
             return "redirect:/staff/requests/view/" + id;
         }
 
-        setupRequestForm(model, existingRequest, request);
+        formPopulator.populateForEdit(existingRequest, model, request);
         return "staff/request-form";
     }
 
@@ -88,7 +87,8 @@ public class RequestController {
             RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
-            setupRequestForm(model, incomingRequest, request);
+            formPopulator.populateForCreate(model, request);
+            model.addAttribute("request", incomingRequest); // Override with form data
             return "staff/request-form";
         }
 
@@ -110,7 +110,9 @@ public class RequestController {
 
         if (bindingResult.hasErrors()) {
             // Load full request from DB when validation fails
-            setupRequestForm(model, requestService.findById(id), request);
+            Request existingRequest = requestService.findById(id);
+            formPopulator.populateForEdit(existingRequest, model, request);
+            model.addAttribute("request", incomingRequest); // Override with form data
             return "staff/request-form";
         }
 
@@ -119,13 +121,5 @@ public class RequestController {
         return "redirect:/staff/requests/edit/" + updated.getId();
     }
 
-    /**
-     * Setup common attributes for request form
-     */
-    private void setupRequestForm(Model model, Object request, HttpServletRequest httpRequest) {
-        model.addAttribute("request", request);
-        model.addAttribute("requestUri", httpRequest.getRequestURI());
-        model.addAttribute("maxImages", maxImagesPerRequest);
-    }
 
 }

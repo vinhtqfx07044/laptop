@@ -1,0 +1,38 @@
+package com.laptoprepair.web;
+
+import com.laptoprepair.entity.Request;
+import com.laptoprepair.enums.RequestStatus;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.ui.Model;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+@Component
+public class DefaultRequestFormPopulator implements RequestFormPopulator {
+
+    @Value("${upload.max-images-per-request}")
+    private int maxImagesPerRequest;
+
+    @Override
+    public void populateForCreate(Model model, HttpServletRequest request) {
+        model.addAttribute("request", new Request());
+        addCommonAttributes(model, request);
+    }
+
+    @Override
+    public void populateForEdit(Request existing, Model model, HttpServletRequest request) {
+        model.addAttribute("request", existing);
+        addCommonAttributes(model, request);
+        
+        // Add locked status for form controls
+        boolean isLocked = existing.getStatus() == RequestStatus.COMPLETED 
+                        || existing.getStatus() == RequestStatus.CANCELLED;
+        model.addAttribute("locked", isLocked);
+    }
+
+    private void addCommonAttributes(Model model, HttpServletRequest request) {
+        model.addAttribute("requestUri", request.getRequestURI());
+        model.addAttribute("maxImages", maxImagesPerRequest);
+    }
+}

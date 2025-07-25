@@ -2,10 +2,9 @@ package com.laptoprepair.controller;
 
 import com.laptoprepair.entity.Request;
 import com.laptoprepair.service.RequestService;
+import com.laptoprepair.web.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -21,10 +20,11 @@ import java.util.UUID;
 public class PublicController {
 
     private final RequestService requestService;
+    private final AuthService authService;
 
     @GetMapping("/login")
     public String login() {
-        if (isStaffAuthenticated()) {
+        if (authService.isStaff()) {
             return "redirect:/staff/requests/list";
         }
         return "public/login";
@@ -32,7 +32,7 @@ public class PublicController {
 
     @GetMapping("/")
     public String index(Model model) {
-        if (isStaffAuthenticated()) {
+        if (authService.isStaff()) {
             return "redirect:/staff/requests/list";
         }
         return "public/index";
@@ -94,14 +94,5 @@ public class PublicController {
         return "staff/request-detail";
     }
 
-    /**
-     * Check if current user is authenticated as staff
-     */
-    private boolean isStaffAuthenticated() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return auth != null && auth.isAuthenticated() &&
-                auth.getAuthorities().stream()
-                        .anyMatch(a -> a.getAuthority().equals("ROLE_STAFF"));
-    }
 
 }

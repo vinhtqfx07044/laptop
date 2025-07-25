@@ -1,7 +1,6 @@
 package com.laptoprepair.entity;
 
 import com.laptoprepair.enums.RequestStatus;
-import com.laptoprepair.util.TimeZoneUtil;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Data;

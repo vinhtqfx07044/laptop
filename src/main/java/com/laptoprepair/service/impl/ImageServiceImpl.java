@@ -5,6 +5,7 @@ import com.laptoprepair.entity.RequestImage;
 import com.laptoprepair.exception.ValidationException;
 import com.laptoprepair.service.ImageService;
 import com.laptoprepair.validation.ImageValidator;
+import com.laptoprepair.io.FileStorageService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -23,13 +23,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ImageServiceImpl implements ImageService {
 
-    @Value("${upload.dir:uploads}")
-    private String uploadDir;
-
     @Value("${upload.max-images-per-request}")
     private int maxImagesPerRequest;
 
     private final ImageValidator imageValidator;
+    private final FileStorageService fileStorageService;
 
     @Override
     public List<RequestImage> deleteImages(UUID requestId, List<RequestImage> currentImages, String[] toDelete)
@@ -38,12 +36,11 @@ public class ImageServiceImpl implements ImageService {
             return currentImages;
         }
 
-        Path requestDir = Paths.get(uploadDir, requestId.toString());
         List<RequestImage> updatedImages = new ArrayList<>(currentImages);
 
         for (String filename : toDelete) {
             try {
-                Files.deleteIfExists(requestDir.resolve(filename));
+                fileStorageService.deleteIfExists(requestId, filename);
             } catch (IOException e) {
                 throw new ValidationException("Lỗi xóa ảnh: " + e.getMessage());
             }
@@ -67,11 +64,8 @@ public class ImageServiceImpl implements ImageService {
                 .toList();
         imageValidator.validateMaxImagesPerRequest(currentFilenames, newImages);
 
-        Path requestDir = Paths.get(uploadDir, requestId.toString());
         try {
-            if (!Files.exists(requestDir)) {
-                Files.createDirectories(requestDir);
-            }
+            fileStorageService.createDir(requestId);
         } catch (IOException e) {
             throw new ValidationException("Lỗi tạo thư mục lưu ảnh: " + e.getMessage());
         }
@@ -81,12 +75,16 @@ public class ImageServiceImpl implements ImageService {
         for (MultipartFile file : newImages) {
             if (!file.isEmpty()) {
                 imageValidator.validateImageFileSizeAndFormat(file);
-                String filename = uploadImage(requestDir, file);
-                
-                RequestImage requestImage = new RequestImage();
-                requestImage.setFilename(filename);
-                requestImage.setRequest(request);
-                updatedImages.add(requestImage);
+                try {
+                    String filename = fileStorageService.save(requestId, file);
+                    
+                    RequestImage requestImage = new RequestImage();
+                    requestImage.setFilename(filename);
+                    requestImage.setRequest(request);
+                    updatedImages.add(requestImage);
+                } catch (IOException e) {
+                    throw new ValidationException("Lỗi lưu ảnh: " + e.getMessage());
+                }
             }
         }
 
@@ -108,17 +106,4 @@ public class ImageServiceImpl implements ImageService {
         return currentImages;
     }
 
-    private String uploadImage(Path requestDir, MultipartFile file) throws ValidationException {
-        String contentType = file.getContentType();
-        String extension = contentType != null && contentType.equals("image/png") ? ".png" : ".jpg";
-        String filename = UUID.randomUUID() + extension;
-        Path imagePath = requestDir.resolve(filename);
-
-        try {
-            Files.copy(file.getInputStream(), imagePath, StandardCopyOption.REPLACE_EXISTING);
-            return filename;
-        } catch (IOException e) {
-            throw new ValidationException("Lỗi lưu ảnh: " + e.getMessage());
-        }
-    }
 }

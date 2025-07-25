@@ -1,6 +1,6 @@
 package com.laptoprepair.entity;
 
-import com.laptoprepair.util.TimeZoneUtil;
+import com.laptoprepair.common.DefaultTimeProvider;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -21,12 +21,12 @@ public abstract class BaseEntity {
 
     @PrePersist
     protected void prePersist() {
-        createdAt = TimeZoneUtil.nowInVietnam();
-        updatedAt = TimeZoneUtil.nowInVietnam();
+        createdAt = DefaultTimeProvider.nowInVietnam();
+        updatedAt = DefaultTimeProvider.nowInVietnam();
     }
 
     @PreUpdate
     protected void preUpdate() {
-        updatedAt = TimeZoneUtil.nowInVietnam();
+        updatedAt = DefaultTimeProvider.nowInVietnam();
     }
 }
