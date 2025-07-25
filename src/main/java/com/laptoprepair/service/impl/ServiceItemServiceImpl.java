@@ -36,7 +36,6 @@ public class ServiceItemServiceImpl implements ServiceItemService {
     private final ServiceItemRepository serviceItemRepository;
     private final ServiceItemValidator serviceItemValidator;
     private final ServiceItemCsvParser csvParser;
-    private final ServiceItemService self; // Self-inject to handle @Transactional calls
 
     @Override
     public ServiceItem create(ServiceItem serviceItem) {
@@ -53,7 +52,7 @@ public class ServiceItemServiceImpl implements ServiceItemService {
 
     @Override
     public ServiceItem update(UUID id, ServiceItem incomingServiceItem) {
-        ServiceItem existingServiceItem = self.findById(id);
+        ServiceItem existingServiceItem = findById(id);
 
         serviceItemValidator.validateUniqueNameOnUpdate(id, incomingServiceItem.getName());
 

@@ -61,7 +61,7 @@ public class EmailServiceImpl implements EmailService {
         StringBuilder body = new StringBuilder("Yêu cầu sửa chữa của bạn đã được cập nhật:\n\n");
         body.append("Mã ID: " + request.getId() + "\n");
         body.append(AppConstants.MESSAGE_LINK_PREFIX + publicRequestBaseUrl + request.getId() + "\n");
-        body.append("Chi tiết thay đổi: \n").append(changes + "\n");
+        body.append(changes + "\n");
         body.append("\n").append(THANK_YOU_MESSAGE);
         String subject = String.format(UPDATE_SUBJECT, shopName);
         sendEmail(request.getEmail(), subject, body.toString());

@@ -1,7 +1,6 @@
 package com.laptoprepair.web;
 
 import com.laptoprepair.entity.Request;
-import com.laptoprepair.enums.RequestStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import com.laptoprepair.common.AppConstants;
@@ -27,8 +26,7 @@ public class DefaultRequestFormPopulator implements RequestFormPopulator {
         addCommonAttributes(model, request);
 
         // Add locked status for form controls
-        boolean isLocked = existing.getStatus() == RequestStatus.COMPLETED
-                || existing.getStatus() == RequestStatus.CANCELLED;
+        boolean isLocked = existing.getStatus() != null && existing.getStatus().isLocked();
         model.addAttribute("locked", isLocked);
     }
 

@@ -69,6 +69,12 @@
                                 </div>
                             </div>
 
+                            <!-- Locked warning message -->
+                            <div th:if="${locked}" class="alert alert-warning mb-3">
+                                <i class="fas fa-lock me-2"></i>
+                                Phiếu đã được khóa - Không thể chỉnh sửa hạng mục
+                            </div>
+
                             <div class="table-responsive">
                                 <table class="table table-bordered" id="itemsTable">
                                     <thead class="table-light">
@@ -84,13 +90,6 @@
                                     </thead>
                                     <tbody>
                                         <!-- Items will be added dynamically by JavaScript -->
-                                        <!-- Locked warning inline in table -->
-                                        <tr th:if="${request.status != null and request.status.locked}">
-                                            <td colspan="7" class="text-center text-warning bg-light">
-                                                <i class="fas fa-lock me-2"></i>
-                                                Phiếu đã được khóa - Không thể chỉnh sửa hạng mục
-                                            </td>
-                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
