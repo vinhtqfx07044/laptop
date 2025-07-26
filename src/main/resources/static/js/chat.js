@@ -3,11 +3,11 @@ class ChatWidget {
         this.isOpen = false;
         this.isStreaming = false;
         this.eventSource = null;
+        this.conversationId = null;
         this.init();
     }
 
     init() {
-        // Widget is already in DOM, just attach events
         this.attachEvents();
     }
 
@@ -58,74 +58,79 @@ class ChatWidget {
         this.setStreaming(true);
         
         try {
-            // Get full conversation history
-            const conversation = this.getConversationHistory();
-            await this.streamResponse(conversation);
+            await this.streamResponse(message);
         } finally {
             this.setStreaming(false);
         }
     }
 
-    getConversationHistory() {
-        const messages = [];
-        const messageElements = document.querySelectorAll('#chat-messages .message');
-        
-        messageElements.forEach(element => {
-            if (element.classList.contains('user')) {
-                // Remove FontAwesome user icon and extract text
-                const content = element.textContent.replace(/^\s*\s*/, '').trim();
-                messages.push({ role: 'user', content });
-            } else if (element.classList.contains('bot')) {
-                // Remove FontAwesome robot icon and extract text  
-                const content = element.textContent.replace(/^\s*\s*/, '').trim();
-                if (content) messages.push({ role: 'assistant', content });
-            }
-        });
-        
-        return JSON.stringify(messages);
-    }
-
-    streamResponse(conversation) {
+    streamResponse(message) {
         return new Promise((resolve) => {
-            const url = `/api/chat/stream?conversation=${encodeURIComponent(conversation)}`;
+            // Generate conversation ID on first message if not exists
+            if (!this.conversationId) {
+                this.conversationId = crypto.randomUUID();
+            }
+            
+            const params = new URLSearchParams({ 
+                message,
+                conversationId: this.conversationId 
+            });
+            
+            const url = `/api/chat/stream?${params}`;
             this.eventSource = new EventSource(url);
             let botMessage = null;
             let content = '';
+            let hasReceivedMessage = false;
             
             this.eventSource.onmessage = (event) => {
+                hasReceivedMessage = true;
                 if (!botMessage) botMessage = this.addMessage('bot', '');
                 
-                const chunk = this.parseChunk(event.data);
+                const chatResponse = JSON.parse(event.data);
+                const chunk = chatResponse.results?.[0]?.output?.text || '';
+                
                 if (this.isErrorMessage(chunk)) {
                     this.handleErrorMessage(botMessage, chunk);
+                    this.cleanup();
+                    resolve();
                     return;
                 }
                 
                 content += chunk;
+                
                 botMessage.innerHTML = `<i class="fas fa-robot text-primary me-2"></i>${content}`;
                 this.scrollToBottom();
             };
             
-            this.eventSource.onerror = () => {
-                this.addMessage('error', 'Không thể kết nối tới server. Vui lòng thử lại sau.');
+            this.eventSource.onerror = (error) => {
+                console.log('SSE connection closed. Has received message:', hasReceivedMessage);
+                
+                // Only show error if we haven't received any data (real connection error)
+                if (!hasReceivedMessage) {
+                    console.error('Real SSE Error:', error);
+                    this.addMessage('error', 'Không thể kết nối tới server. Vui lòng thử lại sau.');
+                }
+                
                 this.cleanup();
                 resolve();
+            };
+            
+            // Clean up when stream is done
+            this.eventSource.addEventListener('close', () => {
+                console.log('SSE stream completed successfully');
+                this.cleanup();
+                resolve();
+            });
+            
+            this.eventSource.onopen = () => {
+                
             };
         });
     }
 
-    parseChunk(data) {
-        try {
-            const chatResponse = JSON.parse(data);
-            return chatResponse.result?.output?.text || chatResponse.results?.[0]?.output?.text || '';
-        } catch (e) {
-            return data; // Fallback to plain text
-        }
-    }
-
     isErrorMessage(chunk) {
         return chunk && (chunk.includes('Quá nhiều yêu cầu') || 
-                        chunk.includes('không hợp lệ') || 
+                        chunk.includes('Vui lòng nhập tin nhắn') || 
                         chunk.includes('Đã xảy ra lỗi'));
     }
 
@@ -163,6 +168,7 @@ class ChatWidget {
     }
 
     newChat() {
+        this.conversationId = null; // Reset conversation ID
         document.getElementById('chat-messages').innerHTML = `
             <div class="message bot">
                 <i class="fas fa-robot text-primary me-2"></i>
