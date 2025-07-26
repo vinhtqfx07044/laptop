@@ -11,7 +11,6 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.web.SecurityFilterChain;
 
 import java.util.ArrayList;
@@ -72,7 +71,7 @@ public class SecurityConfig {
                                                 .logoutSuccessUrl("/")
                                                 .permitAll())
                                 .csrf(csrf -> csrf.disable())
-                                .headers(headers -> headers.frameOptions(Customizer.withDefaults()))
+                                .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()))
                                 .build();
         }
 
