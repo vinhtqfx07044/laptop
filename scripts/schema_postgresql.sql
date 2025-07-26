@@ -94,6 +94,39 @@ CREATE TABLE IF NOT EXISTS SPRING_AI_CHAT_MEMORY (
     "timestamp" TIMESTAMP NOT NULL
 );
 
+-- -------------------------------------------------------------------------------------------------
+-- Section 3: PERFORMANCE INDEXES
+-- -------------------------------------------------------------------------------------------------
+
+-- Service Item indexes
+CREATE INDEX IF NOT EXISTS idx_service_item_active ON service_item(active);
+CREATE INDEX IF NOT EXISTS idx_service_item_name ON service_item(name);
+CREATE INDEX IF NOT EXISTS idx_service_item_created_at ON service_item(created_at);
+
+-- Request indexes
+CREATE INDEX IF NOT EXISTS idx_request_status ON request(status);
+CREATE INDEX IF NOT EXISTS idx_request_appointment_date ON request(appointment_date);
+CREATE INDEX IF NOT EXISTS idx_request_phone ON request(phone);
+CREATE INDEX IF NOT EXISTS idx_request_email ON request(email);
+CREATE INDEX IF NOT EXISTS idx_request_created_at ON request(created_at);
+CREATE INDEX IF NOT EXISTS idx_request_completed_at ON request(completed_at);
+
+-- Request Items indexes
+CREATE INDEX IF NOT EXISTS idx_request_items_request_id ON request_items(request_id);
+CREATE INDEX IF NOT EXISTS idx_request_items_service_item_id ON request_items(service_item_id);
+CREATE INDEX IF NOT EXISTS idx_request_items_created_at ON request_items(created_at);
+
+-- Request History indexes
+CREATE INDEX IF NOT EXISTS idx_request_history_request_id ON request_history(request_id);
+CREATE INDEX IF NOT EXISTS idx_request_history_created_at ON request_history(created_at);
+
+-- Request Images indexes
+CREATE INDEX IF NOT EXISTS idx_request_images_request_id ON request_images(request_id);
+
+-- Spring AI Chat Memory indexes
+CREATE INDEX IF NOT EXISTS SPRING_AI_CHAT_MEMORY_CONVERSATION_ID_TIMESTAMP_IDX
+ON SPRING_AI_CHAT_MEMORY(conversation_id, "timestamp");
+
 -- =================================================================================================
 -- END OF SCHEMA CREATION SCRIPT
 -- =================================================================================================
