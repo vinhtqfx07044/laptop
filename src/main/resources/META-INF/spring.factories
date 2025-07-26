@@ -1,0 +1,1 @@
+org.springframework.context.ApplicationContextInitializer=com.laptoprepair.config.DotEnvConfig

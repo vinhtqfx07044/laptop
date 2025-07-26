@@ -24,4 +24,5 @@ public class WebConfig implements WebMvcConfigurer {
         registrar.setDateTimeFormatter(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));
         registrar.registerFormatters(registry);
     }
+
 }

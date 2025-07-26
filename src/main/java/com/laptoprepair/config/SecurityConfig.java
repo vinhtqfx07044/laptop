@@ -45,6 +45,8 @@ public class SecurityConfig {
             "/css/**", "/js/**", "/favicon.ico",
             "/images/**", // allow image access
             "/public/**", // all public endpoints including request detail
+            "/api/chat/**", // chat API endpoints
+            "/actuator/**", // management endpoints for observability
     };
 
     @Bean
