@@ -65,7 +65,7 @@ class ServiceItemIntegrationTest {
 
         @Test
         void createServiceItem_WithValidData_ShouldPersist() throws Exception {
-                mockMvc.perform(post("/staff/service-items")
+                mockMvc.perform(post("/staff/service-items/create")
                                 .param("name", "Test Service Item")
                                 .param("price", "150000")
                                 .param("vatRate", "0.10")
