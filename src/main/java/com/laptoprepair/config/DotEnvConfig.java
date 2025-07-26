@@ -21,11 +21,11 @@ public class DotEnvConfig implements ApplicationContextInitializer<ConfigurableA
 
         ConfigurableEnvironment environment = applicationContext.getEnvironment();
         Map<String, Object> dotenvMap = new HashMap<>();
-        
+
         dotenv.entries().forEach(entry -> {
             dotenvMap.put(entry.getKey(), entry.getValue());
         });
-        
+
         environment.getPropertySources().addFirst(new MapPropertySource("dotenv", dotenvMap));
     }
 }

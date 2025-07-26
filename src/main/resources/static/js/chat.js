@@ -16,7 +16,7 @@ class ChatWidget {
         const chatForm = document.getElementById('chat-form');
         const newChatBtn = document.getElementById('new-chat-btn');
         const chatInput = document.getElementById('chat-input');
-        
+
         if (toggleBtn) toggleBtn.onclick = () => this.toggle();
         if (chatForm) chatForm.onsubmit = (e) => this.sendMessage(e);
         if (newChatBtn) newChatBtn.onclick = () => this.newChat();
@@ -33,11 +33,11 @@ class ChatWidget {
     toggle() {
         const chatBox = document.getElementById('chat-box');
         const toggle = document.getElementById('chat-toggle');
-        
+
         this.isOpen = !this.isOpen;
         chatBox.style.display = this.isOpen ? 'block' : 'none';
         toggle.innerHTML = this.isOpen ? '<i class="fas fa-times"></i>' : '<i class="fas fa-comments"></i>';
-        
+
         if (this.isOpen) this.scrollToBottom();
     }
 
@@ -47,16 +47,16 @@ class ChatWidget {
 
         const input = document.getElementById('chat-input');
         const message = input.value.trim();
-        
+
         if (!message || message.length > 200) {
             this.addMessage('error', message.length > 200 ? 'Tin nhắn quá dài (tối đa 200 ký tự).' : 'Vui lòng nhập tin nhắn.');
             return;
         }
-        
+
         input.value = '';
         this.addMessage('user', message);
         this.setStreaming(true);
-        
+
         try {
             await this.streamResponse(message);
         } finally {
@@ -70,68 +70,64 @@ class ChatWidget {
             if (!this.conversationId) {
                 this.conversationId = crypto.randomUUID();
             }
-            
-            const params = new URLSearchParams({ 
+
+            const params = new URLSearchParams({
                 message,
-                conversationId: this.conversationId 
+                conversationId: this.conversationId
             });
-            
+
             const url = `/api/chat/stream?${params}`;
             this.eventSource = new EventSource(url);
             let botMessage = null;
             let content = '';
             let hasReceivedMessage = false;
-            
+
             this.eventSource.onmessage = (event) => {
                 hasReceivedMessage = true;
                 if (!botMessage) botMessage = this.addMessage('bot', '');
-                
+
                 const chatResponse = JSON.parse(event.data);
                 const chunk = chatResponse.results?.[0]?.output?.text || '';
-                
+
                 if (this.isErrorMessage(chunk)) {
                     this.handleErrorMessage(botMessage, chunk);
                     this.cleanup();
                     resolve();
                     return;
                 }
-                
+
                 content += chunk;
-                
+
                 botMessage.innerHTML = `<i class="fas fa-robot text-primary me-2"></i>${content}`;
                 this.scrollToBottom();
             };
-            
+
             this.eventSource.onerror = (error) => {
-                console.log('SSE connection closed. Has received message:', hasReceivedMessage);
-                
                 // Only show error if we haven't received any data (real connection error)
                 if (!hasReceivedMessage) {
-                    console.error('Real SSE Error:', error);
                     this.addMessage('error', 'Không thể kết nối tới server. Vui lòng thử lại sau.');
                 }
-                
+
                 this.cleanup();
                 resolve();
             };
-            
+
             // Clean up when stream is done
             this.eventSource.addEventListener('close', () => {
-                console.log('SSE stream completed successfully');
                 this.cleanup();
                 resolve();
             });
-            
+
             this.eventSource.onopen = () => {
-                
+
             };
         });
     }
 
     isErrorMessage(chunk) {
-        return chunk && (chunk.includes('Quá nhiều yêu cầu') || 
-                        chunk.includes('Vui lòng nhập tin nhắn') || 
-                        chunk.includes('Đã xảy ra lỗi'));
+        return chunk && (chunk.includes('Quá nhiều yêu cầu') ||
+            chunk.includes('Vui lòng nhập tin nhắn') ||
+            chunk.includes('Đã xảy ra lỗi'));
     }
 
     handleErrorMessage(botMessage, errorText) {
@@ -145,7 +141,7 @@ class ChatWidget {
         const container = document.getElementById('chat-messages');
         const message = document.createElement('div');
         message.className = `message ${type}`;
-        
+
         if (type === 'user') {
             message.innerHTML = `<i class="fas fa-user text-white me-2"></i>${content}`;
         } else if (type === 'error') {
@@ -153,7 +149,7 @@ class ChatWidget {
         } else {
             message.innerHTML = `<i class="fas fa-robot text-primary me-2"></i>${content}`;
         }
-        
+
         container.appendChild(message);
         this.scrollToBottom();
         return message;
@@ -162,7 +158,7 @@ class ChatWidget {
     setStreaming(streaming) {
         this.isStreaming = streaming;
         const input = document.getElementById('chat-input');
-        
+
         input.disabled = streaming;
         input.placeholder = streaming ? 'Đang trả lời...' : 'Nhập câu hỏi của bạn rồi nhấn Enter...';
     }

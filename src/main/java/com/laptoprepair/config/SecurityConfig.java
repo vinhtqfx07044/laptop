@@ -22,79 +22,80 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    @Value("${app.security.login.default-success-url}")
-    private String defaultSuccessUrl;
+        @Value("${app.security.login.default-success-url}")
+        private String defaultSuccessUrl;
 
-    private final Environment environment;
+        private final Environment environment;
 
-    public SecurityConfig(Environment environment) {
-        this.environment = environment;
-    }
-
-    // Chỉ cho anonymous truy cập (redirect staff)
-    private static final String[] ANONYMOUS_ONLY = {
-            "/about", "/lookup", "/submit", "/recover"
-    };
-
-    // Cho phép tất cả truy cập
-    public static final String LOGIN_PATH = "/login";
-
-    // Cho phép tất cả truy cập
-    private static final String[] PERMIT_ALL = {
-            "/", "/h2-console/**", LOGIN_PATH, "/logout", "/error",
-            "/css/**", "/js/**", "/favicon.ico",
-            "/images/**", // allow image access
-            "/public/**", // all public endpoints including request detail
-            "/api/chat/**", // chat API endpoints
-            "/actuator/**", // management endpoints for observability
-    };
-
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(PERMIT_ALL).permitAll() // public cho all
-                        .requestMatchers(ANONYMOUS_ONLY).anonymous() // chỉ cho anonymous
-                        .requestMatchers("/staff/**").hasRole("STAFF") // staff only
-                        .anyRequest().authenticated())
-                .formLogin(form -> form
-                        .loginPage(LOGIN_PATH)
-                        .loginProcessingUrl(LOGIN_PATH)
-                        .defaultSuccessUrl(defaultSuccessUrl, true)
-                        .failureUrl("/login?error")
-                        .permitAll())
-                .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(
-                                (request, response, authException) -> response.sendRedirect(LOGIN_PATH)))
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/")
-                        .permitAll())
-                .csrf(csrf -> csrf.disable())
-                .headers(headers -> headers.frameOptions(Customizer.withDefaults()))
-                .build();
-    }
-
-    @Bean
-    public UserDetailsService userDetailsService() {
-        String usersConfig = environment.getProperty("app.security.staff.users");
-        List<UserDetails> users = new ArrayList<>();
-
-        if (usersConfig != null && !usersConfig.isEmpty()) {
-            for (String userConfig : usersConfig.split(",")) {
-                String[] parts = userConfig.trim().split(":");
-                if (parts.length == 2) {
-                    UserDetails user = User.builder()
-                            .username(parts[0].trim())
-                            .password("{noop}" + parts[1].trim())
-                            .roles("STAFF")
-                            .build();
-                    users.add(user);
-                }
-            }
+        public SecurityConfig(Environment environment) {
+                this.environment = environment;
         }
 
-        return new InMemoryUserDetailsManager(users);
-    }
+        // Chỉ cho anonymous truy cập (redirect staff)
+        private static final String[] ANONYMOUS_ONLY = {
+                        "/about", "/lookup", "/submit", "/recover"
+        };
+
+        // Cho phép tất cả truy cập
+        public static final String LOGIN_PATH = "/login";
+
+        // Cho phép tất cả truy cập
+        private static final String[] PERMIT_ALL = {
+                        "/", "/h2-console/**", LOGIN_PATH, "/logout", "/error",
+                        "/css/**", "/js/**", "/favicon.ico",
+                        "/images/**",
+                        "/public/**",
+                        "/api/chat/**",
+                        "/actuator/**",
+        };
+
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+                return http
+                                .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers(PERMIT_ALL).permitAll()
+                                                .requestMatchers(ANONYMOUS_ONLY).anonymous()
+                                                .requestMatchers("/staff/**").hasRole("STAFF")
+                                                .anyRequest().authenticated())
+                                .formLogin(form -> form
+                                                .loginPage(LOGIN_PATH)
+                                                .loginProcessingUrl(LOGIN_PATH)
+                                                .defaultSuccessUrl(defaultSuccessUrl, true)
+                                                .failureUrl("/login?error")
+                                                .permitAll())
+                                .exceptionHandling(ex -> ex
+                                                .authenticationEntryPoint(
+                                                                (request, response, authException) -> response
+                                                                                .sendRedirect(LOGIN_PATH)))
+                                .logout(logout -> logout
+                                                .logoutUrl("/logout")
+                                                .logoutSuccessUrl("/")
+                                                .permitAll())
+                                .csrf(csrf -> csrf.disable())
+                                .headers(headers -> headers.frameOptions(Customizer.withDefaults()))
+                                .build();
+        }
+
+        @Bean
+        public UserDetailsService userDetailsService() {
+                String usersConfig = environment.getProperty("app.security.staff.users");
+                List<UserDetails> users = new ArrayList<>();
+
+                if (usersConfig != null && !usersConfig.isEmpty()) {
+                        for (String userConfig : usersConfig.split(",")) {
+                                String[] parts = userConfig.trim().split(":");
+                                if (parts.length == 2) {
+                                        UserDetails user = User.builder()
+                                                        .username(parts[0].trim())
+                                                        .password("{noop}" + parts[1].trim())
+                                                        .roles("STAFF")
+                                                        .build();
+                                        users.add(user);
+                                }
+                        }
+                }
+
+                return new InMemoryUserDetailsManager(users);
+        }
 
 }
