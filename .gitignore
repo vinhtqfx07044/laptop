@@ -31,13 +31,6 @@ build/
 ### VS Code ###
 .vscode/
 
-### Additional files ###
-config.json
-output.txt
-repo2txt.py
-CLAUDE.md
-.mcp.json
-
 # Environment variables
 .env
 .env.local
@@ -49,3 +42,12 @@ uploads/
 # Logs
 *.log
 app.log
+
+### Additional files ###
+.claude/
+.gemini/
+config.json
+output.txt
+repo2txt.py
+CLAUDE.md
+.mcp.json
