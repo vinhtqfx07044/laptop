@@ -123,17 +123,7 @@
             <artifactId>spring-ai-starter-model-openai</artifactId>
         </dependency>
         
-        <!-- Actuator for observability -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
         
-        <!-- Micrometer for metrics -->
-        <dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-registry-prometheus</artifactId>
-        </dependency>
         
         <!-- Testing -->
         <dependency>
