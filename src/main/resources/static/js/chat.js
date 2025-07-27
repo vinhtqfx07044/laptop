@@ -127,7 +127,8 @@ class ChatWidget {
     isErrorMessage(chunk) {
         return chunk && (chunk.includes('Quá nhiều yêu cầu') ||
             chunk.includes('Vui lòng nhập tin nhắn') ||
-            chunk.includes('Đã xảy ra lỗi'));
+            chunk.includes('Đã xảy ra lỗi') ||
+            chunk.includes('Đã đạt giới hạn'));
     }
 
     handleErrorMessage(botMessage, errorText) {

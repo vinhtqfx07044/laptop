@@ -7,6 +7,9 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.MessageType;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
@@ -19,10 +22,15 @@ public class ChatController {
 
     private final ChatClient chatClient;
     private final RateLimiter rateLimiter;
+    private final ChatMemory chatMemory;
 
-    public ChatController(ChatClient chatClient, RateLimiter rateLimiter) {
+    @Value("${app.chat.max-user-messages}")
+    private int maxUserMessages;
+
+    public ChatController(ChatClient chatClient, RateLimiter rateLimiter, ChatMemory chatMemory) {
         this.chatClient = chatClient;
         this.rateLimiter = rateLimiter;
+        this.chatMemory = chatMemory;
     }
 
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -43,6 +51,18 @@ public class ChatController {
         String sessionId = conversationId != null && !conversationId.trim().isEmpty() 
                           ? conversationId.trim() 
                           : UUID.randomUUID().toString();
+
+        // Check message count limit (only for existing conversations)
+        if (conversationId != null && !conversationId.trim().isEmpty()) {
+            List<Message> existingMessages = chatMemory.get(sessionId);
+            long userMessageCount = existingMessages.stream()
+                    .filter(msg -> msg.getMessageType() == MessageType.USER)
+                    .count();
+            
+            if (userMessageCount >= maxUserMessages) {
+                return Flux.just(createErrorResponse("Đã đạt giới hạn " + maxUserMessages + " tin nhắn. Vui lòng nhấn nút làm mới cuộc trò chuyện."));
+            }
+        }
 
         return chatClient.prompt()
                 .user(message.trim())

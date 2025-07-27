@@ -23,6 +23,9 @@ public class ChatConfig {
     @Value("classpath:system-prompt.txt")
     private Resource promptResource;
 
+    @Value("${app.chat.max-user-messages}")
+    private int maxUserMessages;
+
     private final JdbcTemplate jdbcTemplate;
     private final Environment environment;
 
@@ -43,7 +46,7 @@ public class ChatConfig {
 
         // Configure dialect based on active profile
         for (String profile : environment.getActiveProfiles()) {
-            if ("prod".equals(profile) || "dev".equals(profile)) {
+            if ("prod".equals(profile)) {
                 builder.dialect(new PostgresChatMemoryRepositoryDialect());
                 break;
             }
@@ -51,7 +54,7 @@ public class ChatConfig {
 
         return MessageWindowChatMemory.builder()
                 .chatMemoryRepository(builder.build())
-                .maxMessages(20)
+                .maxMessages(maxUserMessages * 3)
                 .build();
     }
 
