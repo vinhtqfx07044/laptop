@@ -50,7 +50,8 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public Page<Request> list(String search, RequestStatus status, Pageable pageable) {
-        return reqRepo.findWithFilters(search, status, pageable);
+        String statusString = status != null ? status.name() : null;
+        return reqRepo.findWithFilters(search, statusString, pageable);
     }
 
     @Override

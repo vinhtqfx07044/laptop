@@ -15,10 +15,14 @@ import java.util.UUID;
 public interface ServiceItemRepository extends JpaRepository<ServiceItem, UUID> {
 
        // Find all items with pagination and optional filters
-       @Query("SELECT s FROM ServiceItem s WHERE " +
+       @Query(value = "SELECT * FROM service_item s WHERE " +
                      "(:keyword IS NULL OR :keyword = '' OR LOWER(s.name) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
                      "AND (:activeOnly IS NULL OR s.active = :activeOnly) " +
-                     "ORDER BY s.name ASC")
+                     "ORDER BY s.name ASC",
+              countQuery = "SELECT COUNT(*) FROM service_item s WHERE " +
+                     "(:keyword IS NULL OR :keyword = '' OR LOWER(s.name) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+                     "AND (:activeOnly IS NULL OR s.active = :activeOnly)",
+              nativeQuery = true)
        Page<ServiceItem> findWithFilters(
                      @Param("keyword") String keyword,
                      @Param("activeOnly") Boolean activeOnly,

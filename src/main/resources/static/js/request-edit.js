@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function searchAndUpdateDatalist(query) {
-    if (query.length < 3) return updateDatalist([]);
+    if (query.length < 2) return updateDatalist([]);
 
     fetch(`/staff/service-items/search?q=${encodeURIComponent(query)}&size=20&page=0`)
         .then(res => res.json())
