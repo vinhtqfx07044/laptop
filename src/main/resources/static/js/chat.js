@@ -7,6 +7,13 @@ class ChatWidget {
         this.init();
     }
 
+    // HTML escape function to prevent XSS
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
     init() {
         this.attachEvents();
     }
@@ -98,7 +105,7 @@ class ChatWidget {
 
                 content += chunk;
 
-                botMessage.innerHTML = `<i class="fas fa-robot text-primary me-2"></i>${content}`;
+                botMessage.innerHTML = `<i class="fas fa-robot text-primary me-2"></i>${this.escapeHtml(content)}`;
                 this.scrollToBottom();
             };
 
@@ -144,11 +151,11 @@ class ChatWidget {
         message.className = `message ${type}`;
 
         if (type === 'user') {
-            message.innerHTML = `<i class="fas fa-user text-white me-2"></i>${content}`;
+            message.innerHTML = `<i class="fas fa-user text-white me-2"></i>${this.escapeHtml(content)}`;
         } else if (type === 'error') {
-            message.innerHTML = `<i class="fas fa-exclamation-triangle text-danger me-2"></i>${content}`;
+            message.innerHTML = `<i class="fas fa-exclamation-triangle text-danger me-2"></i>${this.escapeHtml(content)}`;
         } else {
-            message.innerHTML = `<i class="fas fa-robot text-primary me-2"></i>${content}`;
+            message.innerHTML = `<i class="fas fa-robot text-primary me-2"></i>${this.escapeHtml(content)}`;
         }
 
         container.appendChild(message);

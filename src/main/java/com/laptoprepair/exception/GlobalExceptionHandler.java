@@ -69,11 +69,19 @@ public class GlobalExceptionHandler {
         return createRedirectWithError("ID yêu cầu không hợp lệ. Vui lòng kiểm tra lại.", request, attrs);
     }
 
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ModelAndView handleRateLimitExceeded(RateLimitExceededException ex) {
+        ModelAndView modelAndView = new ModelAndView("error");
+        modelAndView.addObject("status", 429);
+        modelAndView.addObject("errorMsg", ex.getMessage());
+        return modelAndView;
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ModelAndView handleAccessDenied(AccessDeniedException ex) {
         ModelAndView modelAndView = new ModelAndView("error");
         modelAndView.addObject("status", 403);
-        modelAndView.addObject("errorMessage", "Bạn không có quyền truy cập tài nguyên này");
+        modelAndView.addObject("errorMsg", "Bạn không có quyền truy cập tài nguyên này");
         return modelAndView;
     }
 
@@ -94,6 +102,27 @@ public class GlobalExceptionHandler {
 
     private RedirectView createRedirectView(HttpServletRequest request) {
         String referer = request.getHeader("Referer");
-        return new RedirectView(referer != null ? referer : "/");
+        String redirectUrl = "/";
+        
+        if (referer != null && isSafeRedirectUrl(referer, request)) {
+            redirectUrl = referer;
+        }
+        
+        return new RedirectView(redirectUrl);
+    }
+    
+    private boolean isSafeRedirectUrl(String url, HttpServletRequest request) {
+        try {
+            // Get the base URL of current request
+            String baseUrl = request.getScheme() + "://" + request.getServerName();
+            if (request.getServerPort() != 80 && request.getServerPort() != 443) {
+                baseUrl += ":" + request.getServerPort();
+            }
+            
+            // Only allow redirects to same domain or relative URLs
+            return url.startsWith(baseUrl) || url.startsWith("/");
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

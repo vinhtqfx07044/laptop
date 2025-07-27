@@ -41,11 +41,11 @@
                         <div class="card-body">
                             <!-- Test: Add search inputs only -->
                             <div class="row mb-3"
-                                th:classappend="${request.status != null and request.status.locked} ? 'd-none' : ''">
+                                th:classappend="${request.status != null and request.status.isRequestItemsLocked} ? 'd-none' : ''">
                                 <div class="col-md-5">
                                     <label for="serviceInput" class="form-label">Tìm và chọn dịch vụ</label>
                                     <input type="text" id="serviceInput" class="form-control"
-                                        th:disabled="${request.status != null and request.status.locked}"
+                                        th:disabled="${request.status != null and request.status.isRequestItemsLocked}"
                                         placeholder="Gõ để tìm dịch vụ..." list="serviceList" autocomplete="off">
                                     <datalist id="serviceList">
                                         <!-- Options will be populated dynamically -->
@@ -54,23 +54,23 @@
                                 <div class="col-md-2">
                                     <label for="newQty" class="form-label">Số lượng</label>
                                     <input id="newQty" type="number" value="1" min="1" class="form-control"
-                                        th:disabled="${request.status != null and request.status.locked}" />
+                                        th:disabled="${request.status != null and request.status.isRequestItemsLocked}" />
                                 </div>
                                 <div class="col-md-3">
                                     <label for="newDisc" class="form-label">Giảm giá (VNĐ)</label>
                                     <input id="newDisc" type="number" value="0" min="0" step="1000" class="form-control"
-                                        th:disabled="${request.status != null and request.status.locked}" />
+                                        th:disabled="${request.status != null and request.status.isRequestItemsLocked}" />
                                 </div>
                                 <div class="col-md-2 d-flex align-items-end">
                                     <button type="button" onclick="addItem()" class="btn btn-outline-success"
-                                        th:disabled="${request.status != null and request.status.locked}">
+                                        th:disabled="${request.status != null and request.status.isRequestItemsLocked}">
                                         <i class="fas fa-plus me-2"></i>Thêm
                                     </button>
                                 </div>
                             </div>
 
                             <!-- Locked warning message -->
-                            <div th:if="${locked}" class="alert alert-warning mb-3">
+                            <div th:if="${isRequestItemsLocked}" class="alert alert-warning mb-3">
                                 <i class="fas fa-lock me-2"></i>
                                 Phiếu đã được khóa - Không thể chỉnh sửa hạng mục
                             </div>
@@ -193,7 +193,7 @@
     <!-- Pass server data to JavaScript -->
     <script th:inline="javascript">
         window.serverItems = /*[[${request.items}]]*/[];
-        window.isRequestLocked = /*[[${request.status != null and request.status.locked}]]*/ false;
+        window.isRequestLocked = /*[[${request.status != null and request.status.isRequestItemsLocked}]]*/ false;
     </script>
 
     <!-- Include external JS files -->

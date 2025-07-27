@@ -72,19 +72,24 @@ public class HistoryServiceImpl implements HistoryService {
 
     @Override
     public boolean areItemsEqual(List<RequestItem> oldItems, List<RequestItem> newItems) {
-        if (oldItems == null || newItems == null)
+        if (oldItems == null || newItems == null) {
             return false;
+        }
+
+        if (oldItems.size() != newItems.size()) {
+            return false;
+        }
 
         try {
-            // Sort both lists by serviceItemId and compare using toString()
+            // Sort both lists by serviceItemId and compare meaningful fields only (excluding entity ID)
             String oldItemsString = oldItems.stream()
                     .sorted((item1, item2) -> item1.getServiceItemId().compareTo(item2.getServiceItemId()))
-                    .map(RequestItem::toString)
+                    .map(this::itemToComparableString)
                     .collect(Collectors.joining(","));
 
             String newItemsString = newItems.stream()
                     .sorted((item1, item2) -> item1.getServiceItemId().compareTo(item2.getServiceItemId()))
-                    .map(RequestItem::toString)
+                    .map(this::itemToComparableString)
                     .collect(Collectors.joining(","));
 
             return oldItemsString.equals(newItemsString);
@@ -92,6 +97,25 @@ public class HistoryServiceImpl implements HistoryService {
             log.error("Error comparing items", e);
             return false;
         }
+    }
+
+    private String itemToComparableString(RequestItem item) {
+        // Compare only meaningful fields, excluding entity ID which changes between requests
+        return String.format(
+            "serviceItemId=%s,name=%s,price=%s,vat=%s,warranty=%d,qty=%d,discount=%s",
+            item.getServiceItemId(),
+            item.getName(),
+            normalizeBigDecimal(item.getPrice()),
+            normalizeBigDecimal(item.getVatRate()),
+            item.getWarrantyDays(),
+            item.getQuantity(),
+            normalizeBigDecimal(item.getDiscount()));
+    }
+
+    private String normalizeBigDecimal(java.math.BigDecimal value) {
+        if (value == null)
+            return "null";
+        return value.stripTrailingZeros().toPlainString();
     }
 
 }

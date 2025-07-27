@@ -1,5 +1,6 @@
 package com.laptoprepair.integration;
 
+import com.laptoprepair.config.TestEmailConfig;
 import com.laptoprepair.entity.Request;
 import com.laptoprepair.repository.RequestRepository;
 import com.laptoprepair.service.FileStorageService;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
@@ -20,6 +22,7 @@ import java.time.LocalDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -27,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
+@Import(TestEmailConfig.class)
 class ImageUploadIntegrationTest {
 
         @Autowired
@@ -60,7 +64,8 @@ class ImageUploadIntegrationTest {
                                 .param("phone", saved.getPhone())
                                 .param("email", saved.getEmail())
                                 .param("description", saved.getDescription())
-                                .param("appointmentDate", saved.getAppointmentDate().toString()))
+                                .param("appointmentDate", saved.getAppointmentDate().toString())
+                                .with(csrf()))
                                 .andExpect(status().is3xxRedirection());
 
                 Request updated = requestRepository.findById(saved.getId()).orElseThrow();
@@ -82,7 +87,8 @@ class ImageUploadIntegrationTest {
                                 .param("description", saved.getDescription())
                                 .param("appointmentDate", saved.getAppointmentDate().toString())
                                 .param("toDelete", imageIdToDelete)
-                                .param("note", "Xóa hình ảnh không cần thiết"))
+                                .param("note", "Xóa hình ảnh không cần thiết")
+                                .with(csrf()))
                                 .andExpect(status().is3xxRedirection());
         }
 
@@ -101,7 +107,8 @@ class ImageUploadIntegrationTest {
                                 .param("phone", saved.getPhone())
                                 .param("email", saved.getEmail())
                                 .param("description", saved.getDescription())
-                                .param("appointmentDate", saved.getAppointmentDate().toString()))
+                                .param("appointmentDate", saved.getAppointmentDate().toString())
+                                .with(csrf()))
                                 .andExpect(status().is3xxRedirection());
         }
 

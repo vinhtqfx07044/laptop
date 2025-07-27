@@ -21,16 +21,16 @@
                     <div class="card-body">
                         <form th:action="@{/staff/requests/list}" method="get" class="row g-3">
                             <div class="col-md-3">
-                                <label for="status" class="form-label">Trạng thái</label>
+                                <label for="status" class="form-label">Lọc theo trạng thái phiếu</label>
                                 <select name="status" id="status" class="form-select">
                                     <option value="">Tất cả</option>
                                     <option th:each="s : ${T(com.laptoprepair.enums.RequestStatus).values()}"
                                         th:value="${s.name()}" th:text="${s.getDisplayName()}"
-                                        th:selected="${status != null and status == s.name()}"></option>
+                                        th:selected="${status != null and status.name() == s.name()}"></option>
                                 </select>
                             </div>
                             <div class="col-md-5">
-                                <label for="search" class="form-label">Tìm kiếm (tên hoặc ID)</label>
+                                <label for="search" class="form-label">Tìm kiếm theo tên khách hàng</label>
                                 <input type="text" name="search" id="search" class="form-control" th:value="${search}"
                                     placeholder="Nhập tên hoặc mã yêu cầu..." />
                             </div>
@@ -51,7 +51,7 @@
                     <div class="text-muted">
                         <span th:if="${requests.totalElements > 0}">
                             Hiển thị <strong th:text="${requests.numberOfElements}"></strong>
-                            trên tổng <strong th:text="${requests.totalElements}"></strong> yêu cầu
+                            trên tổng <strong th:text="${requests.totalElements}"></strong> yêu cầu sửa chữa
                         </span>
                         <span th:unless="${requests.totalElements > 0}">
                             Không có yêu cầu nào

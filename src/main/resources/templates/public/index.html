@@ -12,7 +12,7 @@
             <p class="lead">Chúng tôi cung cấp dịch vụ sửa chữa laptop chuyên nghiệp, nhanh chóng và đáng tin cậy.</p>
 
             <!-- Lookup Form -->
-            <form action="/lookup" method="post" class="d-flex justify-content-center mb-3">
+            <form th:action="@{/lookup}" method="post" class="d-flex justify-content-center mb-3">
                 <div class="input-group" style="max-width:600px;">
                     <input type="text" name="id" class="form-control" placeholder="Nhập mã tra cứu (UUID)…" required>
                     <button class="btn btn-outline-primary btn-lg" type="submit"><i class="fas fa-search me-2"></i>Tra
@@ -80,7 +80,7 @@
                     <h5 class="modal-title">Khôi phục Mã Tra cứu</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form action="/recover" method="post">
+                <form th:action="@{/recover}" method="post">
                     <div class="modal-body">
                         <p class="text-muted mb-3">Nhập email để nhận danh sách mã tra cứu</p>
                         <input type="email" name="email" class="form-control" placeholder="Địa chỉ email" required>

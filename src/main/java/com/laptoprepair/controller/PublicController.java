@@ -75,8 +75,8 @@ public class PublicController {
 
         Request saved = requestService.publicCreate(request);
         redirectAttributes.addFlashAttribute("successMessage",
-                "Yêu cầu đã được gửi thành công! <a href='/public/request/" + saved.getId()
-                        + "'>Xem chi tiết tại đây</a>");
+                "Yêu cầu đã được gửi thành công!");
+        redirectAttributes.addFlashAttribute("requestId", saved.getId());
         return "redirect:/submit";
     }
 

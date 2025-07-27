@@ -135,8 +135,8 @@ public class RequestController {
         addCommonAttributes(model, request);
 
         // Add locked status for form controls
-        boolean isLocked = existing.getStatus() != null && existing.getStatus().isLocked();
-        model.addAttribute("locked", isLocked);
+        boolean isRequestItemsLocked = existing.getStatus() != null && existing.getStatus().isRequestItemsLocked();
+        model.addAttribute("isRequestItemsLocked", isRequestItemsLocked);
     }
 
     private void addCommonAttributes(Model model, HttpServletRequest request) {

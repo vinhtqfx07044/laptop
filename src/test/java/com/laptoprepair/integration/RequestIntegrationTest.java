@@ -1,5 +1,6 @@
 package com.laptoprepair.integration;
 
+import com.laptoprepair.config.TestEmailConfig;
 import com.laptoprepair.entity.Request;
 import com.laptoprepair.entity.ServiceItem;
 import com.laptoprepair.enums.RequestStatus;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -24,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -31,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @org.springframework.transaction.annotation.Transactional
+@Import(TestEmailConfig.class)
 class RequestIntegrationTest {
 
     @Autowired
@@ -54,7 +58,8 @@ class RequestIntegrationTest {
                 .param("phone", "0123456789")
                 .param("email", "john@example.com")
                 .param("description", "Laptop không khởi động được, cần kiểm tra")
-                .param("appointmentDate", LocalDateTime.now().plusDays(1).toString()))
+                .param("appointmentDate", LocalDateTime.now().plusDays(1).toString())
+                .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/submit"))
                 .andExpect(flash().attributeExists("successMessage"));
@@ -115,7 +120,8 @@ class RequestIntegrationTest {
                 .param("items[0].serviceItemId", savedServiceItem.getId().toString())
                 .param("items[0].quantity", "1")
                 .param("items[0].price", "100000")
-                .param("note", "Đã báo giá cho khách hàng"))
+                .param("note", "Đã báo giá cho khách hàng")
+                .with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
         Request updated = requestRepository.findById(saved.getId()).orElseThrow();
@@ -127,7 +133,8 @@ class RequestIntegrationTest {
     @Test
     void lookupRequest_WithInvalidId_ShouldReturnError() throws Exception {
         mockMvc.perform(post("/lookup")
-                .param("id", "invalid-id"))
+                .param("id", "invalid-id")
+                .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/"))
                 .andExpect(flash().attributeExists("errorMessage"));
@@ -139,7 +146,8 @@ class RequestIntegrationTest {
         requestRepository.save(request);
 
         mockMvc.perform(post("/recover")
-                .param("email", "test@example.com"))
+                .param("email", "test@example.com")
+                .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/"))
                 .andExpect(flash().attributeExists("successMessage"));

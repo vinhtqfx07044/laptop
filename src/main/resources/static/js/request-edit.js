@@ -1,6 +1,13 @@
 let items = [];
 let serviceSearchTimeout = null;
 
+// HTML escape function to prevent XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // Vietnamese currency formatter
 function formatVietnameseCurrency(amount) {
     if (!amount) return '0 ₫';
@@ -66,9 +73,9 @@ function updateDatalist(services) {
         const price = formatVietnameseCurrency(service.price);
         const vat = (service.vatRate * 100).toFixed(1) + '%';
         const warranty = service.warrantyDays + ' ngày';
-        return `<option value="${service.name}" 
-                        label="${service.name} - ${price} - VAT ${vat} - BH ${warranty}"
-                        data-service='${JSON.stringify(service)}'></option>`;
+        return `<option value="${escapeHtml(service.name)}" 
+                        label="${escapeHtml(service.name)} - ${price} - VAT ${vat} - BH ${warranty}"
+                        data-service='${escapeHtml(JSON.stringify(service))}'></option>`;
     }).join('');
 }
 
@@ -124,7 +131,7 @@ function renderTable() {
             `<button type="button" class="btn btn-sm btn-danger" onclick="removeItem(${i})"><i class="fas fa-trash"></i></button>`;
 
         return `<tr>
-            <td>${it.name}</td>
+            <td>${escapeHtml(it.name)}</td>
             <td>${it.quantity}</td>
             <td>${formatVietnameseCurrency(it.price)}</td>
             <td>${formatVietnameseCurrency(it.discount)}</td>
@@ -132,7 +139,7 @@ function renderTable() {
             <td class="fw-bold">${formatVietnameseCurrency(line)}</td>
             <td>${deleteBtn}</td>
             ${['serviceItemId', 'quantity', 'discount', 'vatRate', 'warrantyDays', 'name', 'price']
-                .map(field => `<input type="hidden" name="items[${i}].${field}" value="${it[field] || (field === 'quantity' ? 1 : 0)}">`)
+                .map(field => `<input type="hidden" name="items[${i}].${field}" value="${escapeHtml(String(it[field] || (field === 'quantity' ? 1 : 0)))}">`)
                 .join('')}
         </tr>`;
     }).join('');

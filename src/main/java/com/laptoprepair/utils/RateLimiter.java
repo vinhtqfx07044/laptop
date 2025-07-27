@@ -17,32 +17,74 @@ public class RateLimiter {
 
     private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
     
-    @Value("${app.rate-limiter.max-requests-per-minute:10}")
-    private int maxRequestsPerMinute;
+    @Value("${app.rate-limiter.public.max-requests-per-minute:10}")
+    private int publicMaxRequestsPerMinute;
+    
+    @Value("${app.rate-limiter.chat.max-requests-per-minute:20}")
+    private int chatMaxRequestsPerMinute;
     
     @Value("${app.rate-limiter.window-size-seconds:60}")
     private int windowSizeSeconds;
 
     public boolean isAllowed(HttpServletRequest request) {
-        // Skip rate limiting for staff endpoints
+        return isAllowed(request, "default");
+    }
+    
+    public boolean isAllowed(HttpServletRequest request, String keyPrefix) {
         String requestPath = request.getRequestURI();
-        if (requestPath.startsWith("/staff/")) {
+        
+        // Skip rate limiting for staff endpoints and static resources
+        if (requestPath.startsWith("/staff/") || 
+            requestPath.startsWith("/css/") || 
+            requestPath.startsWith("/js/") || 
+            requestPath.startsWith("/images/") ||
+            requestPath.startsWith("/favicon.ico")) {
             return true;
         }
         
-        String clientKey = getClientKey(request);
-        Instant now = Instant.now();
+        // Apply rate limiting to specified endpoints
+        if (shouldRateLimit(requestPath, keyPrefix)) {
+            String clientKey = keyPrefix + ":" + getClientKey(request);
+            Instant now = Instant.now();
+            
+            buckets.compute(clientKey, (key, bucket) -> {
+                if (bucket == null || now.isAfter(bucket.windowStart.plusSeconds(windowSizeSeconds))) {
+                    return new Bucket(now, new AtomicInteger(1));
+                } else {
+                    bucket.count.incrementAndGet();
+                    return bucket;
+                }
+            });
+            
+            int maxRequests = getMaxRequestsForPrefix(keyPrefix);
+            return buckets.get(clientKey).count.get() <= maxRequests;
+        }
         
-        buckets.compute(clientKey, (key, bucket) -> {
-            if (bucket == null || now.isAfter(bucket.windowStart.plusSeconds(windowSizeSeconds))) {
-                return new Bucket(now, new AtomicInteger(1));
-            } else {
-                bucket.count.incrementAndGet();
-                return bucket;
-            }
-        });
+        return true;
+    }
+    
+    private boolean shouldRateLimit(String requestPath, String keyPrefix) {
+        if ("chat".equals(keyPrefix)) {
+            return requestPath.startsWith("/api/chat/");
+        }
         
-        return buckets.get(clientKey).count.get() <= maxRequestsPerMinute;
+        if ("public".equals(keyPrefix)) {
+            // Rate limit sensitive public endpoints (excluding chat)
+            return requestPath.equals("/submit") || 
+                   requestPath.equals("/lookup") || 
+                   requestPath.equals("/recover") ||
+                   requestPath.equals("/login");
+        }
+        
+        return false;
+    }
+    
+    private int getMaxRequestsForPrefix(String keyPrefix) {
+        return switch (keyPrefix) {
+            case "chat" -> chatMaxRequestsPerMinute;
+            case "public" -> publicMaxRequestsPerMinute;
+            default -> publicMaxRequestsPerMinute; // Default to public limit
+        };
     }
 
     private String getClientKey(HttpServletRequest request) {

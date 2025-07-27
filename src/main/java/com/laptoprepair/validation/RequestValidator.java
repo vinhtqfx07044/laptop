@@ -5,12 +5,14 @@ import com.laptoprepair.enums.RequestStatus;
 import com.laptoprepair.exception.ValidationException;
 import com.laptoprepair.service.HistoryService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class RequestValidator {
     private final HistoryService historyService;
 
@@ -50,7 +52,7 @@ public class RequestValidator {
     }
 
     public void validateNoItemModificationWhenLocked(Request existingRequest, Request incomingRequest) {
-        if (existingRequest.getStatus().isLocked()
+        if (existingRequest.getStatus().isRequestItemsLocked()
                 && !historyService.areItemsEqual(existingRequest.getItems(), incomingRequest.getItems())) {
             throw new ValidationException("Phiếu đã ở trạng thái \"" +
                     existingRequest.getStatus().getDisplayName() +

@@ -1,5 +1,6 @@
 package com.laptoprepair.integration;
 
+import com.laptoprepair.config.TestEmailConfig;
 import com.laptoprepair.entity.ServiceItem;
 import com.laptoprepair.repository.ServiceItemRepository;
 
@@ -7,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
@@ -15,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import org.hamcrest.Matchers;
@@ -23,6 +26,7 @@ import org.hamcrest.Matchers;
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
+@Import(TestEmailConfig.class)
 @WithMockUser(roles = "STAFF")
 class ServiceItemIntegrationTest {
 
@@ -42,7 +46,8 @@ class ServiceItemIntegrationTest {
                                 "file", "services.csv", "text/csv", csvContent.getBytes());
 
                 mockMvc.perform(multipart("/staff/service-items/import")
-                                .file(csvFile))
+                                .file(csvFile)
+                                .with(csrf()))
                                 .andExpect(status().is3xxRedirection())
                                 .andExpect(redirectedUrl("/staff/service-items"));
         }
@@ -70,7 +75,8 @@ class ServiceItemIntegrationTest {
                                 .param("price", "150000")
                                 .param("vatRate", "0.10")
                                 .param("warrantyDays", "30")
-                                .param("active", "true"))
+                                .param("active", "true")
+                                .with(csrf()))
                                 .andExpect(status().is3xxRedirection());
         }
 
@@ -83,7 +89,8 @@ class ServiceItemIntegrationTest {
                                 "file", "invalid.csv", "text/csv", invalidCsvContent.getBytes());
 
                 mockMvc.perform(multipart("/staff/service-items/import")
-                                .file(csvFile))
+                                .file(csvFile)
+                                .with(csrf()))
                                 .andExpect(status().is3xxRedirection());
         }
 

@@ -67,13 +67,19 @@ public class ServiceItemController {
     }
 
     @PostMapping("/create")
-    public String create(@ModelAttribute ServiceItem serviceItem,
+    public String createOrUpdate(@ModelAttribute ServiceItem serviceItem,
+            @RequestParam(defaultValue = "create") String actionType,
             BindingResult bindingResult,
             Model model) {
         if (bindingResult.hasErrors()) {
             return list(0, null, null, null, model);
         }
-        serviceItemService.create(serviceItem);
+        
+        if ("update".equals(actionType) && serviceItem.getId() != null) {
+            serviceItemService.update(serviceItem.getId(), serviceItem);
+        } else {
+            serviceItemService.create(serviceItem);
+        }
         return AppConstants.REDIRECT_STAFF_SERVICE_ITEMS;
     }
 

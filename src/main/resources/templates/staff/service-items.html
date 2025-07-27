@@ -166,8 +166,9 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="serviceItemForm" method="post">
+                    <form id="serviceItemForm" th:action="@{/staff/service-items/create}" method="post">
                         <input type="hidden" id="serviceItemId" name="id" />
+                        <input type="hidden" id="actionType" name="actionType" value="create" />
                         <div class="mb-3">
                             <label for="name" class="form-label">Tên dịch vụ <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="name" name="name" required>

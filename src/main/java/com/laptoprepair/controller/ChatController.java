@@ -38,8 +38,8 @@ public class ChatController {
             @RequestParam String message,
             @RequestParam(required = false) String conversationId,
             HttpServletRequest request) {
-        
-        if (!rateLimiter.isAllowed(request)) {
+
+        if (!rateLimiter.isAllowed(request, "chat")) {
             return Flux.just(createErrorResponse("Quá nhiều yêu cầu. Vui lòng thử lại sau 1 phút."));
         }
 
@@ -47,20 +47,19 @@ public class ChatController {
             return Flux.just(createErrorResponse("Vui lòng nhập tin nhắn."));
         }
 
-        // Use provided conversation ID or generate new one
-        String sessionId = conversationId != null && !conversationId.trim().isEmpty() 
-                          ? conversationId.trim() 
-                          : UUID.randomUUID().toString();
+        String sessionId = conversationId != null && !conversationId.trim().isEmpty()
+                ? conversationId.trim()
+                : UUID.randomUUID().toString();
 
-        // Check message count limit (only for existing conversations)
         if (conversationId != null && !conversationId.trim().isEmpty()) {
             List<Message> existingMessages = chatMemory.get(sessionId);
             long userMessageCount = existingMessages.stream()
                     .filter(msg -> msg.getMessageType() == MessageType.USER)
                     .count();
-            
+
             if (userMessageCount >= maxUserMessages) {
-                return Flux.just(createErrorResponse("Đã đạt giới hạn " + maxUserMessages + " tin nhắn. Vui lòng nhấn nút làm mới cuộc trò chuyện."));
+                return Flux.just(createErrorResponse("Đã đạt giới hạn " + maxUserMessages
+                        + " tin nhắn. Vui lòng nhấn nút làm mới cuộc trò chuyện."));
             }
         }
 

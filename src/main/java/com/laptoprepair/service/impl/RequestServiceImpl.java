@@ -2,6 +2,7 @@ package com.laptoprepair.service.impl;
 
 import com.laptoprepair.entity.Request;
 import com.laptoprepair.entity.RequestImage;
+import com.laptoprepair.entity.RequestItem;
 import com.laptoprepair.enums.RequestStatus;
 import com.laptoprepair.exception.NotFoundException;
 import com.laptoprepair.exception.ValidationException;
@@ -85,10 +86,16 @@ public class RequestServiceImpl implements RequestService {
         }
 
         incomingRequest.setStatus(RequestStatus.SCHEDULED);
+
+        // Set request reference for items and snapshot service items BEFORE saving
+        for (RequestItem item : incomingRequest.getItems()) {
+            item.setRequest(incomingRequest);
+        }
         mappingService.snapshotServiceItems(incomingRequest.getItems());
+        
         historyService.addHistory(incomingRequest, noteBuilder.toString(), historyService.getCurrentUser());
 
-        // Create request first to get ID
+        // Create request with properly linked items
         Request savedRequest = reqRepo.save(incomingRequest);
 
         // Process images if provided

@@ -23,7 +23,10 @@
         <!-- Success message -->
         <div th:if="${successMessage != null}" class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="fas fa-check-circle me-2"></i>
-            <span th:utext="${successMessage}"></span>
+            <span th:text="${successMessage}"></span>
+            <a th:if="${requestId != null}" th:href="@{/public/request/{id}(id=${requestId})}" class="alert-link ms-2">
+                Xem chi tiết tại đây
+            </a>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
