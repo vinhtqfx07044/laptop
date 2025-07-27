@@ -93,7 +93,7 @@
                                         </td>
                                         <td>
                                             <span
-                                                th:text="${#numbers.formatDecimal(request.total, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></span>
+                                                th:text="${#numbers.formatDecimal(request.getTotal(), 0, 'COMMA', 0, 'POINT')} + ' ₫'"></span>
                                         </td>
                                         <td class="text-center">
                                             <a th:href="@{/staff/requests/view/{id}(id=${request.id})}"

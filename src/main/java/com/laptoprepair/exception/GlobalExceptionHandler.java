@@ -10,8 +10,6 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.view.RedirectView;
 
-import com.laptoprepair.utils.AppConstants;
-
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
@@ -55,7 +53,7 @@ public class GlobalExceptionHandler {
                 .toList();
 
         if (errors.size() == 1) {
-            attrs.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE, errors.get(0));
+            attrs.addFlashAttribute("errorMessage", errors.get(0));
         } else {
             attrs.addFlashAttribute("errorMessages", errors);
         }
@@ -71,18 +69,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RateLimitExceededException.class)
     public ModelAndView handleRateLimitExceeded(RateLimitExceededException ex) {
-        ModelAndView modelAndView = new ModelAndView("error");
-        modelAndView.addObject("status", 429);
-        modelAndView.addObject("errorMsg", ex.getMessage());
-        return modelAndView;
+        return createErrorModelAndView(429, ex.getMessage());
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ModelAndView handleAccessDenied(AccessDeniedException ex) {
-        ModelAndView modelAndView = new ModelAndView("error");
-        modelAndView.addObject("status", 403);
-        modelAndView.addObject("errorMsg", "Bạn không có quyền truy cập tài nguyên này");
-        return modelAndView;
+        return createErrorModelAndView(403, "Bạn không có quyền truy cập tài nguyên này");
     }
 
     @ExceptionHandler(Exception.class)
@@ -96,8 +88,15 @@ public class GlobalExceptionHandler {
     private RedirectView createRedirectWithError(String errorMessage,
             HttpServletRequest request,
             RedirectAttributes attrs) {
-        attrs.addFlashAttribute(AppConstants.ATTR_ERROR_MESSAGE, errorMessage);
+        attrs.addFlashAttribute("errorMessage", errorMessage);
         return createRedirectView(request);
+    }
+
+    private ModelAndView createErrorModelAndView(int status, String errorMessage) {
+        ModelAndView modelAndView = new ModelAndView("error");
+        modelAndView.addObject("status", status);
+        modelAndView.addObject("errorMsg", errorMessage);
+        return modelAndView;
     }
 
     private RedirectView createRedirectView(HttpServletRequest request) {

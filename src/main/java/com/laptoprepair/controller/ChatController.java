@@ -2,6 +2,8 @@ package com.laptoprepair.controller;
 
 import com.laptoprepair.utils.RateLimiter;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -19,6 +21,8 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/chat")
 public class ChatController {
+
+    private static final Logger logger = LoggerFactory.getLogger(ChatController.class);
 
     private final ChatClient chatClient;
     private final RateLimiter rateLimiter;
@@ -69,7 +73,7 @@ public class ChatController {
                 .stream()
                 .chatResponse()
                 .onErrorResume(e -> {
-                    System.err.println("Chat streaming error: " + e.getMessage());
+                    logger.error("Chat streaming error: {}", e.getMessage(), e);
                     return Flux.just(createErrorResponse("Đã xảy ra lỗi khi kết nối với AI. Vui lòng thử lại sau."));
                 });
     }

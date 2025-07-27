@@ -95,7 +95,7 @@
                                         <div class="d-flex justify-content-between align-items-center">
                                             <span class="fw-bold">Tổng cộng:</span>
                                             <h4 class="text-primary mb-0"
-                                                th:text="${#numbers.formatDecimal(request.total, 0, 'COMMA', 0, 'POINT')} + ' ₫'">
+                                                th:text="${#numbers.formatDecimal(request.getTotal(), 0, 'COMMA', 0, 'POINT')} + ' ₫'">
                                                 0 ₫
                                             </h4>
                                         </div>

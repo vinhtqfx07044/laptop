@@ -87,7 +87,7 @@ public class ServiceItemServiceImpl implements ServiceItemService {
             int rowNumber = 1;
             for (CSVRecord csvRecord : parser) {
                 rowNumber++;
-                ServiceItem serviceItem = mappingService.parseCSVRecord(csvRecord, rowNumber);
+                ServiceItem serviceItem = mappingService.copyCSVRecordFields(csvRecord, rowNumber);
                 serviceItemRepository.findByName(serviceItem.getName()).ifPresent(existing -> {
                     serviceItem.setId(existing.getId());
                     serviceItem.setCreatedAt(existing.getCreatedAt());

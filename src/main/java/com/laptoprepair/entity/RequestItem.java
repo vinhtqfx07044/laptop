@@ -6,13 +6,13 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.UUID;
+import java.util.Objects;
 
 @Entity
 @Table(name = "request_items")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
 public class RequestItem extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -41,26 +41,6 @@ public class RequestItem extends BaseEntity {
         return calculateSubtotal();
     }
 
-    @Override
-    public String toString() {
-        return String.format(
-                "RequestItem(id=%s,serviceItemId=%s,name=%s,price=%s,vat=%s,warranty=%d,qty=%d,discount=%s)",
-                getId(),
-                serviceItemId,
-                name,
-                normalizeBigDecimal(price),
-                normalizeBigDecimal(vatRate),
-                warrantyDays,
-                quantity,
-                normalizeBigDecimal(discount));
-    }
-
-    private String normalizeBigDecimal(BigDecimal value) {
-        if (value == null)
-            return "null";
-        return value.stripTrailingZeros().toPlainString();
-    }
-
     private BigDecimal calculateSubtotal() {
         if (price == null)
             return BigDecimal.ZERO;
@@ -71,5 +51,49 @@ public class RequestItem extends BaseEntity {
         BigDecimal net = price.subtract(safeDiscount)
                 .multiply(BigDecimal.valueOf(quantity));
         return net.add(net.multiply(safeVatRate));
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null || getClass() != obj.getClass())
+            return false;
+
+        RequestItem that = (RequestItem) obj;
+
+        return quantity == that.quantity &&
+                Objects.equals(warrantyDays, that.warrantyDays) &&
+                Objects.equals(serviceItemId, that.serviceItemId) &&
+                Objects.equals(name, that.name) &&
+                compareBigDecimal(price, that.price) &&
+                compareBigDecimal(vatRate, that.vatRate) &&
+                compareBigDecimal(discount, that.discount);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                serviceItemId,
+                name,
+                normalizeForHash(price),
+                normalizeForHash(vatRate),
+                warrantyDays,
+                quantity,
+                normalizeForHash(discount));
+    }
+
+    private boolean compareBigDecimal(BigDecimal a, BigDecimal b) {
+        if (a == null && b == null)
+            return true;
+        if (a == null || b == null)
+            return false;
+        return a.stripTrailingZeros().equals(b.stripTrailingZeros());
+    }
+
+    private BigDecimal normalizeForHash(BigDecimal value) {
+        if (value == null)
+            return null;
+        return value.stripTrailingZeros();
     }
 }

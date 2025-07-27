@@ -2,7 +2,6 @@ package com.laptoprepair.service.impl;
 
 import com.laptoprepair.entity.Request;
 import com.laptoprepair.service.EmailService;
-import com.laptoprepair.utils.AppConstants;
 
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -47,7 +46,7 @@ public class EmailServiceImpl implements EmailService {
         }
         StringBuilder body = new StringBuilder("Yêu cầu của bạn đã được tiếp nhận.\n\n");
         body.append("Mã ID: " + request.getId() + "\n");
-        body.append(AppConstants.MESSAGE_LINK_PREFIX + publicRequestBaseUrl + request.getId() + "\n");
+        body.append("Link tra cứu: " + publicRequestBaseUrl + request.getId() + "\n");
         body.append("\n").append(THANK_YOU_MESSAGE);
         String subject = String.format(CONFIRMATION_SUBJECT, shopName);
         sendEmail(request.getEmail(), subject, body.toString());
@@ -60,7 +59,7 @@ public class EmailServiceImpl implements EmailService {
         }
         StringBuilder body = new StringBuilder("Yêu cầu sửa chữa của bạn đã được cập nhật:\n\n");
         body.append("Mã ID: " + request.getId() + "\n");
-        body.append(AppConstants.MESSAGE_LINK_PREFIX + publicRequestBaseUrl + request.getId() + "\n");
+        body.append("Link tra cứu: ").append(publicRequestBaseUrl).append(request.getId()).append("\n");
         body.append(changes + "\n");
         body.append("\n").append(THANK_YOU_MESSAGE);
         String subject = String.format(UPDATE_SUBJECT, shopName);
@@ -71,7 +70,7 @@ public class EmailServiceImpl implements EmailService {
     public void sendRecoverEmail(String email, List<Request> requests) {
         StringBuilder body = new StringBuilder("Danh sách yêu cầu của bạn:\n\n");
         for (Request request : requests) {
-            body.append(AppConstants.MESSAGE_LINK_PREFIX).append(publicRequestBaseUrl).append(request.getId()).append("\n");
+            body.append("Link tra cứu: ").append(publicRequestBaseUrl).append(request.getId()).append("\n");
         }
         body.append("\n").append(THANK_YOU_MESSAGE);
         String subject = String.format(RECOVER_SUBJECT, shopName);

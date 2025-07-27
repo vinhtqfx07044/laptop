@@ -88,7 +88,7 @@ class RequestValidatorTest {
         Request incoming = new Request();
         incoming.setItems(List.of());
 
-        when(historyService.areItemsEqual(existing.getItems(), incoming.getItems())).thenReturn(false);
+        when(historyService.areRequestItemsEqual(existing.getItems(), incoming.getItems())).thenReturn(false);
 
         assertThatThrownBy(() -> requestValidator.validateNoItemModificationWhenLocked(existing, incoming))
                 .isInstanceOf(ValidationException.class)

@@ -53,7 +53,7 @@ public class RequestValidator {
 
     public void validateNoItemModificationWhenLocked(Request existingRequest, Request incomingRequest) {
         if (existingRequest.getStatus().isRequestItemsLocked()
-                && !historyService.areItemsEqual(existingRequest.getItems(), incomingRequest.getItems())) {
+                && !historyService.areRequestItemsEqual(existingRequest.getItems(), incomingRequest.getItems())) {
             throw new ValidationException("Phiếu đã ở trạng thái \"" +
                     existingRequest.getStatus().getDisplayName() +
                     "\" và không thể thay đổi hạng mục.");

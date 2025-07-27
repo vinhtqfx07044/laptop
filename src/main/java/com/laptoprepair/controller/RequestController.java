@@ -3,7 +3,6 @@ package com.laptoprepair.controller;
 import com.laptoprepair.entity.Request;
 import com.laptoprepair.enums.RequestStatus;
 import com.laptoprepair.service.RequestService;
-import com.laptoprepair.utils.AppConstants;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -56,7 +55,7 @@ public class RequestController {
     @GetMapping("/create")
     public String createForm(Model model, HttpServletRequest request) {
         populateForCreate(model, request);
-        return AppConstants.VIEW_STAFF_REQUEST_FORM;
+        return "staff/request-form";
     }
 
     @GetMapping("/edit/{id}")
@@ -70,13 +69,13 @@ public class RequestController {
         }
 
         populateForEdit(existingRequest, model, request);
-        return AppConstants.VIEW_STAFF_REQUEST_FORM;
+        return "staff/request-form";
     }
 
     @GetMapping("/view/{id}")
     public String view(@PathVariable UUID id, Model model) {
         Request existingRequest = requestService.findById(id);
-        model.addAttribute(AppConstants.ATTR_REQUEST, existingRequest);
+        model.addAttribute("request", existingRequest);
         model.addAttribute("isStaff", true);
         return "staff/request-detail";
     }
@@ -92,8 +91,8 @@ public class RequestController {
 
         if (bindingResult.hasErrors()) {
             populateForCreate(model, request);
-            model.addAttribute(AppConstants.ATTR_REQUEST, incomingRequest); // Override with form data
-            return AppConstants.VIEW_STAFF_REQUEST_FORM;
+            model.addAttribute("request", incomingRequest); // Override with form data
+            return "staff/request-form";
         }
 
         Request saved = requestService.create(incomingRequest, newImages, note);
@@ -116,8 +115,8 @@ public class RequestController {
             // Load full request from DB when validation fails
             Request existingRequest = requestService.findById(id);
             populateForEdit(existingRequest, model, request);
-            model.addAttribute(AppConstants.ATTR_REQUEST, incomingRequest); // Override with form data
-            return AppConstants.VIEW_STAFF_REQUEST_FORM;
+            model.addAttribute("request", incomingRequest); // Override with form data
+            return "staff/request-form";
         }
 
         Request updated = requestService.update(id, incomingRequest, newImages, toDelete, note);
@@ -126,22 +125,15 @@ public class RequestController {
     }
 
     private void populateForCreate(Model model, HttpServletRequest request) {
-        model.addAttribute(AppConstants.ATTR_REQUEST, new Request());
-        addCommonAttributes(model, request);
-    }
-
-    private void populateForEdit(Request existing, Model model, HttpServletRequest request) {
-        model.addAttribute(AppConstants.ATTR_REQUEST, existing);
-        addCommonAttributes(model, request);
-
-        // Add locked status for form controls
-        boolean isRequestItemsLocked = existing.getStatus() != null && existing.getStatus().isRequestItemsLocked();
-        model.addAttribute("isRequestItemsLocked", isRequestItemsLocked);
-    }
-
-    private void addCommonAttributes(Model model, HttpServletRequest request) {
+        model.addAttribute("request", new Request());
         model.addAttribute("requestUri", request.getRequestURI());
         model.addAttribute("maxImages", maxImagesPerRequest);
     }
 
+    private void populateForEdit(Request existing, Model model, HttpServletRequest request) {
+        model.addAttribute("request", existing);
+        model.addAttribute("requestUri", request.getRequestURI());
+        model.addAttribute("maxImages", maxImagesPerRequest);
+        model.addAttribute("isRequestItemsLocked", existing.getStatus() != null && existing.getStatus().isRequestItemsLocked());
+    }
 }

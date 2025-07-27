@@ -3,7 +3,6 @@ package com.laptoprepair.controller;
 import com.laptoprepair.entity.Request;
 import com.laptoprepair.service.AuthService;
 import com.laptoprepair.service.RequestService;
-import com.laptoprepair.utils.AppConstants;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,15 +40,8 @@ public class PublicController {
     }
 
     @PostMapping("/lookup")
-    public String lookupPost(@RequestParam String id,
-            RedirectAttributes redirectAttributes) {
-        try {
-            return "redirect:/public/request/" + UUID.fromString(id.trim());
-        } catch (IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    "ID yêu cầu không hợp lệ. Vui lòng kiểm tra lại.");
-            return "redirect:/";
-        }
+    public String lookupPost(@RequestParam String id) {
+        return "redirect:/public/request/" + UUID.fromString(id.trim());
     }
 
     @GetMapping("/about")
@@ -59,7 +51,7 @@ public class PublicController {
 
     @GetMapping("/submit")
     public String submitForm(Model model) {
-        model.addAttribute(AppConstants.ATTR_REQUEST, new Request());
+        model.addAttribute("request", new Request());
         return "public/request-submit";
     }
 
@@ -69,7 +61,7 @@ public class PublicController {
             Model model,
             RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute(AppConstants.ATTR_REQUEST, request);
+            model.addAttribute("request", request);
             return "public/request-submit";
         }
 
@@ -92,7 +84,7 @@ public class PublicController {
     @GetMapping("/public/request/{id}")
     public String publicRequestDetail(@PathVariable UUID id, Model model) {
         Request request = requestService.findById(id);
-        model.addAttribute(AppConstants.ATTR_REQUEST, request);
+        model.addAttribute("request", request);
         model.addAttribute("isStaff", false);
         return "staff/request-detail";
     }

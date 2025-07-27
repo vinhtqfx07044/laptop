@@ -11,7 +11,7 @@ import java.util.UUID;
 public interface RequestService {
     Request create(Request request, MultipartFile[] images, String note) throws ValidationException;
 
-    Request update(UUID id, Request request, MultipartFile[] newImages, String[] imagesToDelete, String note)
+    Request update(UUID id, Request request, MultipartFile[] newImages, String[] toDelete, String note)
             throws ValidationException;
 
     Request findById(UUID id);

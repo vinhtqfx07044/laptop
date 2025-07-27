@@ -13,19 +13,15 @@ import java.util.UUID;
 
 public interface RequestRepository extends JpaRepository<Request, UUID> {
 
-       @Query("SELECT r FROM Request r " +
-                     "LEFT JOIN FETCH r.items " +
-                     "WHERE r.id = :id")
+       @Query("SELECT r FROM Request r WHERE r.id = :id")
        Optional<Request> findByIdWithDetails(@Param("id") UUID id);
 
        @Query(value = "SELECT * FROM request r " +
                      "WHERE (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%',:search,'%'))) " +
                      "AND (:status IS NULL OR r.status = CAST(:status AS VARCHAR)) " +
-                     "ORDER BY r.appointment_date DESC", 
-              countQuery = "SELECT COUNT(*) FROM request r " +
-                     "WHERE (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%',:search,'%'))) " +
-                     "AND (:status IS NULL OR r.status = CAST(:status AS VARCHAR))",
-              nativeQuery = true)
+                     "ORDER BY r.appointment_date DESC", countQuery = "SELECT COUNT(*) FROM request r " +
+                                   "WHERE (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%',:search,'%'))) " +
+                                   "AND (:status IS NULL OR r.status = CAST(:status AS VARCHAR))", nativeQuery = true)
        Page<Request> findWithFilters(@Param("search") String search,
                      @Param("status") String status,
                      Pageable pageable);

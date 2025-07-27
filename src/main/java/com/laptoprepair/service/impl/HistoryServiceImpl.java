@@ -3,15 +3,14 @@ package com.laptoprepair.service.impl;
 import com.laptoprepair.entity.Request;
 import com.laptoprepair.entity.RequestHistory;
 import com.laptoprepair.entity.RequestItem;
-import com.laptoprepair.service.AuthService;
 import com.laptoprepair.service.HistoryService;
 import com.laptoprepair.utils.TimeProvider;
 
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 
+import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -20,10 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 public class HistoryServiceImpl implements HistoryService {
 
     private final TimeProvider timeProvider;
-    private final AuthService authService;
 
     @Override
-    public void addHistory(Request request, String changes, String user) {
+    public void addRequestHistoryRecord(Request request, String changes, String user) {
         RequestHistory history = new RequestHistory();
         String finalChanges = (changes != null && changes.length() > 500) ? changes.substring(0, 500) + "..." : changes;
 
@@ -36,7 +34,7 @@ public class HistoryServiceImpl implements HistoryService {
     }
 
     @Override
-    public String computeChanges(Request oldRequest, Request newRequest) {
+    public String computeRequestChanges(Request oldRequest, Request newRequest) {
         StringBuilder changes = new StringBuilder();
 
         // Track status changes
@@ -51,7 +49,7 @@ public class HistoryServiceImpl implements HistoryService {
         }
 
         // Track request items changes
-        if (!areItemsEqual(oldRequest.getItems(), newRequest.getItems())) {
+        if (!areRequestItemsEqual(oldRequest.getItems(), newRequest.getItems())) {
             changes.append("Cập nhật hạng mục sửa chữa\n");
         }
 
@@ -66,12 +64,7 @@ public class HistoryServiceImpl implements HistoryService {
     }
 
     @Override
-    public String getCurrentUser() {
-        return authService.currentUser();
-    }
-
-    @Override
-    public boolean areItemsEqual(List<RequestItem> oldItems, List<RequestItem> newItems) {
+    public boolean areRequestItemsEqual(List<RequestItem> oldItems, List<RequestItem> newItems) {
         if (oldItems == null || newItems == null) {
             return false;
         }
@@ -81,41 +74,12 @@ public class HistoryServiceImpl implements HistoryService {
         }
 
         try {
-            // Sort both lists by serviceItemId and compare meaningful fields only (excluding entity ID)
-            String oldItemsString = oldItems.stream()
-                    .sorted((item1, item2) -> item1.getServiceItemId().compareTo(item2.getServiceItemId()))
-                    .map(this::itemToComparableString)
-                    .collect(Collectors.joining(","));
-
-            String newItemsString = newItems.stream()
-                    .sorted((item1, item2) -> item1.getServiceItemId().compareTo(item2.getServiceItemId()))
-                    .map(this::itemToComparableString)
-                    .collect(Collectors.joining(","));
-
-            return oldItemsString.equals(newItemsString);
+            // Use Set comparison with custom equals() method
+            return new HashSet<>(oldItems).equals(new HashSet<>(newItems));
         } catch (Exception e) {
             log.error("Error comparing items", e);
             return false;
         }
-    }
-
-    private String itemToComparableString(RequestItem item) {
-        // Compare only meaningful fields, excluding entity ID which changes between requests
-        return String.format(
-            "serviceItemId=%s,name=%s,price=%s,vat=%s,warranty=%d,qty=%d,discount=%s",
-            item.getServiceItemId(),
-            item.getName(),
-            normalizeBigDecimal(item.getPrice()),
-            normalizeBigDecimal(item.getVatRate()),
-            item.getWarrantyDays(),
-            item.getQuantity(),
-            normalizeBigDecimal(item.getDiscount()));
-    }
-
-    private String normalizeBigDecimal(java.math.BigDecimal value) {
-        if (value == null)
-            return "null";
-        return value.stripTrailingZeros().toPlainString();
     }
 
 }

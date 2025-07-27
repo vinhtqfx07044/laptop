@@ -2,15 +2,12 @@ package com.laptoprepair.service.impl;
 
 import com.laptoprepair.entity.Request;
 import com.laptoprepair.entity.RequestItem;
-import com.laptoprepair.entity.RequestHistory;
-import com.laptoprepair.entity.RequestImage;
 import com.laptoprepair.entity.ServiceItem;
 import com.laptoprepair.exception.CSVImportException;
 import com.laptoprepair.exception.NotFoundException;
 import com.laptoprepair.exception.ValidationException;
 import com.laptoprepair.repository.ServiceItemRepository;
 import com.laptoprepair.service.MappingService;
-import com.laptoprepair.utils.AppConstants;
 import com.laptoprepair.validation.ServiceItemValidator;
 
 import lombok.RequiredArgsConstructor;
@@ -19,6 +16,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -29,7 +27,7 @@ public class MappingServiceImpl implements MappingService {
     private final ServiceItemValidator serviceItemValidator;
 
     @Override
-    public void snapshotServiceItems(List<RequestItem> items) {
+    public void copyServiceItemsFields(List<RequestItem> items) {
         if (items == null || items.isEmpty()) {
             return;
         }
@@ -55,73 +53,45 @@ public class MappingServiceImpl implements MappingService {
                 "createdAt", "updatedAt", "createdBy", "updatedBy");
 
         if (deepCopyCollections) {
-            // For cloning - deep copy collections to avoid reference issues
-            copyCollectionsDeep(source, target);
+            copyItemsForCloning(source, target);
         } else {
-            // For updating - proper collection management to avoid orphan removal issues
-            copyCollectionsShallow(source, target);
+            updateItemsReference(source, target);
         }
 
         return target;
     }
 
-    private void copyCollectionsDeep(Request source, Request target) {
-        if (source.getItems() != null) {
-            target.setItems(source.getItems().stream()
-                    .map(item -> copyRequestItem(item, target))
-                    .toList());
+    private void copyItemsForCloning(Request source, Request target) {
+        if (source.getItems() == null) {
+            target.setItems(null);
+            return;
         }
-        if (source.getImages() != null) {
-            target.setImages(source.getImages().stream()
-                    .map(image -> copyRequestImage(image, target))
-                    .toList());
+
+        List<RequestItem> copiedItems = new ArrayList<>();
+        for (RequestItem item : source.getItems()) {
+            RequestItem newItem = new RequestItem();
+            BeanUtils.copyProperties(item, newItem, "id", "request");
+            newItem.setRequest(target);
+            copiedItems.add(newItem);
         }
-        if (source.getHistory() != null) {
-            target.setHistory(source.getHistory().stream()
-                    .map(history -> copyRequestHistory(history, target))
-                    .toList());
-        }
+        target.setItems(copiedItems);
     }
 
-    private void copyCollectionsShallow(Request source, Request target) {
+    private void updateItemsReference(Request source, Request target) {
+        // For updating - only change reference
         if (source.getItems() != null) {
             target.getItems().clear();
-            source.getItems().forEach(item -> {
-                item.setRequest(target);
-                target.getItems().add(item);
-            });
+            source.getItems().forEach(item -> item.setRequest(target));
+            target.getItems().addAll(source.getItems());
         }
         if (source.getImages() != null) {
             target.getImages().clear();
-            source.getImages().forEach(image -> {
-                image.setRequest(target);
-                target.getImages().add(image);
-            });
+            source.getImages().forEach(image -> image.setRequest(target));
+            target.getImages().addAll(source.getImages());
         }
     }
 
-    private RequestItem copyRequestItem(RequestItem source, Request target) {
-        RequestItem newItem = new RequestItem();
-        BeanUtils.copyProperties(source, newItem, "id", AppConstants.ATTR_REQUEST);
-        newItem.setRequest(target);
-        return newItem;
-    }
-
-    private RequestImage copyRequestImage(RequestImage source, Request target) {
-        RequestImage newImage = new RequestImage();
-        BeanUtils.copyProperties(source, newImage, "id", "request");
-        newImage.setRequest(target);
-        return newImage;
-    }
-
-    private RequestHistory copyRequestHistory(RequestHistory source, Request target) {
-        RequestHistory newHistory = new RequestHistory();
-        BeanUtils.copyProperties(source, newHistory, "id", "request");
-        newHistory.setRequest(target);
-        return newHistory;
-    }
-
-    public ServiceItem parseCSVRecord(CSVRecord csvRecord, int rowNumber) throws CSVImportException {
+    public ServiceItem copyCSVRecordFields(CSVRecord csvRecord, int rowNumber) throws CSVImportException {
         ServiceItem serviceItem = new ServiceItem();
 
         try {
@@ -158,9 +128,6 @@ public class MappingServiceImpl implements MappingService {
     }
 
     private boolean parseActiveField(String activeStr) {
-        if (activeStr != null && !activeStr.trim().isEmpty()) {
-            return Boolean.parseBoolean(activeStr.trim());
-        }
-        return true; // Default to active
+        return activeStr == null || activeStr.trim().isEmpty() || Boolean.parseBoolean(activeStr.trim());
     }
 }

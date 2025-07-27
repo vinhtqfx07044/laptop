@@ -18,10 +18,10 @@ public interface MappingService {
      * Snapshots current service item data into request items
      * This ensures price/name consistency even if master data changes
      */
-    void snapshotServiceItems(List<RequestItem> items);
+    void copyServiceItemsFields(List<RequestItem> items);
 
     /**
      * Parses a CSV record into a ServiceItem entity
      */
-    ServiceItem parseCSVRecord(CSVRecord csvRecord, int rowNumber) throws CSVImportException;
+    ServiceItem copyCSVRecordFields(CSVRecord csvRecord, int rowNumber) throws CSVImportException;
 }

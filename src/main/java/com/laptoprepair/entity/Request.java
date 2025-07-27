@@ -6,7 +6,6 @@ import jakarta.validation.constraints.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import jakarta.persistence.Transient;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -42,8 +41,6 @@ public class Request extends BaseEntity {
 
     private LocalDateTime completedAt;
 
-    @Transient
-    private BigDecimal total = BigDecimal.ZERO;
 
     @OneToMany(mappedBy = "request", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RequestItem> items = new ArrayList<>();
@@ -58,14 +55,12 @@ public class Request extends BaseEntity {
     @Override
     protected void prePersist() {
         super.prePersist();
-        total = calculateTotal();
     }
 
     @PreUpdate
     @Override
     protected void preUpdate() {
         super.preUpdate();
-        total = calculateTotal();
     }
 
     public BigDecimal getTotal() {

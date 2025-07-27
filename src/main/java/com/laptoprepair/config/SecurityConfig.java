@@ -87,12 +87,16 @@ public class SecurityConfig {
                                                 .frameOptions(frameOptions -> frameOptions.sameOrigin())
                                                 .contentSecurityPolicy(csp -> csp.policyDirectives(
                                                                 "default-src 'self'; " +
-                                                                "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
-                                                                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
-                                                                "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
-                                                                "img-src 'self' data:; " +
-                                                                "frame-src 'self' https://www.google.com; " +
-                                                                "connect-src 'self'"))
+                                                                                "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+                                                                                +
+                                                                                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+                                                                                +
+                                                                                "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+                                                                                +
+                                                                                "img-src 'self' data:; " +
+                                                                                "frame-src 'self' https://www.google.com; "
+                                                                                +
+                                                                                "connect-src 'self'"))
                                                 .httpStrictTransportSecurity(hstsConfig -> hstsConfig
                                                                 .maxAgeInSeconds(31536000)))
                                 .build();
@@ -101,21 +105,16 @@ public class SecurityConfig {
         @Bean
         public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
                 String usersConfig = environment.getProperty("app.security.staff.users");
-                logger.debug("STAFF_USERS config: {}", usersConfig);
-                
                 List<UserDetails> users = new ArrayList<>();
 
                 if (usersConfig != null && !usersConfig.isEmpty()) {
-                        logger.debug("Processing STAFF_USERS: {}", usersConfig);
                         for (String userConfig : usersConfig.split(",")) {
                                 String[] parts = userConfig.trim().split(":");
                                 if (parts.length == 2) {
                                         String username = parts[0].trim();
                                         String rawPassword = parts[1].trim();
                                         String encodedPassword = passwordEncoder.encode(rawPassword);
-                                        
-                                        logger.debug("Creating user: {} with encoded password: {}", username, encodedPassword);
-                                        
+
                                         UserDetails user = User.builder()
                                                         .username(username)
                                                         .password(encodedPassword)
@@ -130,7 +129,7 @@ public class SecurityConfig {
                         logger.warn("No STAFF_USERS configuration found - no users will be created");
                 }
 
-                logger.debug("Created {} users for authentication", users.size());
+                logger.info("Created {} users for authentication", users.size());
                 return new InMemoryUserDetailsManager(users);
         }
 

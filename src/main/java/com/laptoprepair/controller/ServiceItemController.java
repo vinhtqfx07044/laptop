@@ -3,7 +3,6 @@ package com.laptoprepair.controller;
 import com.laptoprepair.entity.ServiceItem;
 import com.laptoprepair.exception.CSVImportException;
 import com.laptoprepair.service.ServiceItemService;
-import com.laptoprepair.utils.AppConstants;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -63,7 +62,7 @@ public class ServiceItemController {
     public String importCSV(@RequestParam("file") MultipartFile file)
             throws CSVImportException {
         serviceItemService.importCSV(file);
-        return AppConstants.REDIRECT_STAFF_SERVICE_ITEMS;
+        return "redirect:/staff/service-items";
     }
 
     @PostMapping("/create")
@@ -74,13 +73,13 @@ public class ServiceItemController {
         if (bindingResult.hasErrors()) {
             return list(0, null, null, null, model);
         }
-        
+
         if ("update".equals(actionType) && serviceItem.getId() != null) {
             serviceItemService.update(serviceItem.getId(), serviceItem);
         } else {
             serviceItemService.create(serviceItem);
         }
-        return AppConstants.REDIRECT_STAFF_SERVICE_ITEMS;
+        return "redirect:/staff/service-items";
     }
 
     @PostMapping("/update/{id}")
@@ -92,7 +91,7 @@ public class ServiceItemController {
             return list(0, null, null, null, model);
         }
         serviceItemService.update(id, serviceItem);
-        return AppConstants.REDIRECT_STAFF_SERVICE_ITEMS;
+        return "redirect:/staff/service-items";
     }
 
     @GetMapping("/search")

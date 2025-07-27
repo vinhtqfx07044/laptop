@@ -32,16 +32,26 @@ public enum RequestStatus {
     }
 
     public boolean canTransitionTo(RequestStatus newStatus) {
-        if (this == newStatus) return true;
-        
+        if (this == newStatus)
+            return true;
+
         switch (this) {
-            case SCHEDULED: return newStatus == QUOTED || newStatus == APPROVE_QUOTED || newStatus == IN_PROGRESS || newStatus == COMPLETED || newStatus == CANCELLED;
-            case QUOTED: return newStatus == APPROVE_QUOTED || newStatus == IN_PROGRESS || newStatus == COMPLETED || newStatus == CANCELLED;
-            case APPROVE_QUOTED: return newStatus == IN_PROGRESS || newStatus == COMPLETED || newStatus == CANCELLED;
-            case IN_PROGRESS: return newStatus == COMPLETED || newStatus == CANCELLED;
-            case COMPLETED: return false;
-            case CANCELLED: return false;
-            default: return true;
+            case SCHEDULED:
+                return newStatus == QUOTED || newStatus == APPROVE_QUOTED || newStatus == IN_PROGRESS
+                        || newStatus == COMPLETED || newStatus == CANCELLED;
+            case QUOTED:
+                return newStatus == APPROVE_QUOTED || newStatus == IN_PROGRESS || newStatus == COMPLETED
+                        || newStatus == CANCELLED;
+            case APPROVE_QUOTED:
+                return newStatus == IN_PROGRESS || newStatus == COMPLETED || newStatus == CANCELLED;
+            case IN_PROGRESS:
+                return newStatus == COMPLETED || newStatus == CANCELLED;
+            case COMPLETED:
+                return false;
+            case CANCELLED:
+                return false;
+            default:
+                return true;
         }
     }
 

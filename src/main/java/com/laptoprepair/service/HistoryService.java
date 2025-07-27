@@ -6,11 +6,9 @@ import com.laptoprepair.entity.Request;
 import com.laptoprepair.entity.RequestItem;
 
 public interface HistoryService {
-    void addHistory(Request request, String note, String user);
+    void addRequestHistoryRecord(Request request, String note, String user);
 
-    String computeChanges(Request oldRequest, Request newRequest);
+    String computeRequestChanges(Request oldRequest, Request newRequest);
 
-    String getCurrentUser();
-
-    boolean areItemsEqual(List<RequestItem> oldItems, List<RequestItem> newItems);
+    boolean areRequestItemsEqual(List<RequestItem> oldItems, List<RequestItem> newItems);
 }
