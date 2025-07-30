@@ -73,9 +73,13 @@ function updateDatalist(services) {
         const price = formatVietnameseCurrency(service.price);
         const vat = (service.vatRate * 100).toFixed(1) + '%';
         const warranty = service.warrantyDays + ' ngày';
-        return `<option value="${escapeHtml(service.name)}" 
-                        label="${escapeHtml(service.name)} - ${price} - VAT ${vat} - BH ${warranty}"
-                        data-service='${escapeHtml(JSON.stringify(service))}'></option>`;
+        // Use double escaping for HTML attribute values to handle quotes properly
+        const escapedName = escapeHtml(service.name).replace(/"/g, '&quot;');
+        const escapedLabel = escapeHtml(`${service.name} - ${price} - VAT ${vat} - BH ${warranty}`).replace(/"/g, '&quot;');
+        const escapedData = escapeHtml(JSON.stringify(service)).replace(/"/g, '&quot;');
+        return `<option value="${escapedName}" 
+                        label="${escapedLabel}"
+                        data-service='${escapedData}'></option>`;
     }).join('');
 }
 
