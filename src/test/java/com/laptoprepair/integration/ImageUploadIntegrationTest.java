@@ -44,7 +44,7 @@ class ImageUploadIntegrationTest {
 
         @Test
         @WithMockUser(roles = "STAFF")
-        void uploadMultipleImages_ShouldStoreAllImages() throws Exception {
+        void uploadMultipleImages_WithValidFiles_ShouldStoreAllImages() throws Exception {
                 Request request = createTestRequest();
                 Request saved = requestRepository.save(request);
 
@@ -74,7 +74,7 @@ class ImageUploadIntegrationTest {
 
         @Test
         @WithMockUser(roles = "STAFF")
-        void deleteImageFromRequest_ShouldRemoveImage() throws Exception {
+        void deleteImageFromRequest_WithValidImageId_ShouldRemoveImage() throws Exception {
                 Request request = createTestRequest();
                 Request saved = requestRepository.save(request);
 
@@ -94,7 +94,7 @@ class ImageUploadIntegrationTest {
 
         @Test
         @WithMockUser(roles = "STAFF")
-        void uploadInvalidFileType_ShouldReturnValidationError() throws Exception {
+        void uploadInvalidFileType_WithTextFile_ShouldReturnValidationError() throws Exception {
                 Request request = createTestRequest();
                 Request saved = requestRepository.save(request);
 
