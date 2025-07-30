@@ -20,6 +20,10 @@ import org.springframework.security.web.SecurityFilterChain;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Security configuration for the Laptop Repair Application.
+ * This class defines security rules, authentication, and authorization.
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -32,24 +36,38 @@ public class SecurityConfig {
 
         private final Environment environment;
 
+        /**
+         * Constructs a new SecurityConfig with the given Environment.
+         * @param environment The Spring environment for profile-specific configurations.
+         */
         public SecurityConfig(Environment environment) {
                 this.environment = environment;
         }
 
+        /**
+         * Provides a BCryptPasswordEncoder bean for password encoding.
+         * @return A PasswordEncoder instance.
+         */
         @Bean
         public PasswordEncoder passwordEncoder() {
                 return new BCryptPasswordEncoder();
         }
 
-        // Chỉ cho anonymous truy cập (redirect staff)
+        /**
+         * Paths accessible only to anonymous users (not authenticated).
+         */
         private static final String[] ANONYMOUS_ONLY = {
                         "/about", "/lookup", "/submit", "/recover"
         };
 
-        // Cho phép tất cả truy cập
+        /**
+         * The login path for the application.
+         */
         public static final String LOGIN_PATH = "/login";
 
-        // Cho phép tất cả truy cập
+        /**
+         * Paths accessible to all users (authenticated or anonymous).
+         */
         private static final String[] PERMIT_ALL = {
                         "/", "/h2-console/**", LOGIN_PATH, "/logout", "/error",
                         "/css/**", "/js/**", "/favicon.ico",
@@ -59,6 +77,13 @@ public class SecurityConfig {
                         "/actuator/**",
         };
 
+        /**
+         * Configures the security filter chain for HTTP requests.
+         * Defines authorization rules, form login, logout, exception handling, and CSRF protection.
+         * @param http The HttpSecurity object to configure.
+         * @return A SecurityFilterChain instance.
+         * @throws Exception If an error occurs during configuration.
+         */
         @Bean
         public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
                 return http
@@ -102,6 +127,12 @@ public class SecurityConfig {
                                 .build();
         }
 
+        /**
+         * Configures and provides an in-memory UserDetailsService for staff users.
+         * User details are loaded from the 'app.security.staff.users' property.
+         * @param passwordEncoder The PasswordEncoder to use for encoding user passwords.
+         * @return A UserDetailsService instance.
+         */
         @Bean
         public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
                 String usersConfig = environment.getProperty("app.security.staff.users");
@@ -134,3 +165,4 @@ public class SecurityConfig {
         }
 
 }
+

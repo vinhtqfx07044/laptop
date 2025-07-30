@@ -8,6 +8,10 @@ import java.util.UUID;
 
 import com.laptoprepair.utils.DefaultTimeProvider;
 
+/**
+ * Base entity class providing common fields and auditing capabilities.
+ * All other entities should extend this class.
+ */
 @MappedSuperclass
 @Data
 public abstract class BaseEntity {
@@ -20,12 +24,18 @@ public abstract class BaseEntity {
     private LocalDateTime updatedAt;
     private String updatedBy;
 
+    /**
+     * Automatically sets the creation and update timestamps before persisting the entity.
+     */
     @PrePersist
     protected void prePersist() {
         createdAt = DefaultTimeProvider.nowInVietnam();
         updatedAt = DefaultTimeProvider.nowInVietnam();
     }
 
+    /**
+     * Automatically updates the update timestamp before updating the entity.
+     */
     @PreUpdate
     protected void preUpdate() {
         updatedAt = DefaultTimeProvider.nowInVietnam();

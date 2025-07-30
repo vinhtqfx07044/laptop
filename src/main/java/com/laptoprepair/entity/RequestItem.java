@@ -9,6 +9,10 @@ import java.math.BigDecimal;
 import java.util.UUID;
 import java.util.Objects;
 
+/**
+ * Represents a service item or part associated with a repair request.
+ * This entity stores details about the item, its price, quantity, and other relevant information.
+ */
 @Entity
 @Table(name = "request_items")
 @Data

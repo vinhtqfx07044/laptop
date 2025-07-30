@@ -18,25 +18,49 @@ import reactor.core.publisher.Flux;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * REST controller for handling chat interactions with an AI model.
+ * Provides an endpoint for streaming chat responses with rate limiting and conversation memory.
+ */
 @RestController
 @RequestMapping("/api/chat")
 public class ChatController {
 
+    /**
+     * Logger for the ChatController class.
+     */
     private static final Logger logger = LoggerFactory.getLogger(ChatController.class);
 
     private final ChatClient chatClient;
     private final RateLimiter rateLimiter;
     private final ChatMemory chatMemory;
 
+    /**
+     * The maximum number of user messages allowed in a conversation, configured via application properties.
+     */
     @Value("${app.chat.max-user-messages}")
     private int maxUserMessages;
 
+    /**
+     * Constructs a new ChatController.
+     * @param chatClient The AI chat client.
+     * @param rateLimiter The rate limiter for API requests.
+     * @param chatMemory The chat memory for maintaining conversation context.
+     */
     public ChatController(ChatClient chatClient, RateLimiter rateLimiter, ChatMemory chatMemory) {
         this.chatClient = chatClient;
         this.rateLimiter = rateLimiter;
         this.chatMemory = chatMemory;
     }
 
+    /**
+     * Streams chat responses from the AI model.
+     * Applies rate limiting and manages conversation history.
+     * @param message The user's message.
+     * @param conversationId Optional. The ID of the ongoing conversation. If null, a new conversation is started.
+     * @param request The HttpServletRequest for rate limiting.
+     * @return A Flux of ChatResponse objects, representing the streamed AI response.
+     */
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ChatResponse> streamChat(
             @RequestParam String message,
@@ -78,6 +102,11 @@ public class ChatController {
                 });
     }
 
+    /**
+     * Creates an error ChatResponse with a given message.
+     * @param message The error message.
+     * @return A ChatResponse containing an AssistantMessage with the error.
+     */
     private ChatResponse createErrorResponse(String message) {
         return new ChatResponse(List.of(new Generation(new AssistantMessage(message))));
     }

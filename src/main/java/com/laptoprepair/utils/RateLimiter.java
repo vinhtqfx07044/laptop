@@ -10,6 +10,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * Implements a simple rate limiting mechanism based on client IP address and request type.
+ * It uses a sliding window approach to limit the number of requests within a specified time frame.
+ */
 @Component
 public class RateLimiter {
 
@@ -27,10 +31,22 @@ public class RateLimiter {
     @Value("${app.rate-limiter.window-size-seconds:60}")
     private int windowSizeSeconds;
 
+    /**
+     * Checks if a request is allowed based on the default rate limit configuration.
+     * @param request The HttpServletRequest to check.
+     * @return true if the request is allowed, false otherwise.
+     */
     public boolean isAllowed(HttpServletRequest request) {
         return isAllowed(request, "default");
     }
 
+    /**
+     * Checks if a request is allowed based on a specific rate limit key prefix.
+     * Requests to staff endpoints and static resources are always allowed.
+     * @param request The HttpServletRequest to check.
+     * @param keyPrefix A prefix to categorize the rate limit (e.g., "public", "chat").
+     * @return true if the request is allowed, false otherwise.
+     */
     public boolean isAllowed(HttpServletRequest request, String keyPrefix) {
         String requestPath = request.getRequestURI();
 
@@ -64,6 +80,12 @@ public class RateLimiter {
         return true;
     }
 
+    /**
+     * Determines if a given request path and key prefix combination should be rate limited.
+     * @param requestPath The URI of the incoming request.
+     * @param keyPrefix The prefix used to categorize the rate limit.
+     * @return true if the request should be rate limited, false otherwise.
+     */
     private boolean shouldRateLimit(String requestPath, String keyPrefix) {
         if ("chat".equals(keyPrefix)) {
             return requestPath.startsWith("/api/chat/");
@@ -80,6 +102,11 @@ public class RateLimiter {
         return false;
     }
 
+    /**
+     * Retrieves the maximum number of requests allowed for a given key prefix.
+     * @param keyPrefix The prefix categorizing the rate limit.
+     * @return The maximum number of requests allowed for that prefix.
+     */
     private int getMaxRequestsForPrefix(String keyPrefix) {
         return switch (keyPrefix) {
             case "chat" -> chatMaxRequestsPerMinute;
@@ -88,6 +115,12 @@ public class RateLimiter {
         };
     }
 
+    /**
+     * Extracts a unique client key from the HttpServletRequest.
+     * Prioritizes "X-Forwarded-For" header for proxy compatibility, falls back to remote address.
+     * @param request The HttpServletRequest.
+     * @return A string representing the client's key.
+     */
     private String getClientKey(HttpServletRequest request) {
         String xForwardedFor = request.getHeader("X-Forwarded-For");
         if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
@@ -96,6 +129,10 @@ public class RateLimiter {
         return request.getRemoteAddr();
     }
 
+    /**
+     * Cleans up expired rate limit buckets.
+     * This method is scheduled to run periodically to prevent memory leaks.
+     */
     @Scheduled(fixedRate = 300000) // Run every 5 minutes
     public void cleanupExpiredBuckets() {
         Instant cutoff = Instant.now().minusSeconds(windowSizeSeconds);

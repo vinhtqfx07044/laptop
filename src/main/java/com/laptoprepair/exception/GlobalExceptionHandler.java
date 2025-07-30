@@ -14,6 +14,11 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
+/**
+ * Global exception handler for the application.
+ * This class provides centralized exception handling for various types of exceptions
+ * and returns appropriate responses or redirects.
+ */
 @ControllerAdvice
 public class GlobalExceptionHandler {
 

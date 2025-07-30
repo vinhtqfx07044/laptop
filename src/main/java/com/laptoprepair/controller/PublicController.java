@@ -15,6 +15,10 @@ import jakarta.validation.Valid;
 
 import java.util.UUID;
 
+/**
+ * Controller for handling public-facing requests and views.
+ * This includes login, home page, request submission, and public request lookup.
+ */
 @Controller
 @RequiredArgsConstructor
 @Slf4j
@@ -23,6 +27,11 @@ public class PublicController {
     private final RequestService requestService;
     private final AuthService authService;
 
+    /**
+     * Handles requests to the login page.
+     * Redirects to staff request list if the user is already logged in as staff.
+     * @return The login view or a redirect to staff dashboard.
+     */
     @GetMapping("/login")
     public String login() {
         if (authService.isStaff()) {
@@ -31,6 +40,12 @@ public class PublicController {
         return "public/login";
     }
 
+    /**
+     * Handles requests to the application's home page.
+     * Redirects to staff request list if the user is already logged in as staff.
+     * @param model The Model object for view data.
+     * @return The index view or a redirect to staff dashboard.
+     */
     @GetMapping("/")
     public String index(Model model) {
         if (authService.isStaff()) {
@@ -39,22 +54,44 @@ public class PublicController {
         return "public/index";
     }
 
+    /**
+     * Handles POST requests for looking up a request by ID.
+     * @param id The ID of the request to lookup.
+     * @return A redirect to the public request detail page.
+     */
     @PostMapping("/lookup")
     public String lookupPost(@RequestParam String id) {
         return "redirect:/public/request/" + UUID.fromString(id.trim());
     }
 
+    /**
+     * Handles requests to the about page.
+     * @return The about view.
+     */
     @GetMapping("/about")
     public String about() {
         return "public/about";
     }
 
+    /**
+     * Displays the request submission form.
+     * @param model The Model object for view data.
+     * @return The request submission form view.
+     */
     @GetMapping("/submit")
     public String submitForm(Model model) {
         model.addAttribute("request", new Request());
         return "public/request-submit";
-    }
-
+    }
+    /**
+     * Handles the submission of a new request.
+     * Validates the request and saves it if valid, then redirects with a success message.
+     * @param request The Request object submitted from the form.
+     * @param bindingResult The BindingResult for validation errors.
+     * @param model The Model object for view data.
+     * @param redirectAttributes The RedirectAttributes for flash messages.
+     * @return A redirect to the submit page with a success message or back to the form with errors.
+     */
     @PostMapping("/submit")
     public String submit(@Valid @ModelAttribute Request request,
             BindingResult bindingResult,
@@ -72,6 +109,12 @@ public class PublicController {
         return "redirect:/submit";
     }
 
+    /**
+     * Handles requests to recover request information via email.
+     * @param email The email address to send recovery information to.
+     * @param redirectAttributes The RedirectAttributes for flash messages.
+     * @return A redirect to the home page with a success message.
+     */
     @PostMapping("/recover")
     public String recoverSubmit(@RequestParam("email") String email,
             RedirectAttributes redirectAttributes) {
@@ -81,6 +124,12 @@ public class PublicController {
         return "redirect:/";
     }
 
+    /**
+     * Displays the public detail page for a specific request.
+     * @param id The UUID of the request.
+     * @param model The Model object for view data.
+     * @return The request detail view.
+     */
     @GetMapping("/public/request/{id}")
     public String publicRequestDetail(@PathVariable UUID id, Model model) {
         Request request = requestService.findById(id);

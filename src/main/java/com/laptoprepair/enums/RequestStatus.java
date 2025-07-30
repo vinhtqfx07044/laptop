@@ -2,6 +2,10 @@ package com.laptoprepair.enums;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
+/**
+ * Defines the possible statuses for a repair request.
+ * Each status has a display value and a corresponding CSS class for UI representation.
+ */
 public enum RequestStatus {
     SCHEDULED("Đã lên lịch", "bg-info"),
     QUOTED("Đã báo giá", "bg-warning"),

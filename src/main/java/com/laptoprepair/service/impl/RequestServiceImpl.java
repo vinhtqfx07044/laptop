@@ -31,6 +31,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Implementation of the {@link RequestService} interface.
+ * Provides business logic for managing repair requests, including CRUD operations,
+ * image handling, history tracking, and email notifications.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -45,6 +50,12 @@ public class RequestServiceImpl implements RequestService {
     private final TimeProvider timeProvider;
     private final AuthService authService;
 
+    /**
+     * Finds a request by its ID.
+     * @param id The UUID of the request to find.
+     * @return The found Request entity.
+     * @throws NotFoundException if the request with the given ID is not found.
+     */
     @Transactional(readOnly = true)
     @Override
     public Request findById(UUID id) {
@@ -52,12 +63,26 @@ public class RequestServiceImpl implements RequestService {
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy yêu cầu với ID: " + id));
     }
 
+    /**
+     * Retrieves a paginated list of requests based on search criteria and status.
+     * @param search Optional search string to filter requests.
+     * @param status Optional RequestStatus to filter requests.
+     * @param pageable Pagination information.
+     * @return A Page of Request entities.
+     */
     @Override
     public Page<Request> list(String search, RequestStatus status, Pageable pageable) {
         String statusString = status != null ? status.name() : null;
         return reqRepo.findWithFilters(search, statusString, pageable);
     }
 
+    /**
+     * Creates a new request submitted by a public user (non-staff).
+     * Sets default status to SCHEDULED and sends a confirmation email.
+     * @param incomingRequest The Request object submitted by the public user.
+     * @return The saved Request entity.
+     * @throws ValidationException if the appointment date is not in the future.
+     */
     @Override
     public Request publicCreate(Request incomingRequest) throws ValidationException {
         requestValidator.validateAppointmentDateInFuture(incomingRequest.getAppointmentDate());
@@ -79,6 +104,15 @@ public class RequestServiceImpl implements RequestService {
         return savedRequest;
     }
 
+    /**
+     * Creates a new repair request by a staff member.
+     * Handles setting default status, processing service items, adding history, and uploading images.
+     * @param incomingRequest The Request object containing details for the new request.
+     * @param newImages An array of MultipartFile objects representing images to be uploaded.
+     * @param note An optional note to be added to the request history.
+     * @return The newly created and saved Request entity.
+     * @throws ValidationException if there are validation errors during creation.
+     */
     @Override
     @Transactional
     public Request create(Request incomingRequest, MultipartFile[] newImages, String note) throws ValidationException {
@@ -111,6 +145,17 @@ public class RequestServiceImpl implements RequestService {
         return savedRequest;
     }
 
+    /**
+     * Updates an existing repair request.
+     * Handles validation, status transitions, image updates, and history tracking.
+     * @param id The UUID of the request to update.
+     * @param incomingRequest The Request object containing updated details.
+     * @param newImages An array of MultipartFile objects for new images to add.
+     * @param toDelete An array of filenames of images to delete.
+     * @param note An optional note to add to the request history.
+     * @return The updated and saved Request entity.
+     * @throws ValidationException if there are validation errors or the request is not found.
+     */
     @Override
     @Transactional
     public Request update(UUID id, Request incomingRequest, MultipartFile[] newImages, String[] toDelete,
@@ -169,6 +214,10 @@ public class RequestServiceImpl implements RequestService {
         return saved;
     }
 
+    /**
+     * Recovers request information by sending an email with tracking links to the provided email address.
+     * @param email The email address for which to recover requests.
+     */
     @Override
     public void recover(String email) {
         List<Request> requests = reqRepo.findByEmail(email);

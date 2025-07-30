@@ -11,18 +11,32 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.time.format.DateTimeFormatter;
 
+/**
+ * Web configuration for the Laptop Repair Application.
+ * Configures resource handlers, formatters, and interceptors.
+ */
 @Configuration
 @RequiredArgsConstructor
 public class WebConfig implements WebMvcConfigurer {
 
     private final RateLimitInterceptor rateLimitInterceptor;
 
+    /**
+     * Configures resource handlers to serve static resources.
+     * Specifically, maps "/images/**" to the "uploads/" directory.
+     * @param registry The ResourceHandlerRegistry to configure.
+     */
     @Override
     public void addResourceHandlers(@org.springframework.lang.NonNull ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/images/**")
                 .addResourceLocations("file:uploads/");
     }
 
+    /**
+     * Adds custom formatters to the registry.
+     * Registers a DateTimeFormatter for "yyyy-MM-dd'T'HH:mm" pattern.
+     * @param registry The FormatterRegistry to configure.
+     */
     @Override
     public void addFormatters(@org.springframework.lang.NonNull FormatterRegistry registry) {
         DateTimeFormatterRegistrar registrar = new DateTimeFormatterRegistrar();
@@ -31,6 +45,11 @@ public class WebConfig implements WebMvcConfigurer {
         registrar.registerFormatters(registry);
     }
 
+    /**
+     * Adds interceptors to the registry.
+     * Registers the RateLimitInterceptor for specific paths.
+     * @param registry The InterceptorRegistry to configure.
+     */
     @Override
     public void addInterceptors(@org.springframework.lang.NonNull InterceptorRegistry registry) {
         registry.addInterceptor(rateLimitInterceptor)

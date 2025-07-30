@@ -8,6 +8,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.UUID;
 
+/**
+ * Service interface for managing repair requests.
+ * Provides methods for creating, updating, retrieving, and listing requests.
+ */
 public interface RequestService {
     Request create(Request request, MultipartFile[] images, String note) throws ValidationException;
 

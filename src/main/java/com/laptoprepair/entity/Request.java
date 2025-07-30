@@ -11,6 +11,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 
+/**
+ * Represents a repair request made by a customer.
+ * Contains details about the customer, the device, the requested service, and the status of the request.
+ */
 @Entity
 @Data
 @EqualsAndHashCode(callSuper = true)

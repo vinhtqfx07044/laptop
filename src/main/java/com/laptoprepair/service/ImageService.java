@@ -8,6 +8,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Service interface for managing images associated with repair requests.
+ * Provides methods for deleting, uploading, and updating request images.
+ */
 public interface ImageService {
 
         List<RequestImage> deleteImages(UUID requestId, List<RequestImage> currentImages, String[] toDelete)

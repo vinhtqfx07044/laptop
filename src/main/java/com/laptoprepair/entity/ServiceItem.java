@@ -6,6 +6,10 @@ import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 
+/**
+ * Represents a service item offered by the repair shop.
+ * This entity stores details about the service, its price, VAT rate, warranty period, and active status.
+ */
 @Entity
 @Data
 @EqualsAndHashCode(callSuper = true)

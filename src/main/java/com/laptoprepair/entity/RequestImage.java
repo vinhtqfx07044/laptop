@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * Represents an image associated with a repair request.
+ */
 @Entity
 @Table(name = "request_images")
 @Data

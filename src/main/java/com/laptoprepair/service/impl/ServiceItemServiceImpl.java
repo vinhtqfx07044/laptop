@@ -28,6 +28,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Implementation of the {@link ServiceItemService} interface.
+ * Provides business logic for managing service items, including CRUD operations,
+ * and CSV import/export functionalities.
+ */
 @Slf4j
 @Service
 @Transactional
@@ -43,12 +48,23 @@ public class ServiceItemServiceImpl implements ServiceItemService {
     private final ServiceItemRepository serviceItemRepository;
     private final ServiceItemValidator serviceItemValidator;
 
+    /**
+     * Creates a new service item.
+     * @param serviceItem The ServiceItem object to create.
+     * @return The created ServiceItem.
+     */
     @Override
     public ServiceItem create(ServiceItem serviceItem) {
         serviceItemValidator.validateUniqueNameOnCreate(serviceItem.getName());
         return serviceItemRepository.save(serviceItem);
     }
 
+    /**
+     * Finds a service item by its ID.
+     * @param id The UUID of the service item to find.
+     * @return The found ServiceItem.
+     * @throws NotFoundException if the service item with the given ID is not found.
+     */
     @Override
     @Transactional(readOnly = true)
     public ServiceItem findById(UUID id) {
@@ -56,6 +72,12 @@ public class ServiceItemServiceImpl implements ServiceItemService {
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy dịch vụ với ID: " + id));
     }
 
+    /**
+     * Updates an existing service item.
+     * @param id The UUID of the service item to update.
+     * @param incomingServiceItem The ServiceItem object with updated details.
+     * @return The updated ServiceItem.
+     */
     @Override
     public ServiceItem update(UUID id, ServiceItem incomingServiceItem) {
         ServiceItem existingServiceItem = this.findById(id);
@@ -72,6 +94,13 @@ public class ServiceItemServiceImpl implements ServiceItemService {
         return serviceItemRepository.save(existingServiceItem);
     }
 
+    /**
+     * Retrieves a paginated list of service items based on a keyword and active status.
+     * @param keyword Optional keyword to filter service items by name.
+     * @param activeOnly Optional boolean to filter for active service items only.
+     * @param pageable Pagination information.
+     * @return A Page of ServiceItem entities.
+     */
     @Override
     @Transactional(readOnly = true)
     public Page<ServiceItem> list(String keyword, Boolean activeOnly, Pageable pageable) {
@@ -79,6 +108,11 @@ public class ServiceItemServiceImpl implements ServiceItemService {
         return serviceItemRepository.findWithFilters(trimmedKeyword, activeOnly, pageable);
     }
 
+    /**
+     * Imports service items from a CSV file.
+     * @param file The MultipartFile representing the CSV file to import.
+     * @throws CSVImportException if there is an error during CSV parsing or data validation.
+     */
     @Override
     public void importCSV(MultipartFile file) throws CSVImportException {
         serviceItemValidator.validateCSVFile(file);
@@ -112,6 +146,10 @@ public class ServiceItemServiceImpl implements ServiceItemService {
         }
     }
 
+    /**
+     * Exports all service items to a CSV file.
+     * @return A byte array representing the CSV file content.
+     */
     @Override
     @Transactional(readOnly = true)
     public byte[] exportCSV() {

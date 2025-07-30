@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * Represents a history entry for a repair request, tracking changes or notes.
+ */
 @Entity
 @Table(name = "request_history")
 @Data

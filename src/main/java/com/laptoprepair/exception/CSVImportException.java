@@ -1,5 +1,9 @@
 package com.laptoprepair.exception;
 
+/**
+ * Custom exception for CSV import errors.
+ * This exception can carry information about the row number and field name where the error occurred.
+ */
 public class CSVImportException extends Exception {
 
     private final int rowNumber;

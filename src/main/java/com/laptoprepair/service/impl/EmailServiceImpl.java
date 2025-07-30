@@ -14,6 +14,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Implementation of the {@link EmailService} interface.
+ * Handles sending various email notifications related to repair requests.
+ */
 @Service
 @RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService {
@@ -39,6 +43,11 @@ public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
 
+    /**
+     * Sends a confirmation email for a new repair request.
+     * The email includes the request ID and a link to track the request.
+     * @param request The Request object for which to send the confirmation.
+     */
     @Override
     public void sendConfirmationEmail(Request request) {
         if (request.getEmail() == null || request.getEmail().isBlank()) {
@@ -52,6 +61,12 @@ public class EmailServiceImpl implements EmailService {
         sendEmail(request.getEmail(), subject, body.toString());
     }
 
+    /**
+     * Sends an update email for an existing repair request.
+     * The email includes the request ID, a tracking link, and a summary of changes.
+     * @param request The Request object that was updated.
+     * @param changes A string describing the changes made to the request.
+     */
     @Override
     public void sendUpdateEmail(Request request, String changes) {
         if (request.getEmail() == null || request.getEmail().isBlank()) {
@@ -66,6 +81,11 @@ public class EmailServiceImpl implements EmailService {
         sendEmail(request.getEmail(), subject, body.toString());
     }
 
+    /**
+     * Sends a recovery email containing links to all requests associated with a given email address.
+     * @param email The email address to send the recovery information to.
+     * @param requests A list of Request objects associated with the email.
+     */
     @Override
     public void sendRecoverEmail(String email, List<Request> requests) {
         StringBuilder body = new StringBuilder("Danh sách yêu cầu của bạn:\n\n");

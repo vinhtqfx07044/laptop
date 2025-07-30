@@ -8,6 +8,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
+/**
+ * Service interface for managing service items.
+ * Provides methods for creating, retrieving, updating, listing, importing, and exporting service items.
+ */
 public interface ServiceItemService {
     ServiceItem create(ServiceItem serviceItem);
 

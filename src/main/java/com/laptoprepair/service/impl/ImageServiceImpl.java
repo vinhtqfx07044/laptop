@@ -18,6 +18,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Implementation of the {@link ImageService} interface.
+ * Handles the business logic for managing images associated with repair requests,
+ * including deletion, uploading, and updating.
+ */
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -29,6 +34,14 @@ public class ImageServiceImpl implements ImageService {
     private final ImageValidator imageValidator;
     private final FileStorageService fileStorageService;
 
+    /**
+     * Deletes specified images associated with a request.
+     * @param requestId The ID of the request.
+     * @param currentImages The current list of images for the request.
+     * @param toDelete An array of filenames to be deleted.
+     * @return The updated list of images after deletion.
+     * @throws ValidationException If an error occurs during image deletion.
+     */
     @Override
     public List<RequestImage> deleteImages(UUID requestId, List<RequestImage> currentImages, String[] toDelete)
             throws ValidationException {
@@ -50,6 +63,15 @@ public class ImageServiceImpl implements ImageService {
         return updatedImages;
     }
 
+    /**
+     * Uploads new images and associates them with a request.
+     * @param requestId The ID of the request.
+     * @param currentImages The current list of images for the request.
+     * @param newImages An array of MultipartFile objects representing the new images to upload.
+     * @param request The Request entity to associate the images with.
+     * @return The updated list of images after uploading.
+     * @throws ValidationException If an error occurs during image upload or validation.
+     */
     @Override
     public List<RequestImage> uploadImages(UUID requestId, List<RequestImage> currentImages, MultipartFile[] newImages,
             Request request)
@@ -90,6 +112,14 @@ public class ImageServiceImpl implements ImageService {
         return updatedImages;
     }
 
+    /**
+     * Updates the images associated with a request by deleting old ones and uploading new ones.
+     * @param request The Request entity whose images are to be updated.
+     * @param newImages An array of MultipartFile objects representing new images to add.
+     * @param toDelete An array of filenames of images to be deleted.
+     * @return The final list of RequestImage objects after updates.
+     * @throws ValidationException If an error occurs during image processing.
+     */
     @Override
     public List<RequestImage> updateRequestServiceImages(Request request, MultipartFile[] newImages, String[] toDelete)
             throws ValidationException {

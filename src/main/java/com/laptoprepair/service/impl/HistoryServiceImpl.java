@@ -13,6 +13,10 @@ import java.util.HashSet;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Implementation of the {@link HistoryService} interface.
+ * Provides methods for adding request history records and computing changes between request states.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -20,6 +24,12 @@ public class HistoryServiceImpl implements HistoryService {
 
     private final TimeProvider timeProvider;
 
+    /**
+     * Adds a new history record to a request.
+     * @param request The Request object to which the history record will be added.
+     * @param changes A string describing the changes or notes for this history entry.
+     * @param user The user who made the changes.
+     */
     @Override
     public void addRequestHistoryRecord(Request request, String changes, String user) {
         RequestHistory history = new RequestHistory();
@@ -33,6 +43,13 @@ public class HistoryServiceImpl implements HistoryService {
         request.getHistory().add(history);
     }
 
+    /**
+     * Computes the differences between an old and a new Request object.
+     * Generates a string summarizing changes in status, appointment date, request items, and total price.
+     * @param oldRequest The original Request object.
+     * @param newRequest The updated Request object.
+     * @return A string detailing the changes, or an empty string if no significant changes.
+     */
     @Override
     public String computeRequestChanges(Request oldRequest, Request newRequest) {
         StringBuilder changes = new StringBuilder();
@@ -63,6 +80,13 @@ public class HistoryServiceImpl implements HistoryService {
         return changes.toString().trim();
     }
 
+    /**
+     * Compares two lists of RequestItem objects for equality.
+     * This comparison is based on the content of the items, not just their references.
+     * @param oldItems The list of old request items.
+     * @param newItems The list of new request items.
+     * @return true if the lists are equal in content, false otherwise.
+     */
     @Override
     public boolean areRequestItemsEqual(List<RequestItem> oldItems, List<RequestItem> newItems) {
         if (oldItems == null || newItems == null) {

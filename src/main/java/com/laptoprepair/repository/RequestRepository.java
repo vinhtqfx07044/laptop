@@ -11,11 +11,27 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Repository interface for {@link Request} entities.
+ * Provides methods for performing CRUD operations and custom queries related to repair requests.
+ */
 public interface RequestRepository extends JpaRepository<Request, UUID> {
 
+       /**
+        * Finds a Request by its ID, eagerly fetching associated details.
+        * @param id The UUID of the request.
+        * @return An Optional containing the Request if found, otherwise empty.
+        */
        @Query("SELECT r FROM Request r WHERE r.id = :id")
        Optional<Request> findByIdWithDetails(@Param("id") UUID id);
 
+       /**
+        * Finds a paginated list of Requests based on search criteria and status.
+        * @param search Optional search term to filter requests by name.
+        * @param status Optional status to filter requests.
+        * @param pageable Pagination information.
+        * @return A Page of Request entities.
+        */
        @Query(value = "SELECT * FROM request r " +
                      "WHERE (:search IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%',:search,'%'))) " +
                      "AND (:status IS NULL OR r.status = CAST(:status AS VARCHAR)) " +
@@ -26,7 +42,12 @@ public interface RequestRepository extends JpaRepository<Request, UUID> {
                      @Param("status") String status,
                      Pageable pageable);
 
-       // Find requests by email for recovery
+       /**
+        * Finds a list of Requests associated with a given email address.
+        * This is used for recovery purposes.
+        * @param email The email address to search for.
+        * @return A List of Request entities matching the email.
+        */
        @Query("SELECT r FROM Request r WHERE r.email = :email")
        List<Request> findByEmail(@Param("email") String email);
 }

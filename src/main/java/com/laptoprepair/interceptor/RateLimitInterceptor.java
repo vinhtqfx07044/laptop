@@ -9,6 +9,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.lang.NonNull;
 
+/**
+ * Interceptor for applying rate limiting to incoming requests.
+ * Prevents abuse by limiting the number of requests from a single source within a time window.
+ */
 @Component
 @RequiredArgsConstructor
 public class RateLimitInterceptor implements HandlerInterceptor {
