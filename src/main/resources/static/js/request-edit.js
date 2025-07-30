@@ -8,13 +8,22 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Vietnamese currency formatter
-function formatVietnameseCurrency(amount) {
-    if (!amount) return '0 ₫';
-    return new Intl.NumberFormat('vi-VN', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2
-    }).format(amount) + ' ₫';
+
+// Calculate line total with same logic as backend CurrencyUtils
+function calculateLineTotal(price, discount, quantity, vatRate) {
+    if (!price) return 0;
+
+    const safeDiscount = discount || 0;
+    const safeVatRate = vatRate || 0;
+
+    // Calculate net amount after discount
+    const net = (price - safeDiscount) * quantity;
+
+    // Add VAT
+    const withVat = net + (net * safeVatRate);
+
+    // Round to match backend (HALF_UP, 0 decimal places)
+    return Math.round(withVat);
 }
 
 const clearDatalistIfShort = (input) => {
@@ -126,8 +135,7 @@ function renderTable() {
 
     let total = 0;
     tbody.innerHTML = items.map((it, i) => {
-        const net = (it.price - it.discount) * it.quantity;
-        const line = net + (net * it.vatRate);
+        const line = calculateLineTotal(it.price, it.discount, it.quantity, it.vatRate);
         total += line;
 
         const deleteBtn = window.isRequestLocked ?
@@ -148,8 +156,9 @@ function renderTable() {
         </tr>`;
     }).join('');
 
+    // Apply rounding to total to match backend behavior
     const totalAmount = document.getElementById('totalAmount');
-    if (totalAmount) totalAmount.textContent = formatVietnameseCurrency(total);
+    if (totalAmount) totalAmount.textContent = formatVietnameseCurrency(Math.round(total));
 }
 
 

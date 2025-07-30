@@ -1,6 +1,7 @@
 package com.laptoprepair.entity;
 
 import com.laptoprepair.enums.RequestStatus;
+import com.laptoprepair.utils.CurrencyUtils;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Data;
@@ -41,7 +42,6 @@ public class Request extends BaseEntity {
 
     private LocalDateTime completedAt;
 
-
     @OneToMany(mappedBy = "request", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RequestItem> items = new ArrayList<>();
 
@@ -64,16 +64,6 @@ public class Request extends BaseEntity {
     }
 
     public BigDecimal getTotal() {
-        return calculateTotal();
-    }
-
-    private BigDecimal calculateTotal() {
-        if (items == null || items.isEmpty()) {
-            return BigDecimal.ZERO;
-        }
-
-        return items.stream()
-                .map(RequestItem::getLineTotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return CurrencyUtils.calculateRequestTotal(items);
     }
 }

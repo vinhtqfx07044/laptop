@@ -4,7 +4,7 @@ import com.laptoprepair.entity.ServiceItem;
 import com.laptoprepair.exception.CSVImportException;
 import com.laptoprepair.exception.NotFoundException;
 import com.laptoprepair.repository.ServiceItemRepository;
-import com.laptoprepair.service.MappingService;
+
 import com.laptoprepair.service.ServiceItemService;
 import com.laptoprepair.validation.ServiceItemValidator;
 
@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -33,9 +34,14 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ServiceItemServiceImpl implements ServiceItemService {
 
+    private static final String NAME_FIELD = "name";
+    private static final String PRICE_FIELD = "price";
+    private static final String VAT_RATE_FIELD = "vatRate";
+    private static final String WARRANTY_DAYS_FIELD = "warrantyDays";
+    private static final String ACTIVE_FIELD = "active";
+
     private final ServiceItemRepository serviceItemRepository;
     private final ServiceItemValidator serviceItemValidator;
-    private final MappingService mappingService;
 
     @Override
     public ServiceItem create(ServiceItem serviceItem) {
@@ -52,7 +58,7 @@ public class ServiceItemServiceImpl implements ServiceItemService {
 
     @Override
     public ServiceItem update(UUID id, ServiceItem incomingServiceItem) {
-        ServiceItem existingServiceItem = findById(id);
+        ServiceItem existingServiceItem = this.findById(id);
 
         serviceItemValidator.validateUniqueNameOnUpdate(id, incomingServiceItem.getName());
 
@@ -81,13 +87,13 @@ public class ServiceItemServiceImpl implements ServiceItemService {
 
         try (Reader reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8);
                 CSVParser parser = new CSVParser(reader, CSVFormat.Builder.create()
-                        .setHeader("name", "price", "vatRate", "warrantyDays", "active")
+                        .setHeader(NAME_FIELD, PRICE_FIELD, VAT_RATE_FIELD, WARRANTY_DAYS_FIELD, ACTIVE_FIELD)
                         .setSkipHeaderRecord(true).build())) {
 
             int rowNumber = 1;
             for (CSVRecord csvRecord : parser) {
                 rowNumber++;
-                ServiceItem serviceItem = mappingService.copyCSVRecordFields(csvRecord, rowNumber);
+                ServiceItem serviceItem = copyCSVRecordFields(csvRecord, rowNumber);
                 serviceItemRepository.findByName(serviceItem.getName()).ifPresent(existing -> {
                     serviceItem.setId(existing.getId());
                     serviceItem.setCreatedAt(existing.getCreatedAt());
@@ -113,7 +119,7 @@ public class ServiceItemServiceImpl implements ServiceItemService {
             StringWriter stringWriter = new StringWriter();
             try (CSVPrinter csvPrinter = new CSVPrinter(stringWriter,
                     CSVFormat.Builder.create()
-                            .setHeader("name", "price", "vatRate", "warrantyDays", "active")
+                            .setHeader(NAME_FIELD, PRICE_FIELD, VAT_RATE_FIELD, WARRANTY_DAYS_FIELD, ACTIVE_FIELD)
                             .build())) {
                 for (ServiceItem serviceItem : serviceItemRepository.findAll()) {
                     csvPrinter.printRecord(
@@ -141,4 +147,40 @@ public class ServiceItemServiceImpl implements ServiceItemService {
         return result;
     }
 
+    private ServiceItem copyCSVRecordFields(CSVRecord csvRecord, int rowNumber) throws CSVImportException {
+        ServiceItem serviceItem = new ServiceItem();
+
+        try {
+            // Parse name
+            String name = csvRecord.get(NAME_FIELD);
+            serviceItemValidator.validateCSVName(name, rowNumber);
+            serviceItem.setName(name.trim());
+
+            // Parse price
+            BigDecimal price = new BigDecimal(csvRecord.get(PRICE_FIELD));
+            serviceItemValidator.validateCSVPrice(price, rowNumber);
+            serviceItem.setPrice(price);
+
+            // Parse vatRate
+            BigDecimal vatRate = new BigDecimal(csvRecord.get(VAT_RATE_FIELD));
+            serviceItemValidator.validateCSVVatRate(vatRate, rowNumber);
+            serviceItem.setVatRate(vatRate);
+
+            // Parse warrantyDays
+            int warrantyDays = Integer.parseInt(csvRecord.get(WARRANTY_DAYS_FIELD));
+            serviceItemValidator.validateCSVWarrantyDays(warrantyDays, rowNumber);
+            serviceItem.setWarrantyDays(warrantyDays);
+
+            // Parse active (default to true if not specified or invalid)
+            String activeStr = csvRecord.get(ACTIVE_FIELD);
+            serviceItem.setActive(
+                    activeStr == null || activeStr.trim().isEmpty() || Boolean.parseBoolean(activeStr.trim()));
+
+            return serviceItem;
+        } catch (NumberFormatException e) {
+            throw new CSVImportException("Dữ liệu số không hợp lệ", rowNumber);
+        } catch (IllegalArgumentException e) {
+            throw new CSVImportException("Cột không tồn tại trong file CSV", rowNumber);
+        }
+    }
 }

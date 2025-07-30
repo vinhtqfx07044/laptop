@@ -89,8 +89,8 @@
                                         <td>
                                             <strong th:text="${item.name}"></strong>
                                         </td>
-                                        <td
-                                            th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')} + ' VND'">
+                                        <td>
+                                            <span class="currency-format" th:data-amount="${item.price}"></span>
                                         </td>
                                         <td
                                             th:text="${#numbers.formatDecimal(item.vatRate * 100, 1, 'POINT', 1, 'POINT')} + '%'">

@@ -68,15 +68,15 @@
                                     <tr th:each="item : ${request.items}">
                                         <td th:text="${item.name}"></td>
                                         <td th:text="${item.quantity}"></td>
-                                        <td
-                                            th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'">
+                                        <td>
+                                            <span class="currency-format" th:data-amount="${item.price}"></span>
                                         </td>
-                                        <td
-                                            th:text="${#numbers.formatDecimal(item.discount, 0, 'COMMA', 0, 'POINT')} + ' ₫'">
+                                        <td>
+                                            <span class="currency-format" th:data-amount="${item.discount}"></span>
                                         </td>
                                         <td th:text="${(item.vatRate * 100)} + '%'"></td>
-                                        <td
-                                            th:text="${#numbers.formatDecimal(item.lineTotal, 0, 'COMMA', 0, 'POINT')} + ' ₫'">
+                                        <td>
+                                            <span class="currency-format" th:data-amount="${item.lineTotal}"></span>
                                         </td>
                                         <td th:text="${item.warrantyDays ?: 0}"></td>
                                         <td
@@ -94,9 +94,9 @@
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <span class="fw-bold">Tổng cộng:</span>
-                                            <h4 class="text-primary mb-0"
-                                                th:text="${#numbers.formatDecimal(request.getTotal(), 0, 'COMMA', 0, 'POINT')} + ' ₫'">
-                                                0 ₫
+                                            <h4 class="text-primary mb-0">
+                                                <span class="currency-format" th:data-amount="${request.getTotal()}">0
+                                                    ₫</span>
                                             </h4>
                                         </div>
                                     </div>

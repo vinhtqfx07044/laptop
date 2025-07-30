@@ -3,27 +3,29 @@ package com.laptoprepair.service.impl;
 import com.laptoprepair.entity.Request;
 import com.laptoprepair.entity.RequestImage;
 import com.laptoprepair.entity.RequestItem;
+import com.laptoprepair.entity.ServiceItem;
 import com.laptoprepair.enums.RequestStatus;
 import com.laptoprepair.exception.NotFoundException;
 import com.laptoprepair.exception.ValidationException;
 
 import com.laptoprepair.repository.RequestRepository;
+import com.laptoprepair.repository.ServiceItemRepository;
 import com.laptoprepair.service.AuthService;
 import com.laptoprepair.service.EmailService;
 import com.laptoprepair.service.HistoryService;
 import com.laptoprepair.service.ImageService;
-import com.laptoprepair.service.MappingService;
 import com.laptoprepair.service.RequestService;
 import com.laptoprepair.utils.TimeProvider;
 import com.laptoprepair.validation.RequestValidator;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +37,7 @@ import java.util.UUID;
 public class RequestServiceImpl implements RequestService {
 
     private final RequestRepository reqRepo;
-    private final MappingService mappingService;
+    private final ServiceItemRepository serviceItemRepository;
     private final HistoryService historyService;
     private final ImageService imageService;
     private final EmailService emailService;
@@ -86,7 +88,7 @@ public class RequestServiceImpl implements RequestService {
         for (RequestItem item : incomingRequest.getItems()) {
             item.setRequest(incomingRequest);
         }
-        mappingService.copyServiceItemsFields(incomingRequest.getItems());
+        copyServiceItemsFields(incomingRequest.getItems());
 
         // Build note after all data preparation
         StringBuilder noteBuilder = new StringBuilder("Tạo mới yêu cầu");
@@ -116,7 +118,7 @@ public class RequestServiceImpl implements RequestService {
         // Load existing request
         Request existingRequest = reqRepo.findByIdWithDetails(id)
                 .orElseThrow(() -> new ValidationException("Không tìm thấy yêu cầu với ID: " + id));
-        
+
         // Trigger lazy loading for collections
         existingRequest.getItems().size();
         existingRequest.getImages().size();
@@ -129,7 +131,7 @@ public class RequestServiceImpl implements RequestService {
 
         // Snapshot để làm history
         Request archivedRequest = new Request();
-        mappingService.copyRequestFields(archivedRequest, existingRequest, true);
+        copyRequestFields(archivedRequest, existingRequest, true);
 
         // Set completion date if status is changing to COMPLETED
         if (existingRequest.getStatus() != RequestStatus.COMPLETED
@@ -142,9 +144,12 @@ public class RequestServiceImpl implements RequestService {
                 toDelete);
 
         // Snapshot service items, copy mọi trường và lưu
-        mappingService.copyServiceItemsFields(incomingRequest.getItems());
-        mappingService.copyRequestFields(existingRequest, incomingRequest, false);
-        
+        if (!existingRequest.getStatus().isRequestItemsLocked()) {
+            copyServiceItemsFields(incomingRequest.getItems());
+        }
+
+        copyRequestFields(existingRequest, incomingRequest, false);
+
         // Apply processed images after field copy
         existingRequest.getImages().clear();
         existingRequest.getImages().addAll(currentImages);
@@ -173,4 +178,55 @@ public class RequestServiceImpl implements RequestService {
         emailService.sendRecoverEmail(email, requests);
     }
 
+    private void copyServiceItemsFields(List<RequestItem> items) {
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+
+        for (RequestItem item : items) {
+            ServiceItem serviceItem = serviceItemRepository.findByIdAndActive(item.getServiceItemId())
+                    .orElseThrow(() -> new NotFoundException("Không tìm dịch vụ sửa chửa: " + item.getName()));
+
+            BeanUtils.copyProperties(serviceItem, item, "id", "serviceItemId", "active", "createdAt", "updatedAt");
+
+            if (item.getDiscount().compareTo(item.getPrice()) > 0) {
+                throw new ValidationException("Giảm giá vượt quá giá gốc: " + item.getName());
+            }
+        }
+    }
+
+    private Request copyRequestFields(Request target, Request source, boolean deepCopyCollections) {
+        BeanUtils.copyProperties(source, target, "id", "items", "images", "history",
+                "createdAt", "updatedAt", "createdBy", "updatedBy");
+
+        if (deepCopyCollections) {
+            if (source.getItems() == null) {
+                target.setItems(null);
+                return target;
+            }
+
+            List<RequestItem> copiedItems = new ArrayList<>();
+            for (RequestItem item : source.getItems()) {
+                RequestItem newItem = new RequestItem();
+                BeanUtils.copyProperties(item, newItem, "id", "request");
+                newItem.setRequest(target);
+                copiedItems.add(newItem);
+            }
+            target.setItems(copiedItems);
+        } else {
+            // For updating - only change reference
+            if (source.getItems() != null) {
+                target.getItems().clear();
+                source.getItems().forEach(item -> item.setRequest(target));
+                target.getItems().addAll(source.getItems());
+            }
+            if (source.getImages() != null) {
+                target.getImages().clear();
+                source.getImages().forEach(image -> image.setRequest(target));
+                target.getImages().addAll(source.getImages());
+            }
+        }
+
+        return target;
+    }
 }

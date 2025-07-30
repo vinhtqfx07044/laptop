@@ -1,6 +1,7 @@
 package com.laptoprepair.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.laptoprepair.utils.CurrencyUtils;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -38,19 +39,7 @@ public class RequestItem extends BaseEntity {
     private BigDecimal discount = BigDecimal.ZERO;
 
     public BigDecimal getLineTotal() {
-        return calculateSubtotal();
-    }
-
-    private BigDecimal calculateSubtotal() {
-        if (price == null)
-            return BigDecimal.ZERO;
-
-        BigDecimal safeDiscount = discount != null ? discount : BigDecimal.ZERO;
-        BigDecimal safeVatRate = vatRate != null ? vatRate : BigDecimal.ZERO;
-
-        BigDecimal net = price.subtract(safeDiscount)
-                .multiply(BigDecimal.valueOf(quantity));
-        return net.add(net.multiply(safeVatRate));
+        return CurrencyUtils.calculateLineTotal(price, discount, quantity, vatRate);
     }
 
     @Override
