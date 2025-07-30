@@ -1,7 +1,7 @@
-let items = [];
-let serviceSearchTimeout = null;
+let items = []; // Stores the list of service items.
+let serviceSearchTimeout = null; // Timeout for service search debounce.
 
-// HTML escape function to prevent XSS
+// HTML escape function to prevent XSS.
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
@@ -9,24 +9,21 @@ function escapeHtml(text) {
 }
 
 
-// Calculate line total with same logic as backend CurrencyUtils
+// Calculates the line total with the same logic as the backend CurrencyUtils.
 function calculateLineTotal(price, discount, quantity, vatRate) {
     if (!price) return 0;
 
     const safeDiscount = discount || 0;
     const safeVatRate = vatRate || 0;
-
-    // Calculate net amount after discount
     const net = (price - safeDiscount) * quantity;
-
-    // Add VAT
     const withVat = net + (net * safeVatRate);
 
-    // Round to match backend (HALF_UP, 0 decimal places)
+    // Rounds to match backend (HALF_UP, 0 decimal places).
     return Math.round(withVat);
 }
 
 const clearDatalistIfShort = (input) => {
+    // If the input value is less than 3 characters, clear the datalist.
     if (input.value.length < 3) updateDatalist([]);
 };
 
@@ -37,52 +34,62 @@ document.addEventListener('DOMContentLoaded', function () {
     const newImages = document.getElementById('newImages');
 
     if (serviceInput) {
+        // Adds an input event listener to the service input for debounced search.
         serviceInput.addEventListener('input', function () {
             clearTimeout(serviceSearchTimeout);
             serviceSearchTimeout = setTimeout(() => searchAndUpdateDatalist(this.value), 300);
         });
+        // Clears the datalist on focus or click if the input value is short.
         serviceInput.addEventListener('focus', () => clearDatalistIfShort(serviceInput));
         serviceInput.addEventListener('click', () => clearDatalistIfShort(serviceInput));
     }
 
+    // Initializes items from server-provided data if available.
     if (window.serverItems?.length) {
         items = window.serverItems;
         renderTable();
     }
 
+    // Stores the original value of the status select element.
     statusSelect?.setAttribute('data-original-value', statusSelect.value);
 
+    // Clears new images and removes the image preview if the 'success' parameter is true in the URL.
     if (new URLSearchParams(location.search).get('success') === 'true') {
         if (newImages) newImages.value = '';
         document.getElementById('imagePreview')?.remove();
     }
 
+    // Clears the confirmation note when the confirm modal is shown.
     confirmModal?.addEventListener('shown.bs.modal', () =>
         document.getElementById('confirmNote').value = '');
 
+    // Adds event listeners for image validation and updating image slots.
     newImages?.addEventListener('change', validateMaxImageSlots);
     document.querySelectorAll('input[name="toDelete"]').forEach(cb =>
         cb.addEventListener('change', updateImageSlots));
 });
 
 function searchAndUpdateDatalist(query) {
+    // Returns early if the query is too short.
     if (query.length < 2) return updateDatalist([]);
 
+    // Fetches service items from the API based on the query.
     fetch(`/staff/service-items/search?q=${encodeURIComponent(query)}&size=20&page=0`)
         .then(res => res.json())
-        .then(data => updateDatalist(data.content || []))
-        .catch(() => { });
+        .then(data => updateDatalist(data.content || [])) // Updates the datalist with the fetched data.
+        .catch(() => { }); // Catches and ignores any errors during the fetch.
 }
 
 function updateDatalist(services) {
     const datalist = document.getElementById('serviceList');
-    if (!datalist) return;
+    if (!datalist) return; // Exits if the datalist element is not found.
 
+    // Generates HTML options for each service and updates the datalist.
     datalist.innerHTML = services.map(service => {
         const price = formatVietnameseCurrency(service.price);
         const vat = (service.vatRate * 100).toFixed(1) + '%';
         const warranty = service.warrantyDays + ' ngày';
-        // Use double escaping for HTML attribute values to handle quotes properly
+        // Uses double escaping for HTML attribute values to handle quotes properly.
         const escapedName = escapeHtml(service.name).replace(/"/g, '&quot;');
         const escapedLabel = escapeHtml(`${service.name} - ${price} - VAT ${vat} - BH ${warranty}`).replace(/"/g, '&quot;');
         const escapedData = escapeHtml(JSON.stringify(service)).replace(/"/g, '&quot;');
@@ -93,19 +100,25 @@ function updateDatalist(services) {
 }
 
 function addItem() {
+    // Prevents adding items if the request is locked.
     if (window.isRequestLocked) return alert('Không thể thêm hạng mục khi phiếu đã được khóa');
 
     const serviceInput = document.getElementById('serviceInput');
     const datalist = document.getElementById('serviceList');
+    // Finds the selected option from the datalist based on the input value.
     const selectedOption = Array.from(datalist.options).find(opt => opt.value === serviceInput.value);
 
+    // Alerts if no service is selected from the list.
     if (!selectedOption) return alert('Vui lòng chọn dịch vụ từ danh sách');
 
     const selectedService = JSON.parse(selectedOption.getAttribute('data-service'));
+    // Checks if the selected service already exists in the items list.
     const existingItem = items.find(item => item.serviceItemId === selectedService.id);
 
+    // Alerts if the service has already been added.
     if (existingItem) return alert(`Dịch vụ "${selectedService.name}" đã được thêm vào danh sách. Vui lòng chọn dịch vụ khác hoặc xóa dịch vụ cũ trước.`);
 
+    // Adds the new service item to the items array with default quantity and discount.
     items.push({
         serviceItemId: selectedService.id,
         name: selectedService.name,
@@ -123,7 +136,9 @@ function addItem() {
 }
 
 function removeItem(i) {
+    // Prevents removing items if the request is locked.
     if (window.isRequestLocked) return alert('Không thể xóa hạng mục khi phiếu đã được khóa');
+    // Confirms deletion with the user.
     if (!confirm('Bạn có chắc chắn muốn xóa dịch vụ này?')) return;
     items.splice(i, 1);
     renderTable();
@@ -131,17 +146,20 @@ function removeItem(i) {
 
 function renderTable() {
     const tbody = document.querySelector('#itemsTable tbody');
-    if (!tbody) return;
+    if (!tbody) return; // Exits if the table body element is not found.
 
     let total = 0;
+    // Generates table rows for each item in the 'items' array.
     tbody.innerHTML = items.map((it, i) => {
         const line = calculateLineTotal(it.price, it.discount, it.quantity, it.vatRate);
         total += line;
 
+        // Determines if the delete button should be shown or a lock icon based on request lock status.
         const deleteBtn = window.isRequestLocked ?
             `<span class="text-muted"><i class="fas fa-lock"></i></span>` :
             `<button type="button" class="btn btn-sm btn-danger" onclick="removeItem(${i})"><i class="fas fa-trash"></i></button>`;
 
+        // Returns the HTML for a table row, including hidden inputs for form submission.
         return `<tr>
             <td>${escapeHtml(it.name)}</td>
             <td>${it.quantity}</td>
@@ -156,18 +174,20 @@ function renderTable() {
         </tr>`;
     }).join('');
 
-    // Apply rounding to total to match backend behavior
+    // Updates the total amount displayed, applying rounding to match backend behavior.
     const totalAmount = document.getElementById('totalAmount');
     if (totalAmount) totalAmount.textContent = formatVietnameseCurrency(Math.round(total));
 }
 
 
 function removeExistingItem(button) {
+    // Confirms deletion with the user.
     if (!confirm('Bạn có chắc chắn muốn xóa dịch vụ này?')) return;
 
     const row = button.closest('tr');
     row.style.display = 'none';
 
+    // Creates a hidden input field to mark the item for deletion on form submission.
     const hiddenInput = document.createElement('input');
     hiddenInput.type = 'hidden';
     hiddenInput.name = 'deletedItems[]';
@@ -179,14 +199,17 @@ function submitForm() {
     const form = document.getElementById('requestForm');
     const note = document.getElementById('confirmNote').value;
 
+    // Removes any existing hidden note inputs to prevent duplicates.
     form.querySelectorAll('input[name="note"]').forEach(input => input.remove());
 
+    // Creates a new hidden input for the confirmation note and appends it to the form.
     const hiddenNote = document.createElement('input');
     hiddenNote.type = 'hidden';
     hiddenNote.name = 'note';
     hiddenNote.value = note;
     form.appendChild(hiddenNote);
 
+    // Hides the confirmation modal and submits the form.
     bootstrap.Modal.getInstance(document.getElementById('confirmModal'))?.hide();
     form.submit();
 }
@@ -195,14 +218,18 @@ function validateMaxImageSlots(e) {
     const files = e.target.files;
     const existingImages = document.querySelectorAll('input[name="toDelete"]:not(:checked)').length;
 
+    // If no files are selected or the total number of images (existing + new) is within the limit (5), return.
     if (!files.length || existingImages + files.length <= 5) return;
 
+    // Calculates the number of remaining allowed slots.
     const maxAllowed = 5 - existingImages;
+    // Alerts the user if the image limit is exceeded and suggests actions.
     alert(`Chỉ còn ${maxAllowed} slot trống. Hãy bỏ chọn bớt ảnh hoặc đánh dấu xóa thêm ảnh cũ.`);
-    e.target.value = '';
+    e.target.value = ''; // Clears the file input to prevent invalid submission.
 }
 
 function updateImageSlots() {
     const fileInput = document.getElementById('newImages');
+    // Re-validates image slots if new files are selected (e.g., after a deletion checkbox is toggled).
     if (fileInput?.files.length) validateMaxImageSlots({ target: fileInput });
 }

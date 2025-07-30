@@ -1,5 +1,6 @@
-//Global logout function
+// Global logout function.
 function doLogout() {
+    // Confirms with the user before logging out.
     if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
         const logoutForm = document.getElementById('logoutForm');
         if (logoutForm) {
@@ -10,7 +11,7 @@ function doLogout() {
     }
 }
 
-// Vietnamese currency formatter
+// Formats a number as Vietnamese currency.
 function formatVietnameseCurrency(amount) {
     if (!amount) return '0 ₫';
     return new Intl.NumberFormat('vi-VN', {
@@ -19,11 +20,12 @@ function formatVietnameseCurrency(amount) {
     }).format(amount) + ' ₫';
 }
 
-// Auto-format all currency elements on page load
+// Automatically formats all currency elements on page load.
 document.addEventListener('DOMContentLoaded', function () {
     formatAllCurrencyElements();
 });
 
+// Iterates through all elements with the 'currency-format' class and formats their content.
 function formatAllCurrencyElements() {
     const currencyElements = document.querySelectorAll('.currency-format');
     currencyElements.forEach(element => {

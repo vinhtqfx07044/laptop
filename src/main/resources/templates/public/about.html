@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-
 <head th:replace="~{fragments/head :: commonHead('Về chúng tôi', false)}"></head>
 
 <body class="d-flex flex-column min-vh-100">
@@ -14,7 +13,7 @@
         </div>
 
         <div class="row">
-            <!-- Shop Information -->
+            <!-- Shop Information Card: Displays contact details and working hours of the shop. -->
             <div class="col-md-6 mb-4">
                 <div class="card h-100">
                     <div class="card-header bg-primary text-white">
@@ -28,6 +27,7 @@
                             <h5>Shop Laptop</h5>
                         </div>
 
+                        <!-- Address -->
                         <div class="contact-item mb-3">
                             <div class="d-flex align-items-start">
                                 <i class="fas fa-map-marker-alt text-primary me-3 mt-1"></i>
@@ -38,6 +38,7 @@
                             </div>
                         </div>
 
+                        <!-- Phone Number -->
                         <div class="contact-item mb-3">
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-phone text-primary me-3"></i>
@@ -48,6 +49,7 @@
                             </div>
                         </div>
 
+                        <!-- Email Address -->
                         <div class="contact-item mb-3">
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-envelope text-primary me-3"></i>
@@ -59,6 +61,7 @@
                             </div>
                         </div>
 
+                        <!-- Working Hours -->
                         <div class="contact-item">
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-clock text-primary me-3"></i>
@@ -73,7 +76,7 @@
                 </div>
             </div>
 
-            <!-- Google Maps -->
+            <!-- Google Maps Card: Embeds a Google Map showing the shop's location. -->
             <div class="col-md-6 mb-4">
                 <div class="card h-100">
                     <div class="card-header bg-success text-white">
@@ -92,12 +95,13 @@
             </div>
         </div>
 
-        <!-- FAQ Section -->
+        <!-- FAQ Section: Displays frequently asked questions in an accordion format. -->
         <div class="row mt-5">
             <div class="col-12">
                 <h2 class="mb-4">Câu hỏi thường gặp</h2>
 
                 <div class="accordion" id="faqAccordion">
+                    <!-- FAQ Item 1: Average repair time -->
                     <div class="accordion-item">
                         <h3 class="accordion-header" id="faq1">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
@@ -120,6 +124,7 @@
                         </div>
                     </div>
 
+                    <!-- FAQ Item 2: Warranty information -->
                     <div class="accordion-item">
                         <h3 class="accordion-header" id="faq2">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
@@ -141,6 +146,7 @@
                         </div>
                     </div>
 
+                    <!-- FAQ Item 3: On-site support -->
                     <div class="accordion-item">
                         <h3 class="accordion-header" id="faq3">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
@@ -159,6 +165,7 @@
                         </div>
                     </div>
 
+                    <!-- FAQ Item 4: Payment methods -->
                     <div class="accordion-item">
                         <h3 class="accordion-header" id="faq4">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
@@ -184,15 +191,17 @@
             </div>
         </div>
 
-        <!-- Quick Actions -->
+        <!-- Quick Actions Section: Provides prominent buttons for common user actions. -->
         <div class="row mt-4 mb-4">
             <div class="col-12 text-center">
                 <h3 class="mb-4">Bạn cần hỗ trợ?</h3>
                 <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    <!-- Button to submit a new repair request -->
                     <a href="/submit" class="btn btn-outline-primary btn-lg">
                         <i class="fas fa-plus me-2"></i>
                         Đặt lịch sửa chữa
                     </a>
+                    <!-- Button to lookup an existing repair request -->
                     <a href="/" class="btn btn-outline-primary btn-lg">
                         <i class="fas fa-search me-2"></i>
                         Tra cứu phiếu
@@ -204,8 +213,6 @@
     </main>
 
     <div th:replace="~{fragments/footer :: footer}"></div>
-
-    <!-- Chat Widget -->
     <div th:replace="~{fragments/chat :: chatWidget}"></div>
 
 </body>

@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="vi" xml:lang="vi">
-
 <head th:replace="~{fragments/head :: commonHead('Quản lý Dịch vụ', false)}"></head>
 
 <body class="d-flex flex-column min-vh-100">
@@ -11,24 +10,29 @@
             <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h1 class="mb-0">Danh sách Dịch vụ</h1>
+                    <!-- Action buttons for Import CSV, Export CSV, and Add New Service -->
                     <div class="d-flex gap-2">
+                        <!-- Button to open the CSV Import modal -->
                         <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
                             data-bs-target="#csvImportModal">
                             <i class="fas fa-upload me-2"></i>Import CSV
                         </button>
+                        <!-- Link to export service items as CSV -->
                         <a href="/staff/service-items/export" class="btn btn-outline-primary">
                             <i class="fas fa-download me-2"></i>Export CSV
                         </a>
+                        <!-- Button to add a new service item, triggers `addServiceItem()` JavaScript function -->
                         <button type="button" class="btn btn-outline-success" onclick="addServiceItem()">
                             <i class="fas fa-plus me-2"></i>Thêm mới
                         </button>
                     </div>
                 </div>
 
-                <!-- Filter Form -->
+                <!-- Filter Form: Allows filtering service items by active status and searching by name. -->
                 <div class="card mb-4">
                     <div class="card-body">
                         <form th:action="@{/staff/service-items}" method="get" class="row g-3">
+                            <!-- Status filter dropdown (All, Active Only, Inactive Only) -->
                             <div class="col-md-3">
                                 <label for="activeOnly" class="form-label">Trạng thái</label>
                                 <select name="activeOnly" id="activeOnly" class="form-select">
@@ -38,11 +42,13 @@
                                     </option>
                                 </select>
                             </div>
+                            <!-- Search input for service name -->
                             <div class="col-md-5">
                                 <label for="search" class="form-label">Tìm kiếm</label>
                                 <input type="text" name="search" id="search" class="form-control" th:value="${search}"
                                     placeholder="Nhập tên dịch vụ..." />
                             </div>
+                            <!-- Filter and Reset buttons -->
                             <div class="col-md-4 d-flex align-items-end gap-1">
                                 <button type="submit" class="btn btn-outline-primary flex-fill">
                                     <i class="fas fa-filter me-1"></i>Lọc
@@ -55,7 +61,7 @@
                     </div>
                 </div>
 
-                <!-- Record Count Display -->
+                <!-- Record Count Display: Shows the number of service items currently displayed and total items. -->
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <div class="text-muted">
                         <span th:if="${serviceItems.totalElements > 0}">
@@ -68,7 +74,7 @@
                     </div>
                 </div>
 
-                <!-- Service Items Table -->
+                <!-- Service Items Table: Displays the list of service items. -->
                 <div class="card">
                     <div class="card-body">
                         <div th:if="${serviceItems.totalElements > 0}" class="table-responsive">
@@ -85,23 +91,28 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    <!-- Iterates over each service item in the current page's content -->
                                     <tr th:each="item : ${serviceItems.content}" th:id="'row-' + ${item.id}">
                                         <td>
                                             <strong th:text="${item.name}"></strong>
                                         </td>
                                         <td>
+                                            <!-- Displays price formatted as currency using a custom JavaScript function (currency-format) -->
                                             <span class="currency-format" th:data-amount="${item.price}"></span>
                                         </td>
+                                        <!-- Displays VAT rate as a percentage, formatted to one decimal place -->
                                         <td
                                             th:text="${#numbers.formatDecimal(item.vatRate * 100, 1, 'POINT', 1, 'POINT')} + '%'">
                                         </td>
                                         <td th:text="${item.warrantyDays}"></td>
                                         <td>
+                                            <!-- Displays active status as a badge with dynamic styling -->
                                             <span th:class="${item.active ? 'badge bg-success' : 'badge bg-secondary'}"
                                                 th:text="${item.active ? 'Hoạt động' : 'Ngừng hoạt động'}"></span>
                                         </td>
                                         <td th:text="${#temporals.format(item.updatedAt, 'dd/MM/yyyy HH:mm')}"></td>
                                         <td class="text-center">
+                                            <!-- Edit button, populates the modal with item data using `data-` attributes -->
                                             <button type="button" class="btn btn-sm btn-outline-primary edit-btn"
                                                 th:data-id="${item.id}" th:data-name="${item.name}"
                                                 th:data-price="${item.price}" th:data-vat-rate="${item.vatRate}"
@@ -115,7 +126,7 @@
                             </table>
                         </div>
 
-                        <!-- Empty State -->
+                        <!-- Empty State: Message displayed when no service items are found. -->
                         <div th:unless="${serviceItems.totalElements > 0}" class="text-center py-5">
                             <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                             <h5 class="text-muted">Không có dịch vụ nào</h5>
@@ -127,6 +138,7 @@
                                     Chưa có dịch vụ nào được tạo. Hãy thêm dịch vụ mới để bắt đầu.
                                 </span>
                             </p>
+                            <!-- Button to add a new service item, opens the modal -->
                             <button type="button" class="btn btn-outline-success" data-bs-toggle="modal"
                                 data-bs-target="#serviceItemModal">
                                 <i class="fas fa-plus me-2"></i>Thêm dịch vụ mới
@@ -135,15 +147,17 @@
                     </div>
                 </div>
 
-                <!-- Pagination -->
+                <!-- Pagination: Navigation for browsing through multiple pages of service items. -->
                 <nav aria-label="Page navigation" th:if="${serviceItems.totalPages > 0}" class="mt-4">
                     <ul class="pagination justify-content-center">
+                        <!-- "Previous" page link -->
                         <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
                             <a class="page-link"
                                 th:href="@{/staff/service-items(page=${currentPage - 1}, size=10, search=${search}, activeOnly=${activeOnly})}"
                                 th:if="${currentPage > 0}">Trước</a>
                             <span class="page-link" th:if="${currentPage == 0}">Trước</span>
                         </li>
+                        <!-- "Next" page link -->
                         <li class="page-item"
                             th:classappend="${currentPage >= serviceItems.totalPages - 1} ? 'disabled'">
                             <a class="page-link"
@@ -157,7 +171,10 @@
         </div>
     </main>
 
-    <!-- Service Item Modal -->
+    <!--
+        Service Item Modal: A Bootstrap modal used for adding new service items or editing existing ones.
+        Its content is dynamically populated by JavaScript.
+    -->
     <div class="modal fade" id="serviceItemModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -166,8 +183,11 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <!-- Form for service item creation/editing -->
                     <form id="serviceItemForm" th:action="@{/staff/service-items/create}" method="post">
+                        <!-- Hidden input for service item ID (used for editing) -->
                         <input type="hidden" id="serviceItemId" name="id" />
+                        <!-- Hidden input to specify action type (create or update) -->
                         <input type="hidden" id="actionType" name="actionType" value="create" />
                         <div class="mb-3">
                             <label for="name" class="form-label">Tên dịch vụ <span class="text-danger">*</span></label>
@@ -211,7 +231,9 @@
         </div>
     </div>
 
-    <!-- CSV Import Modal -->
+    <!--
+        CSV Import Modal: A Bootstrap modal for uploading a CSV file to import service items.
+    -->
     <div class="modal fade" id="csvImportModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -237,8 +259,6 @@
     </div>
 
     <div th:insert="~{fragments/footer :: footer}"></div>
-
-    <!-- Include service-items JS -->
     <script src="/js/service-items.js"></script>
 
 </body>

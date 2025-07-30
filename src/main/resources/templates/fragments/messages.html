@@ -3,14 +3,14 @@
 
 <body>
     <div th:fragment="flashMessages" class="container mt-3">
-        <!-- Single error message -->
+        <!-- Conditional display for a single error message -->
         <div th:if="${errorMessage != null}" class="alert alert-danger alert-dismissible fade show" role="alert">
             <i class="fas fa-exclamation-triangle me-2"></i>
             <span th:text="${errorMessage}"></span>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
-        <!-- Multiple error messages -->
+        <!-- Conditional display for multiple error messages (e.g., from validation) -->
         <div th:if="${errorMessages != null and #lists.size(errorMessages) > 0}"
             class="alert alert-danger alert-dismissible fade show" role="alert">
             <i class="fas fa-exclamation-triangle me-2"></i>
@@ -20,7 +20,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
-        <!-- Success message -->
+        <!-- Conditional display for a success message -->
         <div th:if="${successMessage != null}" class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="fas fa-check-circle me-2"></i>
             <span th:text="${successMessage}"></span>
