@@ -42,6 +42,8 @@ uploads/
 # Logs
 *.log
 app.log
+logs/
+log/
 
 ### Additional files ###
 .claude/

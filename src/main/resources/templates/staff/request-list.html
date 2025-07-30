@@ -77,8 +77,10 @@
                                 </thead>
                                 <tbody>
                                     <tr th:each="request : ${requests.content}">
-                                        <td>
-                                            <code th:text="${#strings.abbreviate(request.id.toString(), 10)}"></code>
+                                        <td th:with="idStr=${request.id.toString()}">
+                                            <code th:text="${#strings.length(idStr) > 10 ? 
+                                                           '...' + #strings.substring(idStr, #strings.length(idStr) - 10) : 
+                                                           idStr}"></code>
                                         </td>
                                         <td th:text="${request.name}"></td>
                                         <td th:text="${request.phone}"></td>
