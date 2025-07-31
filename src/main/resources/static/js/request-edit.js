@@ -84,19 +84,23 @@ function updateDatalist(services) {
     const datalist = document.getElementById('serviceList');
     if (!datalist) return; // Exits if the datalist element is not found.
 
-    // Generates HTML options for each service and updates the datalist.
-    datalist.innerHTML = services.map(service => {
+    // Clear existing options
+    datalist.innerHTML = '';
+    
+    // Create options properly using DOM methods to avoid HTML escaping issues
+    services.forEach(service => {
+        const option = document.createElement('option');
         const price = formatVietnameseCurrency(service.price);
         const vat = (service.vatRate * 100).toFixed(1) + '%';
         const warranty = service.warrantyDays + ' ngày';
-        // Uses double escaping for HTML attribute values to handle quotes properly.
-        const escapedName = escapeHtml(service.name).replace(/"/g, '&quot;');
-        const escapedLabel = escapeHtml(`${service.name} - ${price} - VAT ${vat} - BH ${warranty}`).replace(/"/g, '&quot;');
-        const escapedData = escapeHtml(JSON.stringify(service)).replace(/"/g, '&quot;');
-        return `<option value="${escapedName}" 
-                        label="${escapedLabel}"
-                        data-service='${escapedData}'></option>`;
-    }).join('');
+        
+        // Set properties directly to avoid HTML attribute escaping issues
+        option.value = service.name;
+        option.label = `${service.name} - ${price} - VAT ${vat} - BH ${warranty}`;
+        option.setAttribute('data-service', JSON.stringify(service));
+        
+        datalist.appendChild(option);
+    });
 }
 
 function addItem() {
@@ -159,6 +163,16 @@ function renderTable() {
             `<span class="text-muted"><i class="fas fa-lock"></i></span>` :
             `<button type="button" class="btn btn-sm btn-danger" onclick="removeItem(${i})"><i class="fas fa-trash"></i></button>`;
 
+        // Create hidden inputs properly using DOM to avoid HTML attribute escaping issues
+        const hiddenInputsHtml = ['serviceItemId', 'quantity', 'discount', 'vatRate', 'warrantyDays', 'name', 'price']
+            .map(field => {
+                const value = String(it[field] || (field === 'quantity' ? 1 : 0));
+                // Use proper HTML attribute escaping for double quotes
+                const escapedValue = value.replace(/"/g, '&quot;');
+                return `<input type="hidden" name="items[${i}].${field}" value="${escapedValue}">`;
+            })
+            .join('');
+
         // Returns the HTML for a table row, including hidden inputs for form submission.
         return `<tr>
             <td>${escapeHtml(it.name)}</td>
@@ -168,9 +182,7 @@ function renderTable() {
             <td>${(it.vatRate * 100).toFixed(1)}%</td>
             <td class="fw-bold">${formatVietnameseCurrency(line)}</td>
             <td>${deleteBtn}</td>
-            ${['serviceItemId', 'quantity', 'discount', 'vatRate', 'warrantyDays', 'name', 'price']
-                .map(field => `<input type="hidden" name="items[${i}].${field}" value="${escapeHtml(String(it[field] || (field === 'quantity' ? 1 : 0)))}">`)
-                .join('')}
+            ${hiddenInputsHtml}
         </tr>`;
     }).join('');
 
@@ -208,6 +220,7 @@ function submitForm() {
     hiddenNote.name = 'note';
     hiddenNote.value = note;
     form.appendChild(hiddenNote);
+
 
     // Hides the confirmation modal and submits the form.
     bootstrap.Modal.getInstance(document.getElementById('confirmModal'))?.hide();

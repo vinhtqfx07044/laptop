@@ -98,7 +98,6 @@ public class HistoryServiceImpl implements HistoryService {
         }
 
         try {
-            // Use Set comparison with custom equals() method
             return new HashSet<>(oldItems).equals(new HashSet<>(newItems));
         } catch (Exception e) {
             log.error("Error comparing items", e);

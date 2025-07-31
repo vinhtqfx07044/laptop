@@ -34,7 +34,7 @@
                         <form th:action="@{/staff/service-items}" method="get" class="row g-3">
                             <!-- Status filter dropdown (All, Active Only, Inactive Only) -->
                             <div class="col-md-3">
-                                <label for="activeOnly" class="form-label">Trạng thái</label>
+                                <label for="activeOnly" class="form-label">Lọc theo trạng thái</label>
                                 <select name="activeOnly" id="activeOnly" class="form-select">
                                     <option value="" th:selected="${activeOnly == null}">Tất cả</option>
                                     <option value="true" th:selected="${activeOnly == true}">Chỉ hoạt động</option>
@@ -44,7 +44,7 @@
                             </div>
                             <!-- Search input for service name -->
                             <div class="col-md-5">
-                                <label for="search" class="form-label">Tìm kiếm</label>
+                                <label for="search" class="form-label">Tìm kiếm theo tên dịch vụ</label>
                                 <input type="text" name="search" id="search" class="form-control" th:value="${search}"
                                     placeholder="Nhập tên dịch vụ..." />
                             </div>

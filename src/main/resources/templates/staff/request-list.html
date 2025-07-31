@@ -22,7 +22,7 @@
                         <form th:action="@{/staff/requests/list}" method="get" class="row g-3">
                             <!-- Status filter dropdown -->
                             <div class="col-md-3">
-                                <label for="status" class="form-label">Lọc theo trạng thái phiếu</label>
+                                <label for="status" class="form-label">Lọc theo trạng thái</label>
                                 <select name="status" id="status" class="form-select">
                                     <option value="">Tất cả</option>
                                     <!-- Iterates over RequestStatus enum values to populate options -->
@@ -35,7 +35,7 @@
                             <div class="col-md-5">
                                 <label for="search" class="form-label">Tìm kiếm theo tên khách hàng</label>
                                 <input type="text" name="search" id="search" class="form-control" th:value="${search}"
-                                    placeholder="Nhập tên hoặc mã yêu cầu..." />
+                                    placeholder="Nhập tên khách hàng..." />
                             </div>
                             <!-- Filter and Reset buttons -->
                             <div class="col-md-4 d-flex align-items-end gap-1">
