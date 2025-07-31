@@ -44,7 +44,7 @@ class ImageValidatorTest {
 
                 assertThatThrownBy(() -> imageValidator.validateImageFileSizeAndFormat(file))
                                 .isInstanceOf(ValidationException.class)
-                                .hasMessage("Ảnh quá lớn (tối đa 20MB)");
+                                .hasMessage("Ảnh quá lớn (tối đa 5MB)");
         }
 
         @Test

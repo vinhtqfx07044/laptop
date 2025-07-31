@@ -55,8 +55,8 @@ public class ImageValidator {
             throw new ValidationException("Chỉ hỗ trợ ảnh (PNG, JPG)");
         }
 
-        if (file.getSize() > 20_000_000) {
-            throw new ValidationException("Ảnh quá lớn (tối đa 20MB)");
+        if (file.getSize() > 5_000_000) {
+            throw new ValidationException("Ảnh quá lớn (tối đa 5MB)");
         }
     }
 }
