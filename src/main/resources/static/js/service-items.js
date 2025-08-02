@@ -41,7 +41,7 @@ function editServiceItem(id, name, price, vatRate, warrantyDays, active) {
     // Sets the checked state of the 'active' checkbox.
     document.getElementById('active').checked = active === true || active === 'true';
     document.getElementById('serviceItemModalTitle').textContent = 'Chỉnh sửa dịch vụ';
-    document.getElementById('actionType').value = 'update';
+    document.getElementById('serviceItemForm').action = `/staff/service-items/update/${id}`;
 
     // Shows the service item modal.
     new bootstrap.Modal(document.getElementById('serviceItemModal')).show();
@@ -55,7 +55,7 @@ function addServiceItem() {
     document.getElementById('serviceItemId').value = '';
     document.getElementById('active').checked = true;
     document.getElementById('serviceItemModalTitle').textContent = 'Thêm dịch vụ mới';
-    document.getElementById('actionType').value = 'create';
+    document.getElementById('serviceItemForm').action = '/staff/service-items/create';
 
     // Shows the service item modal.
     new bootstrap.Modal(document.getElementById('serviceItemModal')).show();
@@ -66,7 +66,7 @@ document.getElementById('serviceItemModal').addEventListener('hidden.bs.modal', 
     document.getElementById('serviceItemForm').reset();
     document.getElementById('serviceItemId').value = '';
     document.getElementById('serviceItemModalTitle').textContent = 'Thêm dịch vụ mới';
-    document.getElementById('actionType').value = 'create';
+    document.getElementById('serviceItemForm').action = '/staff/service-items/create';
 
     // Removes validation classes from form controls.
     document.querySelectorAll('#serviceItemForm .form-control').forEach(input => {

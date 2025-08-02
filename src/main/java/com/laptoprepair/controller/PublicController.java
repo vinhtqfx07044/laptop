@@ -60,7 +60,7 @@ public class PublicController {
      * @return A redirect to the public request detail page.
      */
     @PostMapping("/lookup")
-    public String lookupPost(@RequestParam String id) {
+    public String lookup(@RequestParam String id) {
         return "redirect:/public/request/" + UUID.fromString(id.trim());
     }
 
@@ -82,7 +82,8 @@ public class PublicController {
     public String submitForm(Model model) {
         model.addAttribute("request", new Request());
         return "public/request-submit";
-    }
+    }
+
     /**
      * Handles the submission of a new request.
      * Validates the request and saves it if valid, then redirects with a success message.
@@ -116,7 +117,7 @@ public class PublicController {
      * @return A redirect to the home page with a success message.
      */
     @PostMapping("/recover")
-    public String recoverSubmit(@RequestParam("email") String email,
+    public String recover(@RequestParam("email") String email,
             RedirectAttributes redirectAttributes) {
         requestService.recover(email);
         redirectAttributes.addFlashAttribute("successMessage",
@@ -131,7 +132,7 @@ public class PublicController {
      * @return The request detail view.
      */
     @GetMapping("/public/request/{id}")
-    public String publicRequestDetail(@PathVariable UUID id, Model model) {
+    public String viewRequestDetail(@PathVariable UUID id, Model model) {
         Request request = requestService.findById(id);
         model.addAttribute("request", request);
         model.addAttribute("isStaff", false);

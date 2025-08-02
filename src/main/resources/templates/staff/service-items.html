@@ -187,8 +187,6 @@
                     <form id="serviceItemForm" th:action="@{/staff/service-items/create}" method="post">
                         <!-- Hidden input for service item ID (used for editing) -->
                         <input type="hidden" id="serviceItemId" name="id" />
-                        <!-- Hidden input to specify action type (create or update) -->
-                        <input type="hidden" id="actionType" name="actionType" value="create" />
                         <div class="mb-3">
                             <label for="name" class="form-label">Tên dịch vụ <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="name" name="name" required>

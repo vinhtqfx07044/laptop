@@ -71,7 +71,7 @@ public class ServiceItemController {
      * @return A ResponseEntity containing the CSV file as a byte array, with appropriate headers for download.
      */
     @GetMapping("/export")
-    public ResponseEntity<byte[]> export() {
+    public ResponseEntity<byte[]> exportCSV() {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=service-items.csv")
                 .header(HttpHeaders.CONTENT_TYPE, "text/csv; charset=UTF-8")
@@ -93,28 +93,21 @@ public class ServiceItemController {
     }
 
     /**
-     * Creates a new service item or updates an existing one.
+     * Creates a new service item.
      *
-     * @param serviceItem The ServiceItem object containing the data to be created or updated.
-     * @param actionType A string indicating whether the action is 'create' or 'update'.
+     * @param serviceItem The ServiceItem object containing the data to be created.
      * @param bindingResult The BindingResult object for validation errors.
      * @param model The Spring UI model.
      * @return A redirect string to the service items listing page if successful, or back to the form with errors.
      */
     @PostMapping("/create")
-    public String createOrUpdate(@ModelAttribute ServiceItem serviceItem,
-            @RequestParam(defaultValue = "create") String actionType,
+    public String create(@ModelAttribute ServiceItem serviceItem,
             BindingResult bindingResult,
             Model model) {
         if (bindingResult.hasErrors()) {
             return list(0, null, null, null, model);
         }
-
-        if ("update".equals(actionType) && serviceItem.getId() != null) {
-            serviceItemService.update(serviceItem.getId(), serviceItem);
-        } else {
-            serviceItemService.create(serviceItem);
-        }
+        serviceItemService.create(serviceItem);
         return "redirect:/staff/service-items";
     }
 
@@ -150,7 +143,7 @@ public class ServiceItemController {
      */
     @GetMapping("/search")
     @ResponseBody
-    public Page<ServiceItem> searchServiceItems(
+    public Page<ServiceItem> search(
             @RequestParam(required = false) String query,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) Integer size) {
