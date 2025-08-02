@@ -42,12 +42,12 @@
                     <div th:if="${isEditMode}" class="mb-3">
                         <select id="status" th:field="*{status}" class="form-select">
                             <option th:each="s: ${T(com.laptoprepair.enums.RequestStatus).values()}"
-                                th:value="${s.name()}" th:text="${s.displayName}"></option>
+                                th:value="${s.name()}" th:text="${s.value}"></option>
                         </select>
                     </div>
                     <!-- If `isEditMode` is false, display the status as a badge -->
                     <p th:unless="${isEditMode}" class="form-control-plaintext">
-                        <span th:class="${request.status.badgeClass}" th:text="${request.status.displayName}"></span>
+                        <span th:class="${request.status.badgeClass}" th:text="${request.status.value}"></span>
                     </p>
                 </div>
             </div>

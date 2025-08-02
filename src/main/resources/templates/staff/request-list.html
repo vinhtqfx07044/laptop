@@ -27,7 +27,7 @@
                                     <option value="">Tất cả</option>
                                     <!-- Iterates over RequestStatus enum values to populate options -->
                                     <option th:each="s : ${T(com.laptoprepair.enums.RequestStatus).values()}"
-                                        th:value="${s.name()}" th:text="${s.getDisplayName()}"
+                                        th:value="${s.name()}" th:text="${s.getValue()}"
                                         th:selected="${status != null and status.name() == s.name()}"></option>
                                 </select>
                             </div>
@@ -96,7 +96,7 @@
                                             <!-- Displays request status as a badge with dynamic styling -->
                                             <span th:if="${request.status != null}"
                                                 th:class="${request.status.badgeClass}"
-                                                th:text="${request.status.displayName}"></span>
+                                                th:text="${request.status.value}"></span>
                                             <span th:unless="${request.status != null}" class="badge bg-secondary">Không
                                                 xác định</span>
                                         </td>

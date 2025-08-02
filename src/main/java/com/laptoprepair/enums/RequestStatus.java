@@ -31,10 +31,6 @@ public enum RequestStatus {
         return "badge " + badgeClass;
     }
 
-    public String getDisplayName() {
-        return value;
-    }
-
     public boolean canTransitionTo(RequestStatus newStatus) {
         if (this == newStatus)
             return true;

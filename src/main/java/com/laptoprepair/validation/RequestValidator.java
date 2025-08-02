@@ -40,7 +40,7 @@ public class RequestValidator {
         RequestStatus status = existingRequest.getStatus();
         if (status == RequestStatus.COMPLETED || status == RequestStatus.CANCELLED) {
             throw new ValidationException(
-                    "Không thể chỉnh sửa phiếu ở trạng thái \"" + status.getDisplayName() + "\"");
+                    "Không thể chỉnh sửa phiếu ở trạng thái \"" + status.getValue() + "\"");
         }
     }
 
@@ -71,7 +71,7 @@ public class RequestValidator {
         RequestStatus status = incomingRequest.getStatus();
         if (status != RequestStatus.SCHEDULED && status != RequestStatus.CANCELLED
                 && (incomingRequest.getItems() == null || incomingRequest.getItems().isEmpty())) {
-            throw new ValidationException("Phiếu ở trạng thái \"" + status.getDisplayName() +
+            throw new ValidationException("Phiếu ở trạng thái \"" + status.getValue() +
                     "\" phải có ít nhất một hạng mục dịch vụ");
         }
     }
@@ -86,7 +86,7 @@ public class RequestValidator {
         if (existingRequest.getStatus().isRequestItemsLocked()
                 && !historyService.areRequestItemsEqual(existingRequest.getItems(), incomingRequest.getItems())) {
             throw new ValidationException("Phiếu đã ở trạng thái \"" +
-                    existingRequest.getStatus().getDisplayName() +
+                    existingRequest.getStatus().getValue() +
                     "\" và không thể thay đổi hạng mục.");
         }
     }
