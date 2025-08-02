@@ -10,8 +10,8 @@
 -- Service Item table
 CREATE TABLE IF NOT EXISTS service_item (
     id UUID PRIMARY KEY,
-    name VARCHAR(255),
-    price NUMERIC(38,2),
+    name VARCHAR(255) NOT NULL,
+    price NUMERIC(38,2) NOT NULL,
     vat_rate NUMERIC(38,2) NOT NULL,
     warranty_days INTEGER NOT NULL,
     active BOOLEAN NOT NULL,
@@ -44,8 +44,8 @@ CREATE TABLE IF NOT EXISTS request_items (
     id UUID PRIMARY KEY,
     request_id UUID NOT NULL,
     service_item_id UUID NOT NULL,
-    name VARCHAR(255),
-    price NUMERIC(38,2),
+    name VARCHAR(255) NOT NULL,
+    price NUMERIC(38,2) NOT NULL,
     vat_rate NUMERIC(38,2) NOT NULL,
     quantity INTEGER NOT NULL,
     discount NUMERIC(38,2),
@@ -62,10 +62,10 @@ CREATE TABLE IF NOT EXISTS request_items (
 CREATE TABLE IF NOT EXISTS request_history (
     id UUID PRIMARY KEY,
     request_id UUID NOT NULL,
-    changes TEXT,
-    created_at TIMESTAMP,
+    changes TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP,
-    created_by VARCHAR(255),
+    created_by VARCHAR(255) NOT NULL,
     updated_by VARCHAR(255),
     FOREIGN KEY (request_id) REFERENCES request(id)
 );
