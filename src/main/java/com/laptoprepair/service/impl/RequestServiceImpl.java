@@ -130,7 +130,7 @@ public class RequestServiceImpl implements RequestService {
             noteBuilder.append("\nGhi chú: " + note.trim());
         }
 
-        historyService.addRequestHistoryRecord(incomingRequest, noteBuilder.toString(), authService.currentUser());
+        historyService.addRequestHistoryRecord(incomingRequest, noteBuilder.toString(), authService.getCurrentUsername());
 
         // Create request with properly linked items
         Request savedRequest = reqRepo.save(incomingRequest);
@@ -206,7 +206,7 @@ public class RequestServiceImpl implements RequestService {
 
         // Add history if there are actual changes OR if there's a modal note
         if (!noteBuilder.toString().trim().isEmpty()) {
-            historyService.addRequestHistoryRecord(existingRequest, noteBuilder.toString(), authService.currentUser());
+            historyService.addRequestHistoryRecord(existingRequest, noteBuilder.toString(), authService.getCurrentUsername());
         }
 
         Request saved = reqRepo.save(existingRequest);

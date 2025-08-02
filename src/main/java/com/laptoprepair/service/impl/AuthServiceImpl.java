@@ -31,7 +31,7 @@ public class AuthServiceImpl implements AuthService {
      * @return The username of the current user.
      */
     @Override
-    public String currentUser() {
+    public String getCurrentUsername() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName()))
                 ? auth.getName()

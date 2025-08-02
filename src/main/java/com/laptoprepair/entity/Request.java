@@ -55,18 +55,6 @@ public class Request extends BaseEntity {
     @OneToMany(mappedBy = "request", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RequestImage> images = new ArrayList<>();
 
-    @PrePersist
-    @Override
-    protected void prePersist() {
-        super.prePersist();
-    }
-
-    @PreUpdate
-    @Override
-    protected void preUpdate() {
-        super.preUpdate();
-    }
-
     public BigDecimal getTotal() {
         return CurrencyUtils.calculateRequestTotal(items);
     }
