@@ -40,16 +40,7 @@ build/
 uploads/
 
 # Logs
-*.log
-app.log
 logs/
 log/
-
-### Additional files ###
-.claude/
-.gemini/
-config.json
-output.txt
-repo2txt.py
-CLAUDE.md
-.mcp.json
+*.log
+app.log
