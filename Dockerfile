@@ -32,11 +32,8 @@ RUN mkdir -p uploads logs
 # Copy the built JAR from build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Set JVM options for Railway (Railway provides $PORT environment variable)
-ENV JAVA_OPTS="-Xms256m -Xmx512m"
-
 # Expose port (Railway uses PORT environment variable, default to 8080)
 EXPOSE ${PORT:-8080}
 
 # Run the application with production profile
-CMD java $JAVA_OPTS -Dserver.port=${PORT:-8080} -Dspring.profiles.active=prod -jar app.jar
+CMD ["java", "-Xms256m", "-Xmx512m", "-Dserver.port=${PORT:-8080}", "-Dspring.profiles.active=prod", "-jar", "app.jar"]

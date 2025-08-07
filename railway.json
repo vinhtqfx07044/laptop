@@ -4,7 +4,7 @@
     "builder": "DOCKERFILE"
   },
   "deploy": {
-    "startCommand": "java $JAVA_OPTS -Dserver.port=$PORT -Dspring.profiles.active=prod -jar app.jar",
+    "startCommand": "java -Xms256m -Xmx512m -Dserver.port=$PORT -Dspring.profiles.active=prod -jar app.jar",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
