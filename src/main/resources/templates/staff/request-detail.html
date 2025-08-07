@@ -211,6 +211,7 @@
     </main>
 
     <div th:insert="~{fragments/footer :: footer}"></div>
+    <div th:if="${!isStaff}" th:replace="~{fragments/chat :: chatWidget}"></div>
 </body>
 
 </html>
