@@ -35,9 +35,5 @@ COPY --from=build /app/target/*.jar app.jar
 # Expose port (Railway uses PORT environment variable, default to 8080)
 EXPOSE 8080
 
-# Create entrypoint script to handle PORT variable
-RUN echo '#!/bin/sh\njava -Xms256m -Xmx512m -Dserver.port=${PORT:-8080} -Dspring.profiles.active=prod -jar app.jar' > /app/start.sh && \
-    chmod +x /app/start.sh
-
-# Run the application with production profile
-CMD ["/app/start.sh"]
+# Run the application with production profile using shell form to handle environment variables
+CMD java -Xms256m -Xmx512m -Dserver.port=${PORT:-8080} -Dspring.profiles.active=prod -jar app.jar
