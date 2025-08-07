@@ -90,9 +90,12 @@ public class EmailServiceImpl implements EmailService {
     public void sendRecoverEmail(String email, List<Request> requests) {
         StringBuilder body = new StringBuilder("Danh sách yêu cầu của bạn:\n\n");
         for (Request request : requests) {
+            body.append("Mã ID: ").append(request.getId()).append("\n");
             body.append("Link tra cứu: ").append(publicRequestBaseUrl).append(request.getId()).append("\n");
+            body.append("Ngày tạo: ").append(request.getCreatedAt().toLocalDate()).append("\n");
+            body.append("Tình trạng: ").append(request.getStatus()).append("\n\n");
         }
-        body.append("\n").append(THANK_YOU_MESSAGE);
+        body.append(THANK_YOU_MESSAGE);
         String subject = String.format(RECOVER_SUBJECT, shopName);
         sendEmail(email, subject, body.toString());
     }
