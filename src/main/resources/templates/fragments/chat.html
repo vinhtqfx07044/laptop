@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<div th:fragment="chatWidget" class="chat-widget">
+    <!-- Main chat box container -->
+    <div class="chat-box" id="chat-box">
+        <div class="card">
+            <!-- Chat header with title and new chat button -->
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-comments me-2"></i>Hỗ trợ sửa chữa laptop</span>
+                <!-- Button to start a new chat session -->
+                <button class="btn btn-sm btn-outline-light" id="new-chat-btn" title="Bắt đầu cuộc trò chuyện mới">
+                    <i class="fas fa-redo"></i>
+                </button>
+            </div>
+            <!-- Chat messages display area -->
+            <div class="card-body p-0">
+                <div class="chat-messages" id="chat-messages">
+                    <!-- Initial bot welcome message -->
+                    <div class="message bot">
+                        <i class="fas fa-robot text-primary me-2"></i>
+                        Xin chào! Tôi là trợ lý ảo. Bạn cần hỗ trợ gì?
+                    </div>
+                </div>
+            </div>
+            <!-- Chat input form -->
+            <div class="card-footer">
+                <form id="chat-form">
+                    <input type="text" class="form-control" id="chat-input" placeholder="Nhập câu hỏi và nhấn Enter..."
+                        maxlength="200" autocomplete="off">
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Floating button to toggle chat box visibility -->
+    <button class="btn btn-primary btn-floating" id="chat-toggle">
+        <i class="fas fa-comments"></i>
+    </button>
+</div>
+
+</html>

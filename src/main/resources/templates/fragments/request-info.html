@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi" xml:lang="vi">
+
+<th:block th:fragment="requestInfoCards(request, isEditMode, isStaff)">
+    <!--
+        Overview Card: Displays general information about the repair request.
+        This card is only shown if the request has an ID (i.e., it's an existing request, not a new one).
+    -->
+    <div class="card mb-4" th:if="${request.id != null}">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Thông tin phiếu sửa chữa</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- Request ID -->
+                <div class="col-md-3">
+                    <label for="requestId" class="form-label fw-bold">Mã phiếu</label>
+                    <p id="requestId" class="form-control-plaintext">
+                        <code th:text="${request.id}"></code>
+                    </p>
+                </div>
+                <!-- Last Updated At timestamp -->
+                <div class="col-md-3">
+                    <label for="updatedAt" class="form-label fw-bold">Ngày cập nhật</label>
+                    <p id="updatedAt" class="form-control-plaintext" th:if="${request.updatedAt}">
+                        <span th:text="${#temporals.format(request.updatedAt, 'dd/MM/yyyy HH:mm')}"></span>
+                    </p>
+                    <p class="form-control-plaintext text-muted" th:unless="${request.updatedAt}">Chưa có</p>
+                </div>
+                <!-- Completed At timestamp -->
+                <div class="col-md-3">
+                    <label for="completedAt" class="form-label fw-bold">Ngày hoàn thành</label>
+                    <p id="completedAt" class="form-control-plaintext" th:if="${request.completedAt}">
+                        <span th:text="${#temporals.format(request.completedAt, 'dd/MM/yyyy HH:mm')}"></span>
+                    </p>
+                    <p class="form-control-plaintext text-muted" th:unless="${request.completedAt}">Chưa có</p>
+                </div>
+                <!-- Request Status -->
+                <div class="col-md-3">
+                    <label for="status" class="form-label fw-bold">Trạng thái</label>
+                    <!-- Conditional rendering for status -->
+                    <div th:if="${isEditMode}" class="mb-3">
+                        <select id="status" th:field="*{status}" class="form-select">
+                            <option th:each="s: ${T(com.laptoprepair.enums.RequestStatus).values()}"
+                                th:value="${s.name()}" th:text="${s.value}"></option>
+                        </select>
+                    </div>
+                    <!-- If `isEditMode` is false, display the status as a badge -->
+                    <p th:unless="${isEditMode}" class="form-control-plaintext">
+                        <span th:class="${request.status.badgeClass}" th:text="${request.status.value}"></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--
+        Basic Info Card: Displays customer and device details.
+        This card is always shown.
+    -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Thông tin yêu cầu sửa chữa</h5>
+        </div>
+        <div class="card-body">
+            <!-- Customer info in 4 columns -->
+            <div class="row mb-3">
+                <!-- Customer Name -->
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="name" class="form-label fw-bold">Tên khách hàng *</label>
+                        <!-- Edit mode: input field with validation attributes -->
+                        <input th:if="${isEditMode}" id="name" th:field="*{name}" class="form-control" required
+                            minlength="3" maxlength="100" />
+                        <div class="invalid-feedback">Tên khách hàng phải có ít nhất 3 ký tự.</div>
+                        <!-- View mode: plain text -->
+                        <p th:unless="${isEditMode}" class="form-control-plaintext" th:text="${request.name}"></p>
+                    </div>
+                </div>
+                <!-- Phone Number -->
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="phone" class="form-label fw-bold">Điện thoại *</label>
+                        <!-- Edit mode: input field with pattern for phone number validation -->
+                        <input th:if="${isEditMode}" id="phone" th:field="*{phone}" class="form-control"
+                            pattern="0\d{9}" required />
+                        <div class="invalid-feedback">Số điện thoại phải có 10 chữ số và bắt đầu bằng 0.</div>
+                        <!-- View mode: plain text -->
+                        <p th:unless="${isEditMode}" class="form-control-plaintext" th:text="${request.phone}"></p>
+                    </div>
+                </div>
+                <!-- Email Address -->
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="email" class="form-label fw-bold">Email</label>
+                        <!-- Edit mode: email input type -->
+                        <input th:if="${isEditMode}" id="email" th:field="*{email}" class="form-control" type="email" />
+                        <div class="invalid-feedback">Vui lòng nhập địa chỉ email hợp lệ.</div>
+                        <!-- View mode: plain text -->
+                        <p th:unless="${isEditMode}" class="form-control-plaintext" th:text="${request.email}"></p>
+                    </div>
+                </div>
+                <!-- Address -->
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="address" class="form-label fw-bold">Địa chỉ</label>
+                        <!-- Edit mode: input field -->
+                        <input th:if="${isEditMode}" id="address" th:field="*{address}" class="form-control" />
+                        <!-- View mode: plain text -->
+                        <p th:unless="${isEditMode}" class="form-control-plaintext" th:text="${request.address}"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Device, serial number, appointment date, and description -->
+            <div class="row">
+                <!-- Device Brand/Model -->
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="brandModel" class="form-label fw-bold">Thiết bị</label>
+                        <!-- Edit mode: input field -->
+                        <input th:if="${isEditMode}" id="brandModel" th:field="*{brandModel}" class="form-control" />
+                        <!-- View mode: plain text -->
+                        <p th:unless="${isEditMode}" class="form-control-plaintext" th:text="${request.brandModel}"></p>
+                    </div>
+                </div>
+                <!-- Serial Number -->
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="serialNumber" class="form-label fw-bold">Serial Number</label>
+                        <!-- Edit mode: input field -->
+                        <input th:if="${isEditMode}" id="serialNumber" th:field="*{serialNumber}"
+                            class="form-control" />
+                        <!-- View mode: plain text -->
+                        <p th:unless="${isEditMode}" class="form-control-plaintext" th:text="${request.serialNumber}">
+                        </p>
+                    </div>
+                </div>
+                <!-- Appointment Date/Time -->
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="appointmentDate" class="form-label fw-bold">Ngày hẹn *</label>
+                        <!-- Edit mode: datetime-local input type with required attribute -->
+                        <input th:if="${isEditMode}" id="appointmentDate" th:field="*{appointmentDate}"
+                            class="form-control" type="datetime-local" required />
+                        <div class="invalid-feedback">Vui lòng chọn ngày hẹn.</div>
+                        <!--
+                            View mode: plain text, formatted using Thymeleaf's temporals utility.
+                            Displays 'Chưa đặt' (Not set) if the date is null.
+                        -->
+                        <p th:unless="${isEditMode}" class="form-control-plaintext"
+                            th:text="${request.appointmentDate != null ? #temporals.format(request.appointmentDate, 'dd/MM/yyyy HH:mm') : 'Chưa đặt'}">
+                        </p>
+                    </div>
+                </div>
+                <!-- Description of the issue -->
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="description" class="form-label fw-bold">Mô tả *</label>
+                        <!-- Edit mode: textarea with validation attributes -->
+                        <textarea th:if="${isEditMode}" id="description" th:field="*{description}" class="form-control"
+                            rows="1" required minlength="10" maxlength="1000"></textarea>
+                        <div class="invalid-feedback">Mô tả phải có ít nhất 10 ký tự.</div>
+                        <!--
+                            View mode: plain text.
+                            `white-space: pre-wrap;` preserves line breaks and spaces from the original text.
+                        -->
+                        <p th:unless="${isEditMode}" class="form-control-plaintext" th:text="${request.description}"
+                            style="white-space: pre-wrap;"></p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</th:block>
+
+</html>

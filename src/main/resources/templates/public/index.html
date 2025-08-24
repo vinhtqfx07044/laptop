@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: commonHead('Trang chủ', false)}"></head>
+
+<body class="d-flex flex-column min-vh-100">
+    <div th:insert="~{fragments/header :: header}"></div>
+
+    <main class="flex-grow-1">
+        <div class="container text-center mt-5">
+            <h1 class="my-4">Chào Mừng Quý Khách Đến Với Dịch Vụ Sửa Chữa Laptop</h1>
+            <p class="lead">Chúng tôi cung cấp dịch vụ sửa chữa laptop chuyên nghiệp, nhanh chóng và đáng tin cậy.</p>
+
+            <!--
+                Lookup Form: Allows users to search for their repair request status using an ID.
+                The form submits to the '/lookup' endpoint.
+            -->
+            <form th:action="@{/lookup}" method="post" class="d-flex justify-content-center mb-3">
+                <div class="input-group" style="max-width:600px;">
+                    <input type="text" name="id" class="form-control" placeholder="Nhập mã tra cứu (UUID)…" required>
+                    <button class="btn btn-outline-primary btn-lg" type="submit"><i class="fas fa-search me-2"></i>Tra
+                        cứu</button>
+                </div>
+            </form>
+
+            <!-- Link to open the "Recover Lookup ID" modal -->
+            <div class="text-center mb-3">
+                <a href="#" data-bs-toggle="modal" data-bs-target="#recoverModal">Quên mã tra cứu?</a>
+            </div>
+
+            <!-- Feature Cards: Highlights key aspects of the service. -->
+            <div class="row mt-4">
+                <!-- Feature Card 1: Professional Repair -->
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="fas fa-tools fa-3x text-primary mb-3"></i>
+                            <h5 class="card-title">Sửa chữa chuyên nghiệp</h5>
+                            <p class="card-text">Đội ngũ kỹ thuật viên giàu kinh nghiệm, sử dụng linh kiện chính hãng
+                                với chế độ bảo hành uy tín.</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Feature Card 2: Fast and Convenient -->
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="fas fa-clock fa-3x text-success mb-3"></i>
+                            <h5 class="card-title">Nhanh chóng tiện lợi</h5>
+                            <p class="card-text">Thời gian sửa chữa nhanh, hệ thống tra cứu tiến độ trực tuyến 24/7 giúp
+                                bạn theo dõi dễ dàng.</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Feature Card 3: Reliable -->
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="fas fa-shield-alt fa-3x text-warning mb-3"></i>
+                            <h5 class="card-title">Đáng tin cậy</h5>
+                            <p class="card-text">Cam kết bảo mật thông tin khách hàng, minh bạch giá cả và quy trình sửa
+                                chữa rõ ràng.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CTA Button: Call to action to book an appointment. -->
+            <div class="text-center mt-3 mb-4">
+                <a href="/submit" class="btn btn-outline-primary btn-lg px-5 py-3"><i
+                        class="fas fa-calendar-plus me-2"></i>Đặt lịch hẹn ngay</a>
+            </div>
+
+        </div>
+    </main>
+
+    <div th:insert="~{fragments/footer :: footer}"></div>
+    <div th:replace="~{fragments/chat :: chatWidget}"></div>
+
+    <!--
+        Recover Modal: A Bootstrap modal for users to recover their lookup ID by entering their email.
+        The form submits to the '/recover' endpoint.
+    -->
+    <div class="modal fade" id="recoverModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Khôi phục Mã Tra cứu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form th:action="@{/recover}" method="post">
+                    <div class="modal-body">
+                        <p class="text-muted mb-3">Nhập email để nhận danh sách mã tra cứu</p>
+                        <input type="email" name="email" class="form-control" placeholder="Địa chỉ email" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-outline-primary">Gửi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

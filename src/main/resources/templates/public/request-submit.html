@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi" xml:lang="vi" class="h-100">
+<head th:replace="~{fragments/head :: commonHead('Gửi Yêu cầu', true)}"></head>
+
+<body class="d-flex flex-column h-100">
+    <div th:insert="~{fragments/header :: header}"></div>
+
+    <main class="container mt-4 flex-shrink-0">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <h1 class="mb-4">Gửi Yêu cầu Sửa chữa</h1>
+                <form th:action="@{/submit}" th:object="${request}" method="post" class="needs-validation" novalidate>
+                    <!-- Customer Name and Phone Number on the same row -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="name" class="form-label">Tên khách hàng *</label>
+                            <input type="text" class="form-control" id="name" th:field="*{name}" required minlength="3"
+                                maxlength="100">
+                            <div class="invalid-feedback">Tên khách hàng phải có ít nhất 3 ký tự.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Số điện thoại *</label>
+                            <input type="tel" class="form-control" id="phone" th:field="*{phone}" required
+                                pattern="0\d{9}" title="Số điện thoại phải có 10 chữ số và bắt đầu bằng 0">
+                            <div class="invalid-feedback">Số điện thoại phải có 10 chữ số và bắt đầu bằng 0.</div>
+                        </div>
+                    </div>
+
+                    <!-- Email and Address on the same row -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" th:field="*{email}">
+                            <div class="invalid-feedback">Vui lòng nhập địa chỉ email hợp lệ.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="address" class="form-label">Địa chỉ</label>
+                            <input type="text" class="form-control" id="address" th:field="*{address}">
+                        </div>
+                    </div>
+
+                    <!-- Device Brand/Model and Serial Number on the same row -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="brandModel" class="form-label">Hãng và Model laptop</label>
+                            <input type="text" class="form-control" id="brandModel" th:field="*{brandModel}"
+                                placeholder="Ví dụ: Dell Inspiron 15, MacBook Pro 13...">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="serialNumber" class="form-label">Serial Number</label>
+                            <input type="text" class="form-control" id="serialNumber" th:field="*{serialNumber}"
+                                placeholder="Số seri của thiết bị (nếu có)">
+                        </div>
+                    </div>
+
+                    <!-- Appointment Date -->
+                    <div class="mb-3">
+                        <label for="appointmentDate" class="form-label">Ngày hẹn *</label>
+                        <input type="datetime-local" class="form-control" id="appointmentDate"
+                            th:field="*{appointmentDate}"
+                            th:value="${request.appointmentDate != null ? #temporals.format(request.appointmentDate, 'yyyy-MM-dd''T''HH:mm') : ''}"
+                            required>
+                        <div class="invalid-feedback">Vui lòng chọn ngày hẹn.</div>
+                    </div>
+
+                    <!-- Description of the issue -->
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Mô tả tình trạng thiết bị *</label>
+                        <textarea class="form-control" id="description" th:field="*{description}" rows="3" required
+                            minlength="10" maxlength="1000"
+                            placeholder="Mô tả chi tiết các lỗi, triệu chứng mà thiết bị gặp phải..."></textarea>
+                        <div class="invalid-feedback">Mô tả phải có ít nhất 10 ký tự.</div>
+                    </div>
+
+                    <!-- Action Buttons: Back to Home and Submit Request -->
+                    <div class="row mt-4 mb-5">
+                        <div class="col-6">
+                            <a href="/" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-arrow-left me-2"></i>Quay lại trang chủ
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <button type="submit" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-paper-plane me-2"></i>Gửi Yêu cầu
+                            </button>
+                        </div>
+                    </div>
+
+                    <script>
+                        // JavaScript to set the minimum date for the appointment input field.
+                        // This prevents users from selecting a past date/time.
+                        document.addEventListener('DOMContentLoaded', function () {
+                            const input = document.getElementById('appointmentDate');
+                            if (input && input.type === 'datetime-local') {
+                                const now = new Date();
+                                // Adjust for timezone offset to get local time
+                                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                                // Format the date to 'YYYY-MM-DDTHH:MM' for datetime-local input's min attribute
+                                input.min = now.toISOString().slice(0, 16);
+                            }
+                        });
+                    </script>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <div th:insert="~{fragments/footer :: footer}"></div>
+    <div th:replace="~{fragments/chat :: chatWidget}"></div>
+</body>
+
+</html>

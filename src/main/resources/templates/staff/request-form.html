@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi" xml:lang="vi">
+<head th:replace="~{fragments/head :: commonHead('Tạo/Chỉnh sửa Yêu cầu', true)}"></head>
+
+<body class="d-flex flex-column min-vh-100">
+    <div th:insert="~{fragments/header :: header}"></div>
+
+    <main class="container flex-grow-1 mt-4">
+        <div class="row">
+            <div class="col-12">
+                <!-- Header section with page title and action buttons -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <!-- Dynamically sets the title based on whether it's a new request or an existing one -->
+                    <h1 class="mb-1" th:text="${request.id != null ? 'Chỉnh sửa Yêu cầu' : 'Tạo Yêu cầu mới'}">Tạo/Chỉnh
+                        sửa Yêu cầu</h1>
+                    <!-- Action buttons (Save, View Details, Cancel) are shown only for existing requests -->
+                    <div th:if="${request.id != null}">
+                        <!-- Button to trigger form validation and open the confirmation modal -->
+                        <button type="button" class="btn btn-outline-primary" onclick="validateAndOpenModal()">
+                            <i class="fas fa-save me-2"></i>Lưu thay đổi
+                        </button>
+                        <!-- Link to view the detailed request page -->
+                        <a th:href="@{'/staff/requests/view/' + ${request.id}}" class="btn btn-outline-info ms-2">
+                            <i class="fas fa-eye me-2"></i>Xem chi tiết
+                        </a>
+                        <!-- Link to cancel and return to the request list -->
+                        <a th:href="@{/staff/requests/list}" class="btn btn-outline-danger ms-2">
+                            <i class="fas fa-times me-2"></i>Hủy
+                        </a>
+                    </div>
+                </div>
+
+                <!--
+                    Main form for creating/editing a request.
+                    `th:action="@{${requestUri}}"` sets the form submission URL dynamically.
+                    `th:object="${request}"` binds the form to a `request` object.
+                    `enctype="multipart/form-data"` is required for file uploads (images).
+                    `needs-validation` and `novalidate` are Bootstrap 5 classes for client-side form validation.
+                -->
+                <form th:action="@{${requestUri}}" th:object="${request}" method="post" enctype="multipart/form-data"
+                    id="requestForm" class="needs-validation" novalidate>
+
+                    <!--
+                        Includes the request information cards fragment.
+                        `true` is passed for `isEditMode` to render input fields for editing.
+                    -->
+                    <div th:insert="~{fragments/request-info :: requestInfoCards(${request}, true, ${isStaff})}"></div>
+
+                    <!-- Service Items Card: Section for managing service items associated with the request. -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Hạng mục sửa chữa</h5>
+                        </div>
+                        <div class="card-body">
+                            <!--
+                                Input fields for adding new service items.
+                                `th:classappend` conditionally hides this section if request items are locked.
+                            -->
+                            <div class="row mb-3"
+                                th:classappend="${request.status != null and request.status.isRequestItemsLocked} ? 'd-none' : ''">
+                                <div class="col-md-5">
+                                    <label for="serviceInput" class="form-label">Tìm và chọn dịch vụ</label>
+                                    <input type="text" id="serviceInput" class="form-control"
+                                        th:disabled="${request.status != null and request.status.isRequestItemsLocked}"
+                                        placeholder="Gõ để tìm dịch vụ..." list="serviceList" autocomplete="off">
+                                    <datalist id="serviceList">
+                                        <!-- Options for service items will be populated dynamically by JavaScript -->
+                                    </datalist>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="newQty" class="form-label">Số lượng</label>
+                                    <input id="newQty" type="number" value="1" min="1" class="form-control"
+                                        th:disabled="${request.status != null and request.status.isRequestItemsLocked}" />
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="newDisc" class="form-label">Giảm giá (VNĐ)</label>
+                                    <input id="newDisc" type="number" value="0" min="0" step="1" class="form-control"
+                                        th:disabled="${request.status != null and request.status.isRequestItemsLocked}" />
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <!-- Button to add the selected service item to the table -->
+                                    <button type="button" onclick="addItem()" class="btn btn-outline-success"
+                                        th:disabled="${request.status != null and request.status.isRequestItemsLocked}">
+                                        <i class="fas fa-plus me-2"></i>Thêm
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Warning message displayed if request items are locked for editing -->
+                            <div th:if="${isRequestItemsLocked}" class="alert alert-warning mb-3">
+                                <i class="fas fa-lock me-2"></i>
+                                Phiếu đã được khóa - Không thể chỉnh sửa hạng mục
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-bordered" id="itemsTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 30%">Tên dịch vụ</th>
+                                            <th style="width: 10%">Số lượng</th>
+                                            <th style="width: 15%">Giá gốc</th>
+                                            <th style="width: 15%">Giảm giá</th>
+                                            <th style="width: 8%">VAT%</th>
+                                            <th style="width: 15%">Thành tiền</th>
+                                            <th style="width: 7%">Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Service items will be dynamically added and managed by JavaScript (request-edit.js) -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Total amount display for all service items -->
+                            <div class="row mt-3">
+                                <div class="col-md-4 ms-auto">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="fw-bold">Tổng cộng:</span>
+                                                <h4 class="text-primary mb-0" id="totalAmount">0 ₫</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Images Card: Section for managing images associated with the request. -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Hình ảnh</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Displays existing images (if any) at the top -->
+                            <div th:if="${request.images != null and !request.images.empty}" class="mb-3">
+                                <h6>Hình ảnh hiện tại:</h6>
+                                <div class="row">
+                                    <!-- Iterates over existing images -->
+                                    <div th:each="image : ${request.images}" class="col-md-3 mb-2">
+                                        <div class="card">
+                                            <img th:src="@{'/images/' + ${request.id} + '/' + ${image.filename}}"
+                                                class="card-img-top" style="height: 150px; object-fit: cover;"
+                                                th:alt="${'Hình ảnh ' + image.filename}" />
+                                            <div class="card-body p-2">
+                                                <!-- Checkbox to mark an image for deletion -->
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="toDelete"
+                                                        th:id="${'deleteImage-' + image.filename}"
+                                                        th:value="${image.filename}" />
+                                                    <label class="form-check-label"
+                                                        th:for="${'deleteImage-' + image.filename}">Xóa ảnh này</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Input for uploading new images -->
+                            <div class="mb-3">
+                                <label for="newImages" class="form-label">Tải lên hình ảnh (Tối đa <span
+                                        th:text="${maxImages}">5</span> ảnh JPEG/PNG, mỗi ảnh ≤ 5MB)</label>
+                                <input id="newImages" type="file" name="newImages" class="form-control" multiple
+                                    accept="image/jpeg,image/jpg,image/png,image/png,image/gif" />
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- Submit buttons for the form -->
+                    <div class="mb-3">
+                        <!-- Button to trigger form validation and open the confirmation modal -->
+                        <button type="button" class="btn btn-outline-primary" onclick="validateAndOpenModal()">
+                            <i class="fas fa-save me-2"></i>Lưu thay đổi
+                        </button>
+                        <!-- Link to view the detailed request page (only for existing requests) -->
+                        <a th:if="${request.id != null}" th:href="@{'/staff/requests/view/' + ${request.id}}"
+                            class="btn btn-outline-info ms-2">
+                            <i class="fas fa-eye me-2"></i>Xem chi tiết
+                        </a>
+                        <!-- Link to cancel and return to the request list -->
+                        <a th:href="@{/staff/requests/list}" class="btn btn-outline-danger ms-2">
+                            <i class="fas fa-times me-2"></i>Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!--
+        Confirmation Modal: A Bootstrap modal that appears before saving changes.
+        It allows adding an optional note for the change history.
+    -->
+    <div class="modal fade" id="confirmModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Xác nhận lưu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <textarea id="confirmNote" class="form-control" rows="2"
+                        placeholder="Ghi chú (tùy chọn)"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <!-- Button to submit the form after confirmation -->
+                    <button type="button" class="btn btn-outline-primary" onclick="submitForm();">Lưu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:insert="~{fragments/footer :: footer}"></div>
+
+    <!-- JavaScript section to pass server-side data to client-side JavaScript. -->
+    <script th:inline="javascript">
+        window.serverItems = /*[[${request.items}]]*/[];
+        window.isRequestLocked = /*[[${request.status != null and request.status.isRequestItemsLocked}]]*/ false;
+    </script>
+    <script th:src="@{/js/global.js}"></script>
+    <script th:src="@{/js/request-edit.js}"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: commonHead('Đăng nhập', false)}"></head>
+
+<body class="d-flex flex-column min-vh-100">
+    <div th:insert="~{fragments/header :: header}"></div>
+
+    <main class="flex-grow-1 d-flex align-items-center">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-6 col-lg-4">
+                    <div class="card shadow">
+                        <div class="card-body p-4">
+                            <h3 class="card-title text-center mb-4">Đăng nhập</h3>
+
+                            <!-- Login error message -->
+                            <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show"
+                                role="alert">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <span>Sai tên đăng nhập hoặc mật khẩu.</span>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                    aria-label="Close"></button>
+                            </div>
+
+                            <!-- Login form, submits to the '/login' endpoint (handled by Spring Security) -->
+                            <form th:action="@{/login}" method="post">
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">Tên đăng nhập</label>
+                                    <input type="text" name="username" id="username" class="form-control"
+                                        placeholder="Nhập tên đăng nhập" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">Mật khẩu</label>
+                                    <input type="password" name="password" id="password" class="form-control"
+                                        placeholder="Nhập mật khẩu" required>
+                                </div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-outline-primary">Đăng nhập</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div th:insert="~{fragments/footer :: footer}"></div>
+</body>
+
+</html>

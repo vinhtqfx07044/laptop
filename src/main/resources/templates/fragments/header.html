@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="vi" xml:lang="vi" xmlns:th="http://www.thymeleaf.org"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<body>
+    <div th:fragment="header">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container">
+                <!-- Brand logo/name linking to the home page -->
+                <a class="navbar-brand" th:href="@{/}">Shop Laptop</a>
+                <!-- Navbar toggler for mobile responsiveness -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <!--
+                        Public menu items, displayed only when the user is NOT authenticated.
+                        `sec:authorize="!isAuthenticated()"` is a Spring Security Thymeleaf dialect expression.
+                    -->
+                    <ul class="navbar-nav me-auto" sec:authorize="!isAuthenticated()">
+                        <li class="nav-item"><a class="nav-link" th:href="@{/submit}">Đặt lịch</a></li>
+                        <li class="nav-item"><a class="nav-link" th:href="@{/about}">Giới thiệu</a></li>
+                    </ul>
+                    <!--
+                        Staff menu items, displayed only when the user IS authenticated.
+                        `sec:authorize="isAuthenticated()"` is a Spring Security Thymeleaf dialect expression.
+                    -->
+                    <ul class="navbar-nav me-auto" sec:authorize="isAuthenticated()">
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/staff/requests/list}">
+                                Quản lý sửa chữa
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/staff/service-items}">
+                                Quản lý dịch vụ
+                            </a>
+                        </li>
+                    </ul>
+                    <ul class="navbar-nav">
+                        <!-- Login link, displayed only when the user is NOT authenticated -->
+                        <li class="nav-item" sec:authorize="!isAuthenticated()">
+                            <a class="nav-link" th:href="@{/login}">Đăng nhập</a>
+                        </li>
+                        <!--
+                            User dropdown menu, displayed only when the user IS authenticated.
+                            Shows the authenticated user's name.
+                        -->
+                        <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                                <i class="fas fa-user"></i>
+                                <span sec:authentication="name">User</span>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <!-- Logout button, triggers a JavaScript function `doLogout()` -->
+                                    <button type="button" class="dropdown-item" onclick="doLogout();">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                                        </a>
+                                </li>
+                            </ul>
+                            <form id="logoutForm" th:action="@{/logout}" method="post" style="display: none;">
+                            </form>
+                        </li>
+                    </ul>
+
+                </div>
+            </div>
+        </nav>
+        <div th:insert="~{fragments/messages :: flashMessages}"></div>
+    </div>
+</body>
+
+</html>

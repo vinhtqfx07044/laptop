@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi" xml:lang="vi">
+
+<body>
+    <div th:fragment="flashMessages" class="container mt-3">
+        <!-- Conditional display for a single error message -->
+        <div th:if="${errorMessage != null}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Conditional display for multiple error messages (e.g., from validation) -->
+        <div th:if="${errorMessages != null and #lists.size(errorMessages) > 0}"
+            class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <ul class="mb-0 mt-2">
+                <li th:each="msg : ${errorMessages}" th:text="${msg}"></li>
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Conditional display for a success message -->
+        <div th:if="${successMessage != null}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <span th:text="${successMessage}"></span>
+            <a th:if="${requestId != null}" th:href="@{/public/request/{id}(id=${requestId})}" class="alert-link ms-2">
+                Xem chi tiết tại đây
+            </a>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+    </div>
+
+</body>
+
+</html>
