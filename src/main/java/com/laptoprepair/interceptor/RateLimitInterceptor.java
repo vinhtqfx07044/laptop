@@ -1,7 +1,7 @@
 package com.laptoprepair.interceptor;
 
 import com.laptoprepair.exception.RateLimitExceededException;
-import com.laptoprepair.utils.RateLimiter;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
