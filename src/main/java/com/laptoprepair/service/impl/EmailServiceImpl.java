@@ -129,7 +129,7 @@ public class EmailServiceImpl implements EmailService {
                 log.info("Email sent successfully to: {}", toEmail);
             } catch (MailException e) {
                 log.error("Email sending failed to {}: {}", toEmail, e.getMessage(), e);
-                throw new RuntimeException("Failed to send email", e);
+                // throw new RuntimeException("Failed to send email", e);
             }
         });
     }
