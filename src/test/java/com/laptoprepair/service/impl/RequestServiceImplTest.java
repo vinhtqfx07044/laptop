@@ -14,6 +14,8 @@ import com.laptoprepair.service.ImageService;
 import com.laptoprepair.config.VietnamTimeProvider;
 import com.laptoprepair.validation.RequestValidator;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -92,7 +94,7 @@ class RequestServiceImplTest {
         doNothing().when(requestValidator).validateAppointmentDateInFuture(any(LocalDateTime.class));
         doNothing().when(historyService).addRequestHistoryRecord(any(Request.class), eq("Tạo mới yêu cầu"),
                 eq("Khách"));
-        doNothing().when(emailService).sendConfirmationEmail(any(Request.class));
+        when(emailService.sendConfirmationEmail(any(Request.class))).thenReturn(CompletableFuture.completedFuture(null));
 
         // Act
         Request result = requestService.publicCreate(testRequest);
@@ -218,7 +220,7 @@ class RequestServiceImplTest {
         doNothing().when(requestValidator).validateItemsForStatus(any(Request.class));
         doNothing().when(requestValidator).validateNoItemModificationWhenLocked(any(Request.class), any(Request.class));
         doNothing().when(historyService).addRequestHistoryRecord(any(Request.class), anyString(), anyString());
-        doNothing().when(emailService).sendUpdateEmail(any(Request.class), anyString());
+        when(emailService.sendUpdateEmail(any(Request.class), anyString())).thenReturn(CompletableFuture.completedFuture(null));
 
         // Act
         Request result = requestService.update(requestId, incomingRequest, newImages, toDelete, note);
@@ -291,7 +293,7 @@ class RequestServiceImplTest {
         doNothing().when(requestValidator).validateItemsForStatus(any(Request.class));
         doNothing().when(requestValidator).validateNoItemModificationWhenLocked(any(Request.class), any(Request.class));
         doNothing().when(historyService).addRequestHistoryRecord(any(Request.class), anyString(), anyString());
-        doNothing().when(emailService).sendUpdateEmail(any(Request.class), anyString());
+        when(emailService.sendUpdateEmail(any(Request.class), anyString())).thenReturn(CompletableFuture.completedFuture(null));
 
         // Act
         Request result = requestService.update(requestId, incomingRequest, null, null, null);
@@ -353,7 +355,7 @@ class RequestServiceImplTest {
         doNothing().when(requestValidator).validateItemsForStatus(any(Request.class));
         doNothing().when(requestValidator).validateNoItemModificationWhenLocked(any(Request.class), any(Request.class));
         doNothing().when(historyService).addRequestHistoryRecord(any(Request.class), anyString(), anyString());
-        doNothing().when(emailService).sendUpdateEmail(any(Request.class), anyString());
+        when(emailService.sendUpdateEmail(any(Request.class), anyString())).thenReturn(CompletableFuture.completedFuture(null));
 
         // Act
         Request result = requestService.update(requestId, incomingRequest, null, null, note);

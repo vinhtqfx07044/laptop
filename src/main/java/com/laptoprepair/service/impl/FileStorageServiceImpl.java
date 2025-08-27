@@ -18,7 +18,7 @@ import java.util.UUID;
 @Service
 public class FileStorageServiceImpl implements FileStorageService {
 
-    @Value("${upload.dir:uploads}")
+    @Value("${app.upload.directory:uploads}")
     private String uploadDir;
 
     @Override
