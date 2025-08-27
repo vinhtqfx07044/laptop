@@ -1,5 +1,7 @@
 package com.laptoprepair.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -14,6 +16,8 @@ import java.util.concurrent.Executor;
 @EnableAsync
 public class AsyncConfig {
 
+    private static final Logger logger = LoggerFactory.getLogger(AsyncConfig.class);
+
     @Bean(name = "emailTaskExecutor")
     public Executor emailTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
@@ -23,7 +27,7 @@ public class AsyncConfig {
         executor.setThreadNamePrefix("Email-");
         executor.setRejectedExecutionHandler((r, executor1) -> {
             // Log the rejection and continue
-            System.err.println("Email task rejected: " + r.toString());
+            logger.error("Email task rejected: {}", r.toString());
         });
         executor.initialize();
         return executor;
