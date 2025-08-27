@@ -2,15 +2,16 @@ package com.laptoprepair.service;
 
 import com.laptoprepair.entity.Request;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Service interface for sending various types of emails related to repair
  * requests.
  */
 public interface EmailService {
-    void sendConfirmationEmail(Request request);
+    CompletableFuture<Void> sendConfirmationEmail(Request request);
 
-    void sendUpdateEmail(Request request, String changes);
+    CompletableFuture<Void> sendUpdateEmail(Request request, String changes);
 
-    void sendRecoverEmail(String email, List<Request> requests);
+    CompletableFuture<Void> sendRecoverEmail(String email, List<Request> requests);
 }
