@@ -5,7 +5,7 @@ import com.laptoprepair.entity.RequestHistory;
 import com.laptoprepair.entity.RequestItem;
 import com.laptoprepair.enums.RequestStatus;
 import com.laptoprepair.utils.CurrencyUtils;
-import com.laptoprepair.utils.TimeProvider;
+import com.laptoprepair.config.VietnamTimeProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,25 +26,24 @@ import static org.mockito.Mockito.*;
 class HistoryServiceImplTest {
 
     @Mock
-    private TimeProvider timeProvider;
+    private VietnamTimeProvider vietnamTimeProvider;
 
     @InjectMocks
     private HistoryServiceImpl historyService;
 
-    private LocalDateTime testTime;
     private Request request;
 
     @BeforeEach
     void setUp() {
-        testTime = LocalDateTime.of(2024, 7, 1, 10, 0);
         request = new Request();
         request.setHistory(new ArrayList<>());
     }
 
     @Test
     void addRequestHistoryRecord_UTC001_ValidHistoryRecord_ShouldCreateHistoryRecord() {
-        when(timeProvider.now()).thenReturn(testTime);
-
+        LocalDateTime testTime = LocalDateTime.of(2024, 7, 1, 10, 0);
+        when(vietnamTimeProvider.now()).thenReturn(testTime);
+        
         String changes = "Status changed from SCHEDULED to QUOTED.";
         String user = "staff_user";
 
@@ -60,8 +59,9 @@ class HistoryServiceImplTest {
 
     @Test
     void addRequestHistoryRecord_UTC002_LongChangeDescriptionTruncation_ShouldTruncateChanges() {
-        when(timeProvider.now()).thenReturn(testTime);
-
+        LocalDateTime testTime = LocalDateTime.of(2024, 7, 1, 10, 0);
+        when(vietnamTimeProvider.now()).thenReturn(testTime);
+        
         String longChanges = "a".repeat(600);
         String user = "admin";
 
@@ -77,8 +77,9 @@ class HistoryServiceImplTest {
 
     @Test
     void addRequestHistoryRecord_UTC003_NullChangeDescription_ShouldAllowNullChanges() {
-        when(timeProvider.now()).thenReturn(testTime);
-
+        LocalDateTime testTime = LocalDateTime.of(2024, 7, 1, 10, 0);
+        when(vietnamTimeProvider.now()).thenReturn(testTime);
+        
         String user = "system";
 
         historyService.addRequestHistoryRecord(request, null, user);

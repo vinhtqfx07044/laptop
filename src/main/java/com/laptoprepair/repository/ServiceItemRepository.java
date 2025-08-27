@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.security.access.prepost.PreAuthorize;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -69,4 +70,14 @@ public interface ServiceItemRepository extends JpaRepository<ServiceItem, UUID> 
         */
        @Query("SELECT s FROM ServiceItem s WHERE s.id = :id AND s.active = true")
        Optional<ServiceItem> findByIdAndActive(@Param("id") UUID id);
+
+       /**
+        * Finds all active ServiceItems by their IDs in a single query.
+        * This method is used to avoid N+1 query problems when fetching multiple service items.
+        * 
+        * @param ids The list of UUIDs of the service items to fetch.
+        * @return A list of active ServiceItems matching the provided IDs.
+        */
+       @Query("SELECT s FROM ServiceItem s WHERE s.id IN :ids AND s.active = true")
+       List<ServiceItem> findAllByIdInAndActive(@Param("ids") List<UUID> ids);
 }

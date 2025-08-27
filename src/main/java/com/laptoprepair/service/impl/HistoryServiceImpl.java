@@ -4,7 +4,7 @@ import com.laptoprepair.entity.Request;
 import com.laptoprepair.entity.RequestHistory;
 import com.laptoprepair.entity.RequestItem;
 import com.laptoprepair.service.HistoryService;
-import com.laptoprepair.utils.TimeProvider;
+import com.laptoprepair.config.VietnamTimeProvider;
 
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class HistoryServiceImpl implements HistoryService {
 
-    private final TimeProvider timeProvider;
+    private final VietnamTimeProvider vietnamTimeProvider;
+
 
     /**
      * Adds a new history record to a request.
@@ -39,7 +40,7 @@ public class HistoryServiceImpl implements HistoryService {
         String finalChanges = (changes != null && changes.length() > 500) ? changes.substring(0, 500) + "..." : changes;
 
         history.setChanges(finalChanges);
-        history.setCreatedAt(timeProvider.now());
+        history.setCreatedAt(vietnamTimeProvider.now());
         history.setCreatedBy(user);
         history.setRequest(request);
 
@@ -112,5 +113,4 @@ public class HistoryServiceImpl implements HistoryService {
             return false;
         }
     }
-
 }

@@ -8,11 +8,10 @@ import com.laptoprepair.enums.RequestStatus;
 import com.laptoprepair.exception.ValidationException;
 import com.laptoprepair.repository.RequestRepository;
 import com.laptoprepair.repository.ServiceItemRepository;
-import com.laptoprepair.service.AuthService;
 import com.laptoprepair.service.EmailService;
 import com.laptoprepair.service.HistoryService;
 import com.laptoprepair.service.ImageService;
-import com.laptoprepair.utils.TimeProvider;
+import com.laptoprepair.config.VietnamTimeProvider;
 import com.laptoprepair.validation.RequestValidator;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -56,10 +55,7 @@ class RequestServiceImplTest {
     private RequestValidator requestValidator;
 
     @Mock
-    private TimeProvider timeProvider;
-
-    @Mock
-    private AuthService authService;
+    private VietnamTimeProvider vietnamTimeProvider;
 
     @InjectMocks
     private RequestServiceImpl requestService;
@@ -187,12 +183,14 @@ class RequestServiceImplTest {
 
         // Mock service items
         ServiceItem serviceItem1 = new ServiceItem();
+        serviceItem1.setId(item1.getServiceItemId());
         serviceItem1.setName("Service 1");
         serviceItem1.setPrice(BigDecimal.valueOf(100));
         serviceItem1.setVatRate(BigDecimal.valueOf(0.1));
         serviceItem1.setWarrantyDays(30);
 
         ServiceItem serviceItem2 = new ServiceItem();
+        serviceItem2.setId(item2.getServiceItemId());
         serviceItem2.setName("Service 2");
         serviceItem2.setPrice(BigDecimal.valueOf(200));
         serviceItem2.setVatRate(BigDecimal.valueOf(0.1));
@@ -207,21 +205,19 @@ class RequestServiceImplTest {
         processedImages.add(new RequestImage());
 
         when(reqRepo.findByIdWithDetails(requestId)).thenReturn(Optional.of(existingRequest));
-        when(serviceItemRepository.findByIdAndActive(item1.getServiceItemId())).thenReturn(Optional.of(serviceItem1));
-        when(serviceItemRepository.findByIdAndActive(item2.getServiceItemId())).thenReturn(Optional.of(serviceItem2));
+        when(serviceItemRepository.findAllByIdInAndActive(anyList())).thenReturn(List.of(serviceItem1, serviceItem2));
         when(imageService.updateRequestServiceImages(any(Request.class), any(MultipartFile[].class),
                 any(String[].class)))
                 .thenReturn(processedImages);
         when(historyService.computeRequestChanges(any(Request.class), any(Request.class)))
                 .thenReturn("Status changed");
-        when(authService.getCurrentUsername()).thenReturn("staff");
         when(reqRepo.save(any(Request.class))).thenReturn(existingRequest);
 
         doNothing().when(requestValidator).validateEditable(any(Request.class));
         doNothing().when(requestValidator).validateStatusTransition(any(Request.class), any(Request.class));
         doNothing().when(requestValidator).validateItemsForStatus(any(Request.class));
         doNothing().when(requestValidator).validateNoItemModificationWhenLocked(any(Request.class), any(Request.class));
-        doNothing().when(historyService).addRequestHistoryRecord(any(Request.class), anyString(), eq("staff"));
+        doNothing().when(historyService).addRequestHistoryRecord(any(Request.class), anyString(), anyString());
         doNothing().when(emailService).sendUpdateEmail(any(Request.class), anyString());
 
         // Act
@@ -253,7 +249,6 @@ class RequestServiceImplTest {
     void update_UTC003_StatusTransitionToCompleted_ShouldSetCompletedDate() {
         // Arrange
         UUID requestId = UUID.randomUUID();
-        LocalDateTime completionTime = LocalDateTime.of(2025, 8, 10, 15, 0);
 
         // Create a proper RequestItem with required fields
         RequestItem requestItem = new RequestItem();
@@ -266,6 +261,7 @@ class RequestServiceImplTest {
         requestItem.setDiscount(BigDecimal.ZERO);
 
         ServiceItem serviceItem = new ServiceItem();
+        serviceItem.setId(requestItem.getServiceItemId());
         serviceItem.setName("Service Item");
         serviceItem.setPrice(BigDecimal.valueOf(100));
         serviceItem.setVatRate(BigDecimal.valueOf(0.1));
@@ -280,13 +276,12 @@ class RequestServiceImplTest {
         incomingRequest.setStatus(RequestStatus.COMPLETED);
         incomingRequest.setItems(new ArrayList<>(List.of(requestItem)));
 
+        LocalDateTime completionTime = LocalDateTime.of(2025, 8, 27, 15, 33);
+        when(vietnamTimeProvider.now()).thenReturn(completionTime);
         when(reqRepo.findByIdWithDetails(requestId)).thenReturn(Optional.of(existingRequest));
-        when(timeProvider.now()).thenReturn(completionTime);
-        when(serviceItemRepository.findByIdAndActive(requestItem.getServiceItemId()))
-                .thenReturn(Optional.of(serviceItem));
+        when(serviceItemRepository.findAllByIdInAndActive(anyList())).thenReturn(List.of(serviceItem));
         when(historyService.computeRequestChanges(any(Request.class), any(Request.class)))
                 .thenReturn("Trạng thái: IN_PROGRESS → COMPLETED");
-        when(authService.getCurrentUsername()).thenReturn("staff");
         when(reqRepo.save(any(Request.class))).thenReturn(existingRequest);
         when(imageService.updateRequestServiceImages(any(Request.class), isNull(), isNull()))
                 .thenReturn(new ArrayList<>());
@@ -295,7 +290,7 @@ class RequestServiceImplTest {
         doNothing().when(requestValidator).validateStatusTransition(any(Request.class), any(Request.class));
         doNothing().when(requestValidator).validateItemsForStatus(any(Request.class));
         doNothing().when(requestValidator).validateNoItemModificationWhenLocked(any(Request.class), any(Request.class));
-        doNothing().when(historyService).addRequestHistoryRecord(any(Request.class), anyString(), eq("staff"));
+        doNothing().when(historyService).addRequestHistoryRecord(any(Request.class), anyString(), anyString());
         doNothing().when(emailService).sendUpdateEmail(any(Request.class), anyString());
 
         // Act
@@ -349,7 +344,6 @@ class RequestServiceImplTest {
 
         when(reqRepo.findByIdWithDetails(requestId)).thenReturn(Optional.of(existingRequest));
         when(historyService.computeRequestChanges(any(Request.class), any(Request.class))).thenReturn("");
-        when(authService.getCurrentUsername()).thenReturn("staff");
         when(reqRepo.save(any(Request.class))).thenReturn(existingRequest);
         when(imageService.updateRequestServiceImages(any(Request.class), isNull(), isNull()))
                 .thenReturn(new ArrayList<>());
@@ -358,7 +352,7 @@ class RequestServiceImplTest {
         doNothing().when(requestValidator).validateStatusTransition(any(Request.class), any(Request.class));
         doNothing().when(requestValidator).validateItemsForStatus(any(Request.class));
         doNothing().when(requestValidator).validateNoItemModificationWhenLocked(any(Request.class), any(Request.class));
-        doNothing().when(historyService).addRequestHistoryRecord(any(Request.class), anyString(), eq("staff"));
+        doNothing().when(historyService).addRequestHistoryRecord(any(Request.class), anyString(), anyString());
         doNothing().when(emailService).sendUpdateEmail(any(Request.class), anyString());
 
         // Act
@@ -392,13 +386,14 @@ class RequestServiceImplTest {
         incomingRequest.setItems(new ArrayList<>(List.of(item)));
 
         ServiceItem serviceItem = new ServiceItem();
+        serviceItem.setId(item.getServiceItemId());
         serviceItem.setName("Service Item");
         serviceItem.setPrice(BigDecimal.valueOf(200)); // Different price
         serviceItem.setVatRate(BigDecimal.valueOf(0.1));
         serviceItem.setWarrantyDays(30);
 
         when(reqRepo.findByIdWithDetails(requestId)).thenReturn(Optional.of(existingRequest));
-        when(serviceItemRepository.findByIdAndActive(item.getServiceItemId())).thenReturn(Optional.of(serviceItem));
+        when(serviceItemRepository.findAllByIdInAndActive(anyList())).thenReturn(List.of(serviceItem));
         when(imageService.updateRequestServiceImages(any(Request.class), isNull(), isNull()))
                 .thenReturn(new ArrayList<>());
 

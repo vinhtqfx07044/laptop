@@ -3,7 +3,8 @@ package com.laptoprepair.controller;
 import com.laptoprepair.entity.Request;
 import com.laptoprepair.exception.ValidationException;
 import com.laptoprepair.exception.NotFoundException;
-import com.laptoprepair.service.AuthService;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import com.laptoprepair.service.RequestService;
 
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,6 @@ import java.util.UUID;
 public class PublicController {
 
     private final RequestService requestService;
-    private final AuthService authService;
 
     /**
      * Handles requests to the login page.
@@ -38,7 +38,7 @@ public class PublicController {
      */
     @GetMapping("/login")
     public String login() {
-        if (authService.isStaff()) {
+        if (isStaff()) {
             return "redirect:/staff/requests/list";
         }
         return "public/login";
@@ -53,7 +53,7 @@ public class PublicController {
      */
     @GetMapping("/")
     public String index(Model model) {
-        if (authService.isStaff()) {
+        if (isStaff()) {
             return "redirect:/staff/requests/list";
         }
         return "public/index";
@@ -161,6 +161,13 @@ public class PublicController {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return "redirect:/";
         }
+    }
+
+    private boolean isStaff() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.isAuthenticated() &&
+                auth.getAuthorities().stream()
+                        .anyMatch(a -> a.getAuthority().equals("ROLE_STAFF"));
     }
 
 }

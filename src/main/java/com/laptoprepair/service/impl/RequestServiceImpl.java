@@ -10,12 +10,13 @@ import com.laptoprepair.exception.ValidationException;
 
 import com.laptoprepair.repository.RequestRepository;
 import com.laptoprepair.repository.ServiceItemRepository;
-import com.laptoprepair.service.AuthService;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import com.laptoprepair.service.EmailService;
 import com.laptoprepair.service.HistoryService;
 import com.laptoprepair.service.ImageService;
 import com.laptoprepair.service.RequestService;
-import com.laptoprepair.utils.TimeProvider;
+import com.laptoprepair.config.VietnamTimeProvider;
 import com.laptoprepair.validation.RequestValidator;
 
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Implementation of the {@link RequestService} interface.
@@ -49,8 +52,7 @@ public class RequestServiceImpl implements RequestService {
     private final ImageService imageService;
     private final EmailService emailService;
     private final RequestValidator requestValidator;
-    private final TimeProvider timeProvider;
-    private final AuthService authService;
+    private final VietnamTimeProvider vietnamTimeProvider;
 
     /**
      * Finds a request by its ID.
@@ -140,7 +142,7 @@ public class RequestServiceImpl implements RequestService {
         }
 
         historyService.addRequestHistoryRecord(incomingRequest, noteBuilder.toString(),
-                authService.getCurrentUsername());
+                getCurrentUsername());
 
         // Create request with properly linked items
         Request savedRequest = reqRepo.save(incomingRequest);
@@ -194,7 +196,7 @@ public class RequestServiceImpl implements RequestService {
         // Set completion date if status is changing to COMPLETED
         if (existingRequest.getStatus() != RequestStatus.COMPLETED
                 && incomingRequest.getStatus() == RequestStatus.COMPLETED) {
-            incomingRequest.setCompletedAt(timeProvider.now());
+            incomingRequest.setCompletedAt(vietnamTimeProvider.now());
         }
 
         // Process images BEFORE copying fields (to preserve existing images)
@@ -220,7 +222,7 @@ public class RequestServiceImpl implements RequestService {
         // Add history if there are actual changes OR if there's a modal note
         if (!noteBuilder.toString().trim().isEmpty()) {
             historyService.addRequestHistoryRecord(existingRequest, noteBuilder.toString(),
-                    authService.getCurrentUsername());
+                    getCurrentUsername());
         }
 
         Request saved = reqRepo.save(existingRequest);
@@ -248,9 +250,25 @@ public class RequestServiceImpl implements RequestService {
             return;
         }
 
+        // Batch fetching to avoid N+1 query problem
+        // Step 1: Collect all service item IDs
+        List<UUID> serviceItemIds = items.stream()
+                .map(RequestItem::getServiceItemId)
+                .collect(Collectors.toList());
+
+        // Step 2: Fetch all service items in a single query
+        List<ServiceItem> serviceItems = serviceItemRepository.findAllByIdInAndActive(serviceItemIds);
+
+        // Step 3: Convert to Map for O(1) lookup
+        Map<UUID, ServiceItem> serviceItemMap = serviceItems.stream()
+                .collect(Collectors.toMap(ServiceItem::getId, serviceItem -> serviceItem));
+
+        // Step 4: Process each RequestItem using the pre-loaded Map
         for (RequestItem item : items) {
-            ServiceItem serviceItem = serviceItemRepository.findByIdAndActive(item.getServiceItemId())
-                    .orElseThrow(() -> new NotFoundException("Không tìm dịch vụ sửa chửa: " + item.getName()));
+            ServiceItem serviceItem = serviceItemMap.get(item.getServiceItemId());
+            if (serviceItem == null) {
+                throw new NotFoundException("Không tìm dịch vụ sửa chửa: " + item.getName());
+            }
 
             // Validate critical data consistency between frontend and database
             validateServiceItemDataConsistency(item, serviceItem);
@@ -346,4 +364,12 @@ public class RequestServiceImpl implements RequestService {
 
         return target;
     }
+
+    private String getCurrentUsername() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName()))
+                ? auth.getName()
+                : "Public";
+    }
+
 }
