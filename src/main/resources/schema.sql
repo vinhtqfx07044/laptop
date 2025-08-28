@@ -99,13 +99,12 @@ CREATE TABLE IF NOT EXISTS SPRING_AI_CHAT_MEMORY (
 -- Section 3: PERFORMANCE INDEXES
 -- -------------------------------------------------------------------------------------------------
 
--- Service Item indexes
+-- Service Item indexes (used by ServiceItemRepository)
 CREATE INDEX IF NOT EXISTS idx_service_item_id ON service_item(id);
 CREATE INDEX IF NOT EXISTS idx_service_item_active ON service_item(active);
 CREATE INDEX IF NOT EXISTS idx_service_item_name ON service_item(name);
-CREATE INDEX IF NOT EXISTS idx_service_item_created_at ON service_item(created_at);
 
--- Request indexes
+-- Request indexes (used by RequestRepository)
 CREATE INDEX IF NOT EXISTS idx_request_id ON request(id);
 CREATE INDEX IF NOT EXISTS idx_request_status ON request(status);
 CREATE INDEX IF NOT EXISTS idx_request_appointment_date ON request(appointment_date);
@@ -113,25 +112,6 @@ CREATE INDEX IF NOT EXISTS idx_request_phone ON request(phone);
 CREATE INDEX IF NOT EXISTS idx_request_email ON request(email);
 CREATE INDEX IF NOT EXISTS idx_request_serial_number ON request(serial_number);
 CREATE INDEX IF NOT EXISTS idx_request_brand_model ON request(brand_model);
-CREATE INDEX IF NOT EXISTS idx_request_created_at ON request(created_at);
-CREATE INDEX IF NOT EXISTS idx_request_completed_at ON request(completed_at);
-
--- Request Items indexes
-CREATE INDEX IF NOT EXISTS idx_request_items_id ON request_items(id);
-CREATE INDEX IF NOT EXISTS idx_request_items_request_id ON request_items(request_id);
-CREATE INDEX IF NOT EXISTS idx_request_items_service_item_id ON request_items(service_item_id);
-CREATE INDEX IF NOT EXISTS idx_request_items_created_at ON request_items(created_at);
-
--- Request History indexes
-CREATE INDEX IF NOT EXISTS idx_request_history_id ON request_history(id);
-CREATE INDEX IF NOT EXISTS idx_request_history_request_id ON request_history(request_id);
-CREATE INDEX IF NOT EXISTS idx_request_history_created_at ON request_history(created_at);
-CREATE INDEX IF NOT EXISTS idx_request_history_created_by ON request_history(created_by);
-
--- Request Images indexes  
-CREATE INDEX IF NOT EXISTS idx_request_images_id ON request_images(id);
-CREATE INDEX IF NOT EXISTS idx_request_images_request_id ON request_images(request_id);
-CREATE INDEX IF NOT EXISTS idx_request_images_created_at ON request_images(created_at);
 
 -- Spring AI Chat Memory indexes
 CREATE INDEX IF NOT EXISTS SPRING_AI_CHAT_MEMORY_CONVERSATION_ID_TIMESTAMP_IDX
