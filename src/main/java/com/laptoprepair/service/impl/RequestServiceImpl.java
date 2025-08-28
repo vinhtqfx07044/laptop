@@ -283,16 +283,6 @@ public class RequestServiceImpl implements RequestService {
         }
     }
 
-    /**
-     * Validates that RequestItem data is consistent with the latest ServiceItem
-     * data.
-     * Ensures that critical fields like price, VAT rate, and warranty match the
-     * database.
-     * 
-     * @param requestItem The RequestItem from frontend
-     * @param serviceItem The ServiceItem from database
-     * @throws ValidationException if critical data doesn't match
-     */
     private void validateServiceItemDataConsistency(RequestItem requestItem, ServiceItem serviceItem) {
         StringBuilder errors = new StringBuilder();
 

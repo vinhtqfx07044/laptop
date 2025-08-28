@@ -10,15 +10,12 @@ document.addEventListener('DOMContentLoaded', function () {
          */
         const validateInput = input => {
             input.setCustomValidity(''); // Clears any custom validation messages.
-            // Removes previous validation states.
             input.classList.remove('is-valid', 'is-invalid');
-            // Adds 'is-valid' or 'is-invalid' based on the input's validity.
             input.classList.add(input.checkValidity() ? 'is-valid' : 'is-invalid');
         };
 
         // Attaches event listeners to each input for real-time validation.
         inputs.forEach(input => {
-            // Marks input as interacted upon focus.
             input.addEventListener('focus', () => interactedInputs.add(input));
             // Handles validation on blur and input events if the input has been interacted with.
             const handleValidationEvent = () => {
@@ -38,8 +35,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Prevents form submission if validation fails.
             if (!form.checkValidity()) {
-                event.preventDefault(); // Stops the default form submission.
-                event.stopPropagation(); // Stops the event from bubbling up.
+                event.preventDefault();
+                event.stopPropagation();
                 // Scrolls to and focuses on the first invalid input.
                 const firstInvalid = form.querySelector(':invalid');
                 if (firstInvalid) {

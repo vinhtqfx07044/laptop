@@ -76,13 +76,13 @@ function searchAndUpdateDatalist(query) {
     // Fetches service items from the API based on the query.
     fetch(`/staff/service-items/search?q=${encodeURIComponent(query)}&size=20&page=0`)
         .then(res => res.json())
-        .then(data => updateDatalist(data.content || [])) // Updates the datalist with the fetched data.
-        .catch(() => { }); // Catches and ignores any errors during the fetch.
+        .then(data => updateDatalist(data.content || []))
+        .catch(() => { });
 }
 
 function updateDatalist(services) {
     const datalist = document.getElementById('serviceList');
-    if (!datalist) return; // Exits if the datalist element is not found.
+    if (!datalist) return;
 
     // Clear existing options
     datalist.innerHTML = '';

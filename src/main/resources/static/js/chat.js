@@ -1,8 +1,5 @@
 // Defines the ChatWidget class to manage chat functionality.
 class ChatWidget {
-    /**
-     * Initializes the ChatWidget.
-     */
     constructor() {
         this.isOpen = false; // Tracks if the chat box is open.
         this.isStreaming = false; // Tracks if a message stream is active.
@@ -22,9 +19,6 @@ class ChatWidget {
         return div.innerHTML;
     }
 
-    /**
-     * Initializes the chat widget by attaching event listeners.
-     */
     init() {
         this.attachEvents();
     }
@@ -52,9 +46,6 @@ class ChatWidget {
         }
     }
 
-    /**
-     * Toggles the visibility of the chat box.
-     */
     toggle() {
         const chatBox = document.getElementById('chat-box');
         const toggle = document.getElementById('chat-toggle');
@@ -72,7 +63,7 @@ class ChatWidget {
      * @param {Event} e - The event object (e.g., form submission event).
      */
     async sendMessage(e) {
-        e.preventDefault(); // Prevents default form submission.
+        e.preventDefault();
         if (this.isStreaming) return; // Prevents sending new messages while streaming.
 
         const input = document.getElementById('chat-input');
@@ -114,10 +105,10 @@ class ChatWidget {
             });
 
             const url = `/api/chat/stream?${params}`;
-            this.eventSource = new EventSource(url); // Creates a new EventSource.
-            let botMessage = null; // Holds the DOM element for the bot's message.
-            let content = ''; // Accumulates the streamed content.
-            let hasReceivedMessage = false; // Tracks if any message data has been received.
+            this.eventSource = new EventSource(url);
+            let botMessage = null;
+            let content = '';
+            let hasReceivedMessage = false;
 
             // Handles incoming messages from the SSE stream.
             this.eventSource.onmessage = (event) => {
@@ -158,11 +149,6 @@ class ChatWidget {
                 this.cleanup();
                 resolve();
             });
-
-            // Event listener for when the SSE connection is opened.
-            this.eventSource.onopen = () => {
-                // No specific action needed on open for this implementation.
-            };
         });
     }
 
@@ -215,10 +201,6 @@ class ChatWidget {
         return message;
     }
 
-    /**
-     * Sets the streaming state and updates the input field accordingly.
-     * @param {boolean} streaming - True if streaming, false otherwise.
-     */
     setStreaming(streaming) {
         this.isStreaming = streaming;
         const input = document.getElementById('chat-input');
@@ -227,9 +209,6 @@ class ChatWidget {
         input.placeholder = streaming ? 'Đang trả lời...' : 'Nhập câu hỏi của bạn rồi nhấn Enter...';
     }
 
-    /**
-     * Starts a new chat session.
-     */
     newChat() {
         this.conversationId = null;
         document.getElementById('chat-messages').innerHTML = `
@@ -241,9 +220,6 @@ class ChatWidget {
         this.scrollToBottom();
     }
 
-    /**
-     * Cleans up the EventSource connection.
-     */
     cleanup() {
         if (this.eventSource) {
             this.eventSource.close(); // Closes the SSE connection.
@@ -251,9 +227,6 @@ class ChatWidget {
         }
     }
 
-    /**
-     * Scrolls the chat messages container to the bottom.
-     */
     scrollToBottom() {
         const container = document.getElementById('chat-messages');
         container.scrollTop = container.scrollHeight; // Sets scroll position to the bottom.
