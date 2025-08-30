@@ -24,14 +24,14 @@ CREATE TABLE IF NOT EXISTS service_item (
 -- Request table
 CREATE TABLE IF NOT EXISTS request (
     id UUID PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    phone VARCHAR(255) NOT NULL,
+    name VARCHAR(100) NOT NULL CHECK (LENGTH(name) >= 3),
+    phone VARCHAR(10) NOT NULL CHECK (phone ~ '^0[0-9]{9}$'),
     email VARCHAR(255),
     address VARCHAR(255),
     brand_model VARCHAR(255),
     serial_number VARCHAR(255),
     appointment_date TIMESTAMP NOT NULL,
-    description VARCHAR(1000) NOT NULL,
+    description VARCHAR(1000) NOT NULL CHECK (LENGTH(description) >= 10),
     status VARCHAR(50) CHECK (status IN ('APPROVE_QUOTED','CANCELLED','COMPLETED','IN_PROGRESS','QUOTED','SCHEDULED','UNDER_WARRANTY')),
     completed_at TIMESTAMP,
     created_at TIMESTAMP,

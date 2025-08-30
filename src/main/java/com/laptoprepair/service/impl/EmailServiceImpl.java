@@ -3,13 +3,15 @@ package com.laptoprepair.service.impl;
 import com.laptoprepair.entity.Request;
 import com.laptoprepair.service.EmailService;
 
+import com.sendgrid.Method;
+import com.sendgrid.SendGrid;
+import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.Content;
+import com.sendgrid.helpers.mail.objects.Email;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.MailException;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -29,21 +31,22 @@ public class EmailServiceImpl implements EmailService {
     @Value("${app.public-request-base-url}")
     private String publicRequestBaseUrl;
 
-    @Value("${spring.mail.from}")
+    @Value("${app.email.from}")
     private String fromEmail;
 
-    @Value("${spring.mail.cc}")
+    @Value("${app.email.cc}")
     private String ccEmail;
 
     @Value("${app.shop.name}")
     private String shopName;
 
+    @Value("${sendgrid.api.key}")
+    private String sendGridApiKey;
+
     private static final String THANK_YOU_MESSAGE = "Cảm ơn bạn đã sử dụng dịch vụ!";
     private static final String CONFIRMATION_SUBJECT = "Xác nhận yêu cầu sửa chữa tại %s";
     private static final String UPDATE_SUBJECT = "Cập nhật về yêu cầu sửa chữa của bạn tại %s";
     private static final String RECOVER_SUBJECT = "Khôi phục mã tra cứu tại %s";
-
-    private final JavaMailSender mailSender;
 
     /**
      * Sends a confirmation email for a new repair request.
@@ -117,19 +120,33 @@ public class EmailServiceImpl implements EmailService {
         return CompletableFuture.runAsync(() -> {
             try {
                 log.debug("Sending email to: {} with subject: {}", toEmail, subject);
-                SimpleMailMessage message = new SimpleMailMessage();
-                message.setFrom(fromEmail);
-                message.setTo(toEmail);
+                
+                Email from = new Email(fromEmail);
+                Email to = new Email(toEmail);
+                Content content = new Content("text/plain", body);
+                Mail mail = new Mail(from, subject, to, content);
+                
                 if (ccEmail != null && !ccEmail.trim().isEmpty()) {
-                    message.setCc(ccEmail);
+                    Email cc = new Email(ccEmail);
+                    mail.personalization.get(0).addCc(cc);
                 }
-                message.setSubject(subject);
-                message.setText(body);
-                mailSender.send(message);
-                log.info("Email sent successfully to: {}", toEmail);
-            } catch (MailException e) {
+
+                SendGrid sg = new SendGrid(sendGridApiKey);
+                com.sendgrid.Request request = new com.sendgrid.Request();
+                request.setMethod(Method.POST);
+                request.setEndpoint("mail/send");
+                request.setBody(mail.build());
+                
+                com.sendgrid.Response response = sg.api(request);
+                
+                if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
+                    log.info("Email sent successfully to: {} via SendGrid", toEmail);
+                } else {
+                    log.error("SendGrid API error. Status: {}, Body: {}", response.getStatusCode(), response.getBody());
+                }
+                
+            } catch (Exception e) {
                 log.error("Email sending failed to {}: {}", toEmail, e.getMessage(), e);
-                // throw new RuntimeException("Failed to send email", e);
             }
         });
     }

@@ -19,13 +19,28 @@ import java.util.UUID;
 public interface RequestRepository extends JpaRepository<Request, UUID> {
 
        /**
-        * Finds a Request by its ID, eagerly fetching associated details.
+        * Finds a Request by its ID with items and images eagerly fetched.
+        * Optimized for update operations that need items and images.
         * 
         * @param id The UUID of the request.
         * @return An Optional containing the Request if found, otherwise empty.
         */
-       @Query("SELECT r FROM Request r WHERE r.id = :id")
-       Optional<Request> findByIdWithDetails(@Param("id") UUID id);
+       @Query("SELECT r FROM Request r " +
+              "LEFT JOIN FETCH r.items " +
+              "WHERE r.id = :id")
+       Optional<Request> findByIdWithItemsAndImages(@Param("id") UUID id);
+
+       /**
+        * Finds a Request by its ID with all collections eagerly fetched.
+        * Use when all related data is needed.
+        * 
+        * @param id The UUID of the request.
+        * @return An Optional containing the Request if found, otherwise empty.
+        */
+       @Query("SELECT r FROM Request r " +
+              "LEFT JOIN FETCH r.items " +
+              "WHERE r.id = :id")
+       Optional<Request> findByIdWithAllDetails(@Param("id") UUID id);
 
        /**
         * Finds a paginated list of Requests based on search criteria and status.

@@ -24,16 +24,13 @@ public class AuditConfig {
     }
 
     /**
-     * AuditorAware implementation that returns current user or "Public" for guests.
+     * AuditorAware implementation that returns current username or "anonymousUser" for unauthenticated users.
      */
     @Bean
     public AuditorAware<String> auditorAware() {
         return () -> {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            String username = (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName()))
-                    ? auth.getName()
-                    : "Public";
-            return Optional.of(username);
+            return Optional.of(auth != null ? auth.getName() : "anonymous User");
         };
     }
 

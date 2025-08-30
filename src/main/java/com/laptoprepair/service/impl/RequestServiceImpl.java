@@ -64,7 +64,7 @@ public class RequestServiceImpl implements RequestService {
     @Transactional(readOnly = true)
     @Override
     public Request findById(UUID id) {
-        return reqRepo.findByIdWithDetails(id)
+        return reqRepo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy yêu cầu với ID: " + id));
     }
 
@@ -175,13 +175,9 @@ public class RequestServiceImpl implements RequestService {
     @Transactional
     public Request update(UUID id, Request incomingRequest, MultipartFile[] newImages, String[] toDelete,
             String note) throws ValidationException {
-        // Load existing request
-        Request existingRequest = reqRepo.findByIdWithDetails(id)
+        // Load existing request with items and images eagerly fetched
+        Request existingRequest = reqRepo.findByIdWithItemsAndImages(id)
                 .orElseThrow(() -> new ValidationException("Không tìm thấy yêu cầu với ID: " + id));
-
-        // Trigger lazy loading for collections
-        existingRequest.getItems().size();
-        existingRequest.getImages().size();
 
         // Validate early to fail fast
         requestValidator.validateEditable(existingRequest);

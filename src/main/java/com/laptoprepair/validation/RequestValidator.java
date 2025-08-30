@@ -23,7 +23,7 @@ public class RequestValidator {
 
     public void validateAppointmentDateInFuture(LocalDateTime appointmentDate) {
         if (appointmentDate != null && appointmentDate.isBefore(LocalDateTime.now())) {
-            throw new ValidationException("Ngày hẹn phải sau thời điểm hiện tại");
+            throw new ValidationException(ValidationConstants.REQUEST_APPOINTMENT_DATE_FUTURE_MSG);
         }
     }
 
