@@ -28,19 +28,7 @@ public interface RequestRepository extends JpaRepository<Request, UUID> {
        @Query("SELECT r FROM Request r " +
               "LEFT JOIN FETCH r.items " +
               "WHERE r.id = :id")
-       Optional<Request> findByIdWithItemsAndImages(@Param("id") UUID id);
-
-       /**
-        * Finds a Request by its ID with all collections eagerly fetched.
-        * Use when all related data is needed.
-        * 
-        * @param id The UUID of the request.
-        * @return An Optional containing the Request if found, otherwise empty.
-        */
-       @Query("SELECT r FROM Request r " +
-              "LEFT JOIN FETCH r.items " +
-              "WHERE r.id = :id")
-       Optional<Request> findByIdWithAllDetails(@Param("id") UUID id);
+       Optional<Request> findByIdWithItems(@Param("id") UUID id);
 
        /**
         * Finds a paginated list of Requests based on search criteria and status.

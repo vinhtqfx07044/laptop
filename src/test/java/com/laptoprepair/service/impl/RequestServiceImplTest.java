@@ -206,7 +206,7 @@ class RequestServiceImplTest {
         processedImages.add(new RequestImage());
         processedImages.add(new RequestImage());
 
-        when(reqRepo.findByIdWithItemsAndImages(requestId)).thenReturn(Optional.of(existingRequest));
+        when(reqRepo.findByIdWithItems(requestId)).thenReturn(Optional.of(existingRequest));
         when(serviceItemRepository.findAllByIdInAndActive(anyList())).thenReturn(List.of(serviceItem1, serviceItem2));
         when(imageService.updateRequestServiceImages(any(Request.class), any(MultipartFile[].class),
                 any(String[].class)))
@@ -238,7 +238,7 @@ class RequestServiceImplTest {
         UUID nonExistentId = UUID.randomUUID();
         Request incomingRequest = new Request();
 
-        when(reqRepo.findByIdWithItemsAndImages(nonExistentId)).thenReturn(Optional.empty());
+        when(reqRepo.findByIdWithItems(nonExistentId)).thenReturn(Optional.empty());
 
         // Act & Assert
         ValidationException exception = assertThrows(ValidationException.class,
@@ -280,7 +280,7 @@ class RequestServiceImplTest {
 
         LocalDateTime completionTime = LocalDateTime.of(2025, 8, 27, 15, 33);
         when(vietnamTimeProvider.now()).thenReturn(completionTime);
-        when(reqRepo.findByIdWithItemsAndImages(requestId)).thenReturn(Optional.of(existingRequest));
+        when(reqRepo.findByIdWithItems(requestId)).thenReturn(Optional.of(existingRequest));
         when(serviceItemRepository.findAllByIdInAndActive(anyList())).thenReturn(List.of(serviceItem));
         when(historyService.computeRequestChanges(any(Request.class), any(Request.class)))
                 .thenReturn("Trạng thái: IN_PROGRESS → COMPLETED");
@@ -317,7 +317,7 @@ class RequestServiceImplTest {
         Request incomingRequest = new Request();
         incomingRequest.setStatus(RequestStatus.IN_PROGRESS);
 
-        when(reqRepo.findByIdWithItemsAndImages(requestId)).thenReturn(Optional.of(existingRequest));
+        when(reqRepo.findByIdWithItems(requestId)).thenReturn(Optional.of(existingRequest));
         doNothing().when(requestValidator).validateEditable(any(Request.class));
         doThrow(new ValidationException("Không thể chuyển đổi trạng thái phiếu từ Đã hủy đến Đang thực hiện"))
                 .when(requestValidator).validateStatusTransition(existingRequest, incomingRequest);
@@ -344,7 +344,7 @@ class RequestServiceImplTest {
         incomingRequest.setStatus(RequestStatus.SCHEDULED);
         incomingRequest.setItems(new ArrayList<>());
 
-        when(reqRepo.findByIdWithItemsAndImages(requestId)).thenReturn(Optional.of(existingRequest));
+        when(reqRepo.findByIdWithItems(requestId)).thenReturn(Optional.of(existingRequest));
         when(historyService.computeRequestChanges(any(Request.class), any(Request.class))).thenReturn("");
         when(reqRepo.save(any(Request.class))).thenReturn(existingRequest);
         when(imageService.updateRequestServiceImages(any(Request.class), isNull(), isNull()))
@@ -394,7 +394,7 @@ class RequestServiceImplTest {
         serviceItem.setVatRate(BigDecimal.valueOf(0.1));
         serviceItem.setWarrantyDays(30);
 
-        when(reqRepo.findByIdWithItemsAndImages(requestId)).thenReturn(Optional.of(existingRequest));
+        when(reqRepo.findByIdWithItems(requestId)).thenReturn(Optional.of(existingRequest));
         when(serviceItemRepository.findAllByIdInAndActive(anyList())).thenReturn(List.of(serviceItem));
         when(imageService.updateRequestServiceImages(any(Request.class), isNull(), isNull()))
                 .thenReturn(new ArrayList<>());
@@ -427,7 +427,7 @@ class RequestServiceImplTest {
         incomingRequest.setItems(new ArrayList<>(List.of(new RequestItem(), new RequestItem()))); // Different number of
                                                                                                   // items
 
-        when(reqRepo.findByIdWithItemsAndImages(requestId)).thenReturn(Optional.of(existingRequest));
+        when(reqRepo.findByIdWithItems(requestId)).thenReturn(Optional.of(existingRequest));
         doNothing().when(requestValidator).validateEditable(any(Request.class));
         doNothing().when(requestValidator).validateStatusTransition(any(Request.class), any(Request.class));
         doNothing().when(requestValidator).validateItemsForStatus(any(Request.class));

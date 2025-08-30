@@ -176,7 +176,7 @@ public class RequestServiceImpl implements RequestService {
     public Request update(UUID id, Request incomingRequest, MultipartFile[] newImages, String[] toDelete,
             String note) throws ValidationException {
         // Load existing request with items and images eagerly fetched
-        Request existingRequest = reqRepo.findByIdWithItemsAndImages(id)
+        Request existingRequest = reqRepo.findByIdWithItems(id)
                 .orElseThrow(() -> new ValidationException("Không tìm thấy yêu cầu với ID: " + id));
 
         // Validate early to fail fast
