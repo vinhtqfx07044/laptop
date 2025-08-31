@@ -116,16 +116,16 @@ public class EmailServiceImpl implements EmailService {
         if ((toEmail == null || toEmail.trim().isEmpty())) {
             return CompletableFuture.completedFuture(null);
         }
-        
+
         return CompletableFuture.runAsync(() -> {
             try {
                 log.debug("Sending email to: {} with subject: {}", toEmail, subject);
-                
+
                 Email from = new Email(fromEmail);
                 Email to = new Email(toEmail);
                 Content content = new Content("text/plain", body);
                 Mail mail = new Mail(from, subject, to, content);
-                
+
                 if (ccEmail != null && !ccEmail.trim().isEmpty()) {
                     Email cc = new Email(ccEmail);
                     mail.personalization.get(0).addCc(cc);
@@ -136,15 +136,15 @@ public class EmailServiceImpl implements EmailService {
                 request.setMethod(Method.POST);
                 request.setEndpoint("mail/send");
                 request.setBody(mail.build());
-                
+
                 com.sendgrid.Response response = sg.api(request);
-                
+
                 if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
                     log.info("Email sent successfully to: {} via SendGrid", toEmail);
                 } else {
                     log.error("SendGrid API error. Status: {}, Body: {}", response.getStatusCode(), response.getBody());
                 }
-                
+
             } catch (Exception e) {
                 log.error("Email sending failed to {}: {}", toEmail, e.getMessage(), e);
             }

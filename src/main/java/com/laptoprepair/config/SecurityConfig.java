@@ -56,15 +56,6 @@ public class SecurityConfig {
                         "/actuator/**",
         };
 
-        /**
-         * Configures the security filter chain for HTTP requests.
-         * Defines authorization rules, form login, logout, exception handling, and CSRF
-         * protection.
-         * 
-         * @param http The HttpSecurity object to configure.
-         * @return A SecurityFilterChain instance.
-         * @throws Exception If an error occurs during configuration.
-         */
         @Bean
         public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
                 return http
@@ -108,14 +99,6 @@ public class SecurityConfig {
                                 .build();
         }
 
-        /**
-         * Configures and provides an in-memory UserDetailsService for staff users.
-         * User details are loaded from the 'app.security.staff.users' property.
-         * 
-         * @param passwordEncoder The PasswordEncoder to use for encoding user
-         *                        passwords.
-         * @return A UserDetailsService instance.
-         */
         @Bean
         public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
                 String usersConfig = environment.getProperty("app.security.staff.users");

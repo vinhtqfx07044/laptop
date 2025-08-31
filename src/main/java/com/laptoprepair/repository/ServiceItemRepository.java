@@ -73,7 +73,8 @@ public interface ServiceItemRepository extends JpaRepository<ServiceItem, UUID> 
 
        /**
         * Finds all active ServiceItems by their IDs in a single query.
-        * This method is used to avoid N+1 query problems when fetching multiple service items.
+        * This method is used to avoid N+1 query problems when fetching multiple
+        * service items.
         * 
         * @param ids The list of UUIDs of the service items to fetch.
         * @return A list of active ServiceItems matching the provided IDs.

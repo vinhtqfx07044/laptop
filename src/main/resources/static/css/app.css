@@ -31,12 +31,12 @@ main {
     .table-responsive {
         font-size: 0.8em;
     }
-    
+
     .btn-sm {
         font-size: 0.7rem;
         padding: 0.2rem 0.4rem;
     }
-    
+
     .device-description {
         -webkit-line-clamp: 1;
     }

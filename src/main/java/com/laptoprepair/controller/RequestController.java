@@ -25,14 +25,15 @@ import java.util.UUID;
 
 /**
  * Controller for managing repair requests by staff members.
- * Provides functionalities for listing, creating, editing, and viewing requests.
+ * Provides functionalities for listing, creating, editing, and viewing
+ * requests.
  */
 @Controller
 @RequestMapping("/staff/requests")
 @RequiredArgsConstructor
 @Slf4j
 public class RequestController {
-    
+
     private final RequestService requestService;
 
     @Value("${app.pagination.default-page-size.requests}")
@@ -157,6 +158,7 @@ public class RequestController {
         model.addAttribute("request", existing);
         model.addAttribute("requestUri", request.getRequestURI());
         model.addAttribute("maxImages", maxImagesPerRequest);
-        model.addAttribute("isRequestItemsLocked", existing.getStatus() != null && existing.getStatus().isRequestItemsLocked());
+        model.addAttribute("isRequestItemsLocked",
+                existing.getStatus() != null && existing.getStatus().isRequestItemsLocked());
     }
 }

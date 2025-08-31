@@ -26,8 +26,8 @@ public interface RequestRepository extends JpaRepository<Request, UUID> {
         * @return An Optional containing the Request if found, otherwise empty.
         */
        @Query("SELECT r FROM Request r " +
-              "LEFT JOIN FETCH r.items " +
-              "WHERE r.id = :id")
+                     "LEFT JOIN FETCH r.items " +
+                     "WHERE r.id = :id")
        Optional<Request> findByIdWithItems(@Param("id") UUID id);
 
        /**

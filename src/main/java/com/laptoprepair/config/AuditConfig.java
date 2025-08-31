@@ -24,7 +24,8 @@ public class AuditConfig {
     }
 
     /**
-     * AuditorAware implementation that returns current username or "anonymousUser" for unauthenticated users.
+     * AuditorAware implementation that returns current username or "anonymousUser"
+     * for unauthenticated users.
      */
     @Bean
     public AuditorAware<String> auditorAware() {
@@ -34,9 +35,6 @@ public class AuditConfig {
         };
     }
 
-    /**
-     * Get current Vietnam time - same logic as VietnamTimeProvider
-     */
     private LocalDateTime vietnamTime() {
         return ZonedDateTime.now(ZoneId.of("UTC"))
                 .withZoneSameInstant(ZoneId.of("Asia/Ho_Chi_Minh"))

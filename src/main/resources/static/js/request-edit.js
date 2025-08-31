@@ -86,19 +86,19 @@ function updateDatalist(services) {
 
     // Clear existing options
     datalist.innerHTML = '';
-    
+
     // Create options properly using DOM methods to avoid HTML escaping issues
     services.forEach(service => {
         const option = document.createElement('option');
         const price = formatVietnameseCurrency(service.price);
         const vat = (service.vatRate * 100).toFixed(1) + '%';
         const warranty = service.warrantyDays + ' ngày';
-        
+
         // Set properties directly to avoid HTML attribute escaping issues
         option.value = service.name;
         option.label = `${service.name} - ${price} - VAT ${vat} - BH ${warranty}`;
         option.setAttribute('data-service', JSON.stringify(service));
-        
+
         datalist.appendChild(option);
     });
 }

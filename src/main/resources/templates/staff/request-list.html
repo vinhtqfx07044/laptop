@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="vi" xml:lang="vi">
+
 <head th:replace="~{fragments/head :: commonHead('Danh sách Yêu cầu', false)}"></head>
 
 <body class="d-flex flex-column min-vh-100">
@@ -84,26 +85,31 @@
                                     <tr th:each="request : ${requests.content}">
                                         <!-- Displays a truncated version of the request ID for brevity -->
                                         <td th:with="idStr=${request.id.toString()}">
-                                            <code th:text="${'...' + #strings.substring(idStr, #strings.length(idStr) - 4)}"></code>
+                                            <code
+                                                th:text="${'...' + #strings.substring(idStr, #strings.length(idStr) - 4)}"></code>
                                         </td>
                                         <!-- Customer Information Column -->
                                         <td>
                                             <div class="customer-info">
                                                 <div class="fw-bold" th:text="${request.name}"></div>
-                                                <div class="small text-muted" th:if="${request.phone}" th:text="${request.phone}"></div>
-                                                <div class="small text-muted" th:if="${request.email}" th:text="${request.email}"></div>
-                                                <div class="small text-muted" th:if="${request.address}" th:text="${request.address}"></div>
+                                                <div class="small text-muted" th:if="${request.phone}"
+                                                    th:text="${request.phone}"></div>
+                                                <div class="small text-muted" th:if="${request.email}"
+                                                    th:text="${request.email}"></div>
+                                                <div class="small text-muted" th:if="${request.address}"
+                                                    th:text="${request.address}"></div>
                                             </div>
                                         </td>
                                         <!-- Device Information Column -->
                                         <td>
                                             <div class="device-info">
-                                                <div class="fw-bold" th:if="${request.brandModel}" th:text="${request.brandModel}"></div>
+                                                <div class="fw-bold" th:if="${request.brandModel}"
+                                                    th:text="${request.brandModel}"></div>
                                                 <div class="small text-muted" th:if="${request.serialNumber}">
                                                     Serial: <span th:text="${request.serialNumber}"></span>
                                                 </div>
-                                                <div class="small text-muted device-description" th:if="${request.description}" 
-                                                     th:text="${#strings.length(request.description) > 100 ? 
+                                                <div class="small text-muted device-description"
+                                                    th:if="${request.description}" th:text="${#strings.length(request.description) > 100 ? 
                                                                #strings.substring(request.description, 0, 100) + '...' : 
                                                                request.description}"></div>
                                             </div>
@@ -112,12 +118,14 @@
                                         <td>
                                             <div class="repair-time">
                                                 <div class="small">
-                                                    <strong>Hẹn:</strong><br/>
-                                                    <span th:text="${#temporals.format(request.appointmentDate, 'dd/MM/yyyy HH:mm')}"></span>
+                                                    <strong>Hẹn:</strong><br />
+                                                    <span
+                                                        th:text="${#temporals.format(request.appointmentDate, 'dd/MM/yyyy HH:mm')}"></span>
                                                 </div>
                                                 <div class="small text-muted" th:if="${request.completedAt}">
-                                                    <strong>Hoàn thành:</strong><br/>
-                                                    <span th:text="${#temporals.format(request.completedAt, 'dd/MM/yyyy HH:mm')}"></span>
+                                                    <strong>Hoàn thành:</strong><br />
+                                                    <span
+                                                        th:text="${#temporals.format(request.completedAt, 'dd/MM/yyyy HH:mm')}"></span>
                                                 </div>
                                             </div>
                                         </td>

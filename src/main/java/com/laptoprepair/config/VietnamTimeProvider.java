@@ -15,11 +15,6 @@ public class VietnamTimeProvider {
     private static final ZoneId VIETNAM_TIMEZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private static final ZoneId UTC_TIMEZONE = ZoneId.of("UTC");
 
-    /**
-     * Returns current time in Vietnam timezone.
-     * 
-     * @return LocalDateTime representing current time in Vietnam (UTC+7)
-     */
     public LocalDateTime now() {
         return ZonedDateTime.now(UTC_TIMEZONE)
                 .withZoneSameInstant(VIETNAM_TIMEZONE)

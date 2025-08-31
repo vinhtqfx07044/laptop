@@ -25,7 +25,6 @@ public class HistoryServiceImpl implements HistoryService {
 
     private final VietnamTimeProvider vietnamTimeProvider;
 
-
     /**
      * Adds a new history record to a request.
      * 

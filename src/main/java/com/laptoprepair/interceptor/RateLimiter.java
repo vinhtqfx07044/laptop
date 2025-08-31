@@ -33,7 +33,7 @@ public class RateLimiter {
     @Value("${app.rate-limiter.window-size-seconds:60}")
     private int windowSizeSeconds;
 
-/**
+    /**
      * Checks if a request is allowed based on a specific rate limit key prefix.
      * Requests to staff endpoints and static resources are always allowed.
      * 

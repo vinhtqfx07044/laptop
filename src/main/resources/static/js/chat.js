@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check if the chat widget elements exist before initializing
     const chatToggle = document.getElementById('chat-toggle');
     const chatBox = document.getElementById('chat-box');
-    
+
     if (chatToggle && chatBox) {
         new ChatWidget();
     }

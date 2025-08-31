@@ -12,7 +12,8 @@ import java.util.UUID;
 
 /**
  * Validator for ServiceItem entities.
- * Provides methods to validate service item properties, especially for uniqueness and CSV import data.
+ * Provides methods to validate service item properties, especially for
+ * uniqueness and CSV import data.
  */
 @Component
 @RequiredArgsConstructor

@@ -32,36 +32,16 @@ public class ChatConfig {
     private final JdbcTemplate jdbcTemplate;
     private final Environment environment;
 
-    /**
-     * Constructs a new ChatConfig with the given JdbcTemplate and Environment.
-     * 
-     * @param jdbcTemplate The JDBC template for database operations.
-     * @param environment  The Spring environment for profile-specific
-     *                     configurations.
-     */
     public ChatConfig(JdbcTemplate jdbcTemplate, Environment environment) {
         this.jdbcTemplate = jdbcTemplate;
         this.environment = environment;
     }
 
-    /**
-     * Provides the system prompt as a String.
-     * 
-     * @return The content of the system prompt file.
-     * @throws IOException If an error occurs while reading the prompt resource.
-     */
     @Bean
     public String systemPrompt() throws IOException {
         return promptResource.getContentAsString(StandardCharsets.UTF_8);
     }
 
-    /**
-     * Configures and provides the ChatMemory bean.
-     * Uses JdbcChatMemoryRepository with a Postgres dialect if the 'prod' profile
-     * is active.
-     * 
-     * @return A configured ChatMemory instance.
-     */
     @Bean
     public ChatMemory chatMemory() {
         JdbcChatMemoryRepository.Builder builder = JdbcChatMemoryRepository.builder()
@@ -81,15 +61,6 @@ public class ChatConfig {
                 .build();
     }
 
-    /**
-     * Configures and provides the ChatClient bean.
-     * Sets the default system prompt and integrates with the chat memory.
-     * 
-     * @param builder      The ChatClient.Builder provided by Spring AI.
-     * @param systemPrompt The system prompt string.
-     * @param chatMemory   The chat memory instance.
-     * @return A configured ChatClient instance.
-     */
     @Bean
     public ChatClient chatClient(ChatClient.Builder builder, String systemPrompt, ChatMemory chatMemory) {
         return builder

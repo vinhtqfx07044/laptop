@@ -24,7 +24,8 @@ import java.util.UUID;
 
 /**
  * Controller for managing service items.
- * Provides endpoints for listing, exporting, importing, creating, updating, and searching service items.
+ * Provides endpoints for listing, exporting, importing, creating, updating, and
+ * searching service items.
  * Requires STAFF role for access.
  */
 @Controller
@@ -32,7 +33,7 @@ import java.util.UUID;
 @PreAuthorize("hasRole('STAFF')")
 @RequiredArgsConstructor
 public class ServiceItemController {
-    
+
     @Value("${app.pagination.default-page-size.service-items}")
     private int defaultPageSize;
 
@@ -70,7 +71,7 @@ public class ServiceItemController {
     public String importCSV(@RequestParam("file") MultipartFile file,
             RedirectAttributes redirectAttributes,
             Model model) {
-        
+
         // FIX: Local error handling thay vì GlobalExceptionHandler
         try {
             serviceItemService.importCSV(file);
@@ -90,7 +91,7 @@ public class ServiceItemController {
         if (bindingResult.hasErrors()) {
             return list(0, null, null, null, model);
         }
-        
+
         try {
             serviceItemService.create(serviceItem);
             redirectAttributes.addFlashAttribute("successMessage", "Dịch vụ đã được tạo thành công!");
