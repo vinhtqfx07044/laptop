@@ -54,12 +54,9 @@ class RequestServiceImplTest {
         private EmailService emailService;
 
         @Mock
-        private RequestValidator requestValidator;
-
-        @Mock
         private VietnamTimeProvider vietnamTimeProvider;
 
-        @InjectMocks
+        private RequestValidator requestValidator;
         private RequestServiceImpl requestService;
 
         // Test data
@@ -67,6 +64,14 @@ class RequestServiceImplTest {
 
         @BeforeEach
         void setUp() {
+                // Create real validator with mock HistoryService dependency
+                requestValidator = new RequestValidator(historyService);
+                
+                // Create service with all dependencies
+                requestService = new RequestServiceImpl(reqRepo, serviceItemRepository,
+                                                      historyService, imageService, emailService,
+                                                      requestValidator, vietnamTimeProvider);
+                
                 testRequest = new Request();
                 testRequest.setName("John Doe");
                 testRequest.setPhone("0901234567");
@@ -90,8 +95,8 @@ class RequestServiceImplTest {
                 savedRequest.setItems(List.of());
                 savedRequest.setImages(List.of());
 
+                // Mock repository and services - real validator will pass with future date
                 when(reqRepo.save(any(Request.class))).thenReturn(savedRequest);
-                doNothing().when(requestValidator).validateAppointmentDateInFuture(any(LocalDateTime.class));
                 doNothing().when(historyService).addRequestHistoryRecord(any(Request.class), eq("Tạo mới yêu cầu"),
                                 eq("Khách"));
                 when(emailService.sendConfirmationEmail(any(Request.class)))
@@ -105,21 +110,28 @@ class RequestServiceImplTest {
                 assertEquals(RequestStatus.SCHEDULED, result.getStatus());
                 assertTrue(result.getItems().isEmpty());
                 assertTrue(result.getImages().isEmpty());
+                
+                // Verify interactions
+                verify(reqRepo).save(any(Request.class));
+                verify(historyService).addRequestHistoryRecord(any(Request.class), eq("Tạo mới yêu cầu"), eq("Khách"));
+                verify(emailService).sendConfirmationEmail(any(Request.class));
         }
 
         @Test
         void publicCreate_UTC002_PastAppointmentDate_ShouldThrowValidationException() {
-                // Arrange
+                // Arrange - Set past date so real validator will throw exception
                 testRequest.setAppointmentDate(LocalDateTime.now().minusDays(1));
 
-                doThrow(new ValidationException("Ngày hẹn phải sau thời điểm hiện tại"))
-                                .when(requestValidator).validateAppointmentDateInFuture(any(LocalDateTime.class));
-
-                // Act & Assert
+                // Act & Assert - Real validator will automatically throw exception for past date
                 ValidationException exception = assertThrows(ValidationException.class,
                                 () -> requestService.publicCreate(testRequest));
 
                 assertEquals("Ngày hẹn phải sau thời điểm hiện tại", exception.getMessage());
+                
+                // Verify no save operations occurred due to early validation failure
+                verify(reqRepo, never()).save(any(Request.class));
+                verify(historyService, never()).addRequestHistoryRecord(any(), any(), any());
+                verify(emailService, never()).sendConfirmationEmail(any());
         }
 
         @Test
@@ -131,10 +143,12 @@ class RequestServiceImplTest {
                 savedRequest.setItems(List.of());
                 savedRequest.setImages(List.of());
 
+                // Mock repository and services - real validator will pass with future date
                 when(reqRepo.save(any(Request.class))).thenReturn(savedRequest);
-                doNothing().when(requestValidator).validateAppointmentDateInFuture(any(LocalDateTime.class));
                 doNothing().when(historyService).addRequestHistoryRecord(any(Request.class), eq("Tạo mới yêu cầu"),
                                 eq("Khách"));
+                when(emailService.sendConfirmationEmail(any(Request.class)))
+                                .thenReturn(CompletableFuture.completedFuture(null));
 
                 // Act
                 Request result = requestService.publicCreate(testRequest);
@@ -142,6 +156,11 @@ class RequestServiceImplTest {
                 // Assert
                 assertNotNull(result);
                 assertEquals(RequestStatus.SCHEDULED, result.getStatus());
+                
+                // Verify interactions - email service is still called (handles null email internally)
+                verify(reqRepo).save(any(Request.class));
+                verify(historyService).addRequestHistoryRecord(any(Request.class), eq("Tạo mới yêu cầu"), eq("Khách"));
+                verify(emailService).sendConfirmationEmail(any(Request.class));
         }
 
         // ===== UPDATE METHOD TESTS =====
@@ -207,6 +226,7 @@ class RequestServiceImplTest {
                 processedImages.add(new RequestImage());
                 processedImages.add(new RequestImage());
 
+                // Mock repository and service behaviors - real validator will handle validations
                 when(reqRepo.findByIdWithItems(requestId)).thenReturn(Optional.of(existingRequest));
                 when(serviceItemRepository.findAllByIdInAndActive(anyList()))
                                 .thenReturn(List.of(serviceItem1, serviceItem2));
@@ -216,12 +236,6 @@ class RequestServiceImplTest {
                 when(historyService.computeRequestChanges(any(Request.class), any(Request.class)))
                                 .thenReturn("Status changed");
                 when(reqRepo.save(any(Request.class))).thenReturn(existingRequest);
-
-                doNothing().when(requestValidator).validateEditable(any(Request.class));
-                doNothing().when(requestValidator).validateStatusTransition(any(Request.class), any(Request.class));
-                doNothing().when(requestValidator).validateItemsForStatus(any(Request.class));
-                doNothing().when(requestValidator).validateNoItemModificationWhenLocked(any(Request.class),
-                                any(Request.class));
                 doNothing().when(historyService).addRequestHistoryRecord(any(Request.class), anyString(), anyString());
                 when(emailService.sendUpdateEmail(any(Request.class), anyString()))
                                 .thenReturn(CompletableFuture.completedFuture(null));
@@ -234,6 +248,11 @@ class RequestServiceImplTest {
                 assertEquals(RequestStatus.QUOTED, result.getStatus());
                 assertEquals(2, result.getItems().size());
                 assertEquals(2, result.getImages().size());
+                
+                // Verify interactions
+                verify(reqRepo).findByIdWithItems(requestId);
+                verify(serviceItemRepository).findAllByIdInAndActive(anyList());
+                verify(reqRepo).save(any(Request.class));
         }
 
         @Test
@@ -249,6 +268,10 @@ class RequestServiceImplTest {
                                 () -> requestService.update(nonExistentId, incomingRequest, null, null, null));
 
                 assertEquals("Không tìm thấy yêu cầu với ID: " + nonExistentId, exception.getMessage());
+                
+                // Verify repository was called but no further processing occurred
+                verify(reqRepo).findByIdWithItems(nonExistentId);
+                verify(reqRepo, never()).save(any(Request.class));
         }
 
         @Test
@@ -283,6 +306,8 @@ class RequestServiceImplTest {
                 incomingRequest.setItems(new ArrayList<>(List.of(requestItem)));
 
                 LocalDateTime completionTime = LocalDateTime.of(2025, 8, 27, 15, 33);
+                
+                // Mock repository and service behaviors - real validator will handle validations
                 when(vietnamTimeProvider.now()).thenReturn(completionTime);
                 when(reqRepo.findByIdWithItems(requestId)).thenReturn(Optional.of(existingRequest));
                 when(serviceItemRepository.findAllByIdInAndActive(anyList())).thenReturn(List.of(serviceItem));
@@ -291,12 +316,6 @@ class RequestServiceImplTest {
                 when(reqRepo.save(any(Request.class))).thenReturn(existingRequest);
                 when(imageService.updateRequestServiceImages(any(Request.class), isNull(), isNull()))
                                 .thenReturn(new ArrayList<>());
-
-                doNothing().when(requestValidator).validateEditable(any(Request.class));
-                doNothing().when(requestValidator).validateStatusTransition(any(Request.class), any(Request.class));
-                doNothing().when(requestValidator).validateItemsForStatus(any(Request.class));
-                doNothing().when(requestValidator).validateNoItemModificationWhenLocked(any(Request.class),
-                                any(Request.class));
                 doNothing().when(historyService).addRequestHistoryRecord(any(Request.class), anyString(), anyString());
                 when(emailService.sendUpdateEmail(any(Request.class), anyString()))
                                 .thenReturn(CompletableFuture.completedFuture(null));
@@ -308,6 +327,10 @@ class RequestServiceImplTest {
                 assertNotNull(result);
                 assertEquals(RequestStatus.COMPLETED, result.getStatus());
                 assertEquals(completionTime, result.getCompletedAt());
+                
+                // Verify interactions
+                verify(vietnamTimeProvider).now();
+                verify(reqRepo).save(any(Request.class));
         }
 
         @Test
@@ -323,17 +346,19 @@ class RequestServiceImplTest {
                 Request incomingRequest = new Request();
                 incomingRequest.setStatus(RequestStatus.IN_PROGRESS);
 
+                // Mock repository - real validator will automatically throw exception for CANCELLED transition
                 when(reqRepo.findByIdWithItems(requestId)).thenReturn(Optional.of(existingRequest));
-                doNothing().when(requestValidator).validateEditable(any(Request.class));
-                doThrow(new ValidationException("Không thể chuyển đổi trạng thái phiếu từ Đã hủy đến Đang thực hiện"))
-                                .when(requestValidator).validateStatusTransition(existingRequest, incomingRequest);
 
-                // Act & Assert
+                // Act & Assert - Real validator will throw exception for cancelled status
                 ValidationException exception = assertThrows(ValidationException.class,
                                 () -> requestService.update(requestId, incomingRequest, null, null, null));
 
-                assertEquals("Không thể chuyển đổi trạng thái phiếu từ Đã hủy đến Đang thực hiện",
-                                exception.getMessage());
+                // Real validator throws from validateEditable() for CANCELLED status
+                assertEquals("Không thể chỉnh sửa phiếu ở trạng thái \"Đã hủy\"", exception.getMessage());
+                
+                // Verify repository was called but no save occurred due to validation failure
+                verify(reqRepo).findByIdWithItems(requestId);
+                verify(reqRepo, never()).save(any(Request.class));
         }
 
         @Test
@@ -351,17 +376,12 @@ class RequestServiceImplTest {
                 incomingRequest.setStatus(RequestStatus.SCHEDULED);
                 incomingRequest.setItems(new ArrayList<>());
 
+                // Mock repository and service behaviors - real validator will pass for valid scenarios
                 when(reqRepo.findByIdWithItems(requestId)).thenReturn(Optional.of(existingRequest));
                 when(historyService.computeRequestChanges(any(Request.class), any(Request.class))).thenReturn("");
                 when(reqRepo.save(any(Request.class))).thenReturn(existingRequest);
                 when(imageService.updateRequestServiceImages(any(Request.class), isNull(), isNull()))
                                 .thenReturn(new ArrayList<>());
-
-                doNothing().when(requestValidator).validateEditable(any(Request.class));
-                doNothing().when(requestValidator).validateStatusTransition(any(Request.class), any(Request.class));
-                doNothing().when(requestValidator).validateItemsForStatus(any(Request.class));
-                doNothing().when(requestValidator).validateNoItemModificationWhenLocked(any(Request.class),
-                                any(Request.class));
                 doNothing().when(historyService).addRequestHistoryRecord(any(Request.class), anyString(), anyString());
                 when(emailService.sendUpdateEmail(any(Request.class), anyString()))
                                 .thenReturn(CompletableFuture.completedFuture(null));
@@ -371,6 +391,10 @@ class RequestServiceImplTest {
 
                 // Assert
                 assertNotNull(result);
+                
+                // Verify interactions
+                verify(reqRepo).findByIdWithItems(requestId);
+                verify(reqRepo).save(any(Request.class));
         }
 
         @Test
@@ -399,27 +423,27 @@ class RequestServiceImplTest {
                 ServiceItem serviceItem = new ServiceItem();
                 serviceItem.setId(item.getServiceItemId());
                 serviceItem.setName("Service Item");
-                serviceItem.setPrice(BigDecimal.valueOf(200)); // Different price
+                serviceItem.setPrice(BigDecimal.valueOf(200)); // Different price - will cause validation error
                 serviceItem.setVatRate(BigDecimal.valueOf(0.1));
                 serviceItem.setWarrantyDays(30);
 
+                // Mock repository and services - service logic will detect inconsistency
                 when(reqRepo.findByIdWithItems(requestId)).thenReturn(Optional.of(existingRequest));
                 when(serviceItemRepository.findAllByIdInAndActive(anyList())).thenReturn(List.of(serviceItem));
                 when(imageService.updateRequestServiceImages(any(Request.class), isNull(), isNull()))
                                 .thenReturn(new ArrayList<>());
 
-                doNothing().when(requestValidator).validateEditable(any(Request.class));
-                doNothing().when(requestValidator).validateStatusTransition(any(Request.class), any(Request.class));
-                doNothing().when(requestValidator).validateItemsForStatus(any(Request.class));
-                doNothing().when(requestValidator).validateNoItemModificationWhenLocked(any(Request.class),
-                                any(Request.class));
-
-                // Act & Assert
+                // Act & Assert - Service will throw exception due to price inconsistency
                 ValidationException exception = assertThrows(ValidationException.class,
                                 () -> requestService.update(requestId, incomingRequest, null, null, null));
 
                 assertTrue(exception.getMessage().contains("Giá dịch vụ"));
                 assertTrue(exception.getMessage().contains("đã thay đổi"));
+                
+                // Verify repository was called but no save occurred due to validation failure
+                verify(reqRepo).findByIdWithItems(requestId);
+                verify(serviceItemRepository).findAllByIdInAndActive(anyList());
+                verify(reqRepo, never()).save(any(Request.class));
         }
 
         @Test
@@ -434,23 +458,22 @@ class RequestServiceImplTest {
 
                 Request incomingRequest = new Request();
                 incomingRequest.setStatus(RequestStatus.COMPLETED);
-                incomingRequest.setItems(new ArrayList<>(List.of(new RequestItem(), new RequestItem()))); // Different
-                                                                                                          // number of
-                                                                                                          // items
+                incomingRequest.setItems(new ArrayList<>(List.of(new RequestItem(), new RequestItem()))); // Different number of items
 
+                // Mock repository and services - real validator + mock HistoryService will detect locked modification
                 when(reqRepo.findByIdWithItems(requestId)).thenReturn(Optional.of(existingRequest));
-                doNothing().when(requestValidator).validateEditable(any(Request.class));
-                doNothing().when(requestValidator).validateStatusTransition(any(Request.class), any(Request.class));
-                doNothing().when(requestValidator).validateItemsForStatus(any(Request.class));
-                doThrow(new ValidationException("Phiếu đã ở trạng thái Hoàn thành và không thể thay đổi hạng mục."))
-                                .when(requestValidator)
-                                .validateNoItemModificationWhenLocked(existingRequest, incomingRequest);
+                when(historyService.areRequestItemsEqual(any(), any())).thenReturn(false); // Items are different
 
-                // Act & Assert
+                // Act & Assert - Real validator will throw exception for locked item modification
                 ValidationException exception = assertThrows(ValidationException.class,
                                 () -> requestService.update(requestId, incomingRequest, null, null, null));
 
-                assertEquals("Phiếu đã ở trạng thái Hoàn thành và không thể thay đổi hạng mục.",
-                                exception.getMessage());
+                assertTrue(exception.getMessage().contains("Hoàn thành"));
+                assertTrue(exception.getMessage().contains("không thể thay đổi hạng mục"));
+                
+                // Verify repository was called but no save occurred due to validation failure
+                verify(reqRepo).findByIdWithItems(requestId);
+                verify(historyService).areRequestItemsEqual(any(), any());
+                verify(reqRepo, never()).save(any(Request.class));
         }
 }

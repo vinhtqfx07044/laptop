@@ -29,10 +29,7 @@ class ServiceItemServiceImplTest {
         @Mock
         private ServiceItemRepository serviceItemRepository;
 
-        @Mock
         private ServiceItemValidator serviceItemValidator;
-
-        @InjectMocks
         private ServiceItemServiceImpl serviceItemService;
 
         private ServiceItem testServiceItem;
@@ -40,6 +37,12 @@ class ServiceItemServiceImplTest {
 
         @BeforeEach
         void setUp() {
+                // Create real validator with mock repository
+                serviceItemValidator = new ServiceItemValidator(serviceItemRepository);
+                
+                // Create service with mock repository and real validator
+                serviceItemService = new ServiceItemServiceImpl(serviceItemRepository, serviceItemValidator);
+                
                 testServiceItemId = UUID.randomUUID();
                 testServiceItem = new ServiceItem();
                 testServiceItem.setId(testServiceItemId);
@@ -60,7 +63,8 @@ class ServiceItemServiceImplTest {
                 inputServiceItem.setWarrantyDays(30);
                 inputServiceItem.setActive(true);
 
-                doNothing().when(serviceItemValidator).validateUniqueNameOnCreate(eq("Laptop Cleaning"));
+                // Mock repository to simulate name doesn't exist (allowing creation)
+                when(serviceItemRepository.findByName("Laptop Cleaning")).thenReturn(Optional.empty());
                 when(serviceItemRepository.save(eq(inputServiceItem))).thenReturn(inputServiceItem);
 
                 // Act
@@ -73,6 +77,10 @@ class ServiceItemServiceImplTest {
                 assertEquals(new BigDecimal("0.10"), result.getVatRate());
                 assertEquals(30, result.getWarrantyDays());
                 assertTrue(result.isActive());
+                
+                // Verify validator called repository to check uniqueness
+                verify(serviceItemRepository).findByName("Laptop Cleaning");
+                verify(serviceItemRepository).save(inputServiceItem);
         }
 
         @Test
@@ -81,14 +89,22 @@ class ServiceItemServiceImplTest {
                 ServiceItem inputServiceItem = new ServiceItem();
                 inputServiceItem.setName("Existing Service Name");
 
-                doThrow(new ValidationException("Tên dịch vụ đã tồn tại. Vui lòng chọn tên khác"))
-                                .when(serviceItemValidator).validateUniqueNameOnCreate(eq("Existing Service Name"));
+                ServiceItem existingItem = new ServiceItem();
+                existingItem.setId(UUID.randomUUID());
+                existingItem.setName("Existing Service Name");
+
+                // Mock repository to simulate name already exists
+                when(serviceItemRepository.findByName("Existing Service Name")).thenReturn(Optional.of(existingItem));
 
                 // Act & Assert
                 ValidationException exception = assertThrows(ValidationException.class,
                                 () -> serviceItemService.create(inputServiceItem));
 
                 assertEquals("Tên dịch vụ đã tồn tại. Vui lòng chọn tên khác", exception.getMessage());
+                
+                // Verify validator called repository to check uniqueness but didn't call save
+                verify(serviceItemRepository).findByName("Existing Service Name");
+                verify(serviceItemRepository, never()).save(any(ServiceItem.class));
         }
 
         @Test
@@ -109,10 +125,12 @@ class ServiceItemServiceImplTest {
                 incomingServiceItem.setWarrantyDays(60);
                 incomingServiceItem.setActive(false);
 
+                // Mock repository behaviors for successful update
                 when(serviceItemRepository.findById(eq(testServiceItemId)))
                                 .thenReturn(Optional.of(existingServiceItem));
-                doNothing().when(serviceItemValidator).validateUniqueNameOnUpdate(eq(testServiceItemId),
-                                eq("Updated Cleaning Service"));
+                // Mock uniqueness check to return false (no other item has this name)
+                when(serviceItemRepository.existsByNameAndIdNot("Updated Cleaning Service", testServiceItemId))
+                                .thenReturn(false);
                 when(serviceItemRepository.save(any(ServiceItem.class))).thenReturn(existingServiceItem);
 
                 // Act
@@ -126,6 +144,10 @@ class ServiceItemServiceImplTest {
                 assertEquals(new BigDecimal("0.12"), result.getVatRate());
                 assertEquals(60, result.getWarrantyDays());
                 assertFalse(result.isActive());
+                
+                // Verify validator called repository to check uniqueness
+                verify(serviceItemRepository).existsByNameAndIdNot("Updated Cleaning Service", testServiceItemId);
+                verify(serviceItemRepository).save(any(ServiceItem.class));
         }
 
         @Test
@@ -141,6 +163,9 @@ class ServiceItemServiceImplTest {
                                 () -> serviceItemService.update(nonExistentId, incomingServiceItem));
 
                 assertEquals("Không tìm thấy dịch vụ với ID: " + nonExistentId, exception.getMessage());
+                
+                // Verify repository was called to find the item
+                verify(serviceItemRepository).findById(nonExistentId);
         }
 
         @Test
@@ -153,18 +178,22 @@ class ServiceItemServiceImplTest {
                 ServiceItem incomingServiceItem = new ServiceItem();
                 incomingServiceItem.setName("Name of another existing service");
 
+                // Mock repository behaviors for duplicate name scenario
                 when(serviceItemRepository.findById(eq(testServiceItemId)))
                                 .thenReturn(Optional.of(existingServiceItem));
-                doThrow(new ValidationException("Tên dịch vụ đã tồn tại. Vui lòng chọn tên khác"))
-                                .when(serviceItemValidator)
-                                .validateUniqueNameOnUpdate(eq(testServiceItemId),
-                                                eq("Name of another existing service"));
+                // Mock uniqueness check to return true (another item has this name)
+                when(serviceItemRepository.existsByNameAndIdNot("Name of another existing service", testServiceItemId))
+                                .thenReturn(true);
 
                 // Act & Assert
                 ValidationException exception = assertThrows(ValidationException.class,
                                 () -> serviceItemService.update(testServiceItemId, incomingServiceItem));
 
                 assertEquals("Tên dịch vụ đã tồn tại. Vui lòng chọn tên khác", exception.getMessage());
+                
+                // Verify validator called repository to check uniqueness but didn't save
+                verify(serviceItemRepository).existsByNameAndIdNot("Name of another existing service", testServiceItemId);
+                verify(serviceItemRepository, never()).save(any(ServiceItem.class));
         }
 
         @Test
@@ -181,10 +210,12 @@ class ServiceItemServiceImplTest {
                 incomingServiceItem.setPrice(new BigDecimal("250000")); // Updated price
                 incomingServiceItem.setActive(false); // Updated active status
 
+                // Mock repository behaviors for same name update
                 when(serviceItemRepository.findById(eq(testServiceItemId)))
                                 .thenReturn(Optional.of(existingServiceItem));
-                doNothing().when(serviceItemValidator).validateUniqueNameOnUpdate(eq(testServiceItemId),
-                                eq("Original Service Name"));
+                // Mock uniqueness check to return false (same item name, different ID excluded)
+                when(serviceItemRepository.existsByNameAndIdNot("Original Service Name", testServiceItemId))
+                                .thenReturn(false);
                 when(serviceItemRepository.save(any(ServiceItem.class))).thenReturn(existingServiceItem);
 
                 // Act
@@ -196,6 +227,10 @@ class ServiceItemServiceImplTest {
                 assertEquals("Original Service Name", result.getName());
                 assertEquals(new BigDecimal("250000"), result.getPrice());
                 assertFalse(result.isActive());
+                
+                // Verify validator called repository to check uniqueness
+                verify(serviceItemRepository).existsByNameAndIdNot("Original Service Name", testServiceItemId);
+                verify(serviceItemRepository).save(any(ServiceItem.class));
         }
 
         @Test
@@ -207,17 +242,18 @@ class ServiceItemServiceImplTest {
                 MockMultipartFile file = new MockMultipartFile("test.csv", "test.csv", "text/csv",
                                 csvContent.getBytes());
 
-                doNothing().when(serviceItemValidator).validateCSVFile(eq(file));
+                // Mock repository to simulate all items are new (don't exist yet)
                 when(serviceItemRepository.findByName(eq("New Service A"))).thenReturn(Optional.empty());
                 when(serviceItemRepository.findByName(eq("New Service B"))).thenReturn(Optional.empty());
-                doNothing().when(serviceItemValidator).validateCSVName(anyString(), anyInt());
-                doNothing().when(serviceItemValidator).validateCSVPrice(any(BigDecimal.class), anyInt());
-                doNothing().when(serviceItemValidator).validateCSVVatRate(any(BigDecimal.class), anyInt());
-                doNothing().when(serviceItemValidator).validateCSVWarrantyDays(anyInt(), anyInt());
                 when(serviceItemRepository.saveAll(anyList())).thenReturn(List.of());
 
                 // Act & Assert
                 assertDoesNotThrow(() -> serviceItemService.importCSV(file));
+                
+                // Verify repository interactions
+                verify(serviceItemRepository).findByName("New Service A");
+                verify(serviceItemRepository).findByName("New Service B");
+                verify(serviceItemRepository).saveAll(anyList());
         }
 
         @Test
@@ -233,18 +269,19 @@ class ServiceItemServiceImplTest {
                 existingServiceC.setId(UUID.randomUUID());
                 existingServiceC.setName("Existing Service C");
 
-                doNothing().when(serviceItemValidator).validateCSVFile(eq(file));
+                // Mock repository to simulate mixed scenario: one existing, one new
                 when(serviceItemRepository.findByName(eq("Existing Service C")))
                                 .thenReturn(Optional.of(existingServiceC));
                 when(serviceItemRepository.findByName(eq("New Service D"))).thenReturn(Optional.empty());
-                doNothing().when(serviceItemValidator).validateCSVName(anyString(), anyInt());
-                doNothing().when(serviceItemValidator).validateCSVPrice(any(BigDecimal.class), anyInt());
-                doNothing().when(serviceItemValidator).validateCSVVatRate(any(BigDecimal.class), anyInt());
-                doNothing().when(serviceItemValidator).validateCSVWarrantyDays(anyInt(), anyInt());
                 when(serviceItemRepository.saveAll(anyList())).thenReturn(List.of());
 
                 // Act & Assert
                 assertDoesNotThrow(() -> serviceItemService.importCSV(file));
+                
+                // Verify repository interactions
+                verify(serviceItemRepository).findByName("Existing Service C");
+                verify(serviceItemRepository).findByName("New Service D");
+                verify(serviceItemRepository).saveAll(anyList());
         }
 
         @Test
@@ -252,10 +289,8 @@ class ServiceItemServiceImplTest {
                 // Arrange
                 MockMultipartFile file = new MockMultipartFile("test.csv", "test.csv", "text/csv", "".getBytes());
 
-                doThrow(new CSVImportException("File CSV trống hoặc không hợp lệ"))
-                                .when(serviceItemValidator).validateCSVFile(eq(file));
-
                 // Act & Assert
+                // Real validator will detect empty file and throw exception
                 CSVImportException exception = assertThrows(CSVImportException.class,
                                 () -> serviceItemService.importCSV(file));
 
@@ -270,9 +305,8 @@ class ServiceItemServiceImplTest {
                 MockMultipartFile file = new MockMultipartFile("test.csv", "test.csv", "text/csv",
                                 csvContent.getBytes());
 
-                doNothing().when(serviceItemValidator).validateCSVFile(eq(file));
-
                 // Act & Assert
+                // NumberFormatException will be caught and converted to CSVImportException
                 CSVImportException exception = assertThrows(CSVImportException.class,
                                 () -> serviceItemService.importCSV(file));
 
@@ -287,12 +321,8 @@ class ServiceItemServiceImplTest {
                 MockMultipartFile file = new MockMultipartFile("test.csv", "test.csv", "text/csv",
                                 csvContent.getBytes());
 
-                doNothing().when(serviceItemValidator).validateCSVFile(eq(file));
-                doNothing().when(serviceItemValidator).validateCSVName(anyString(), anyInt());
-                doThrow(new CSVImportException("Giá dịch vụ phải lớn hơn 0", 2))
-                                .when(serviceItemValidator).validateCSVPrice(eq(BigDecimal.ZERO), eq(2));
-
                 // Act & Assert
+                // Real validator will detect price = 0 and throw exception
                 CSVImportException exception = assertThrows(CSVImportException.class,
                                 () -> serviceItemService.importCSV(file));
 

@@ -8,10 +8,10 @@ import com.laptoprepair.validation.ImageValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -26,13 +26,11 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ImageServiceImplTest {
 
-    @Mock
     private ImageValidator imageValidator;
 
     @Mock
     private FileStorageService fileStorageService;
 
-    @InjectMocks
     private ImageServiceImpl imageService;
 
     private UUID requestId;
@@ -45,6 +43,13 @@ class ImageServiceImplTest {
         request = new Request();
         request.setId(requestId);
         currentImages = new ArrayList<>();
+        
+        // Create real ImageValidator with test configuration
+        imageValidator = new ImageValidator();
+        ReflectionTestUtils.setField(imageValidator, "maxImages", 5);
+        
+        // Manual dependency injection
+        imageService = new ImageServiceImpl(imageValidator, fileStorageService);
     }
 
     @Test
@@ -54,9 +59,7 @@ class ImageServiceImplTest {
                 new MockMultipartFile("file2", "image2.jpg", "image/jpeg", "test content".getBytes())
         };
 
-        doNothing().when(imageValidator).validateMaxImagesPerRequest(anyList(), any(MultipartFile[].class));
         doNothing().when(fileStorageService).createDir(requestId);
-        doNothing().when(imageValidator).validateImageFileSizeAndFormat(any(MultipartFile.class));
         when(fileStorageService.save(eq(requestId), any(MultipartFile.class)))
                 .thenReturn("generated_filename_1.jpg")
                 .thenReturn("generated_filename_2.jpg");
@@ -69,9 +72,7 @@ class ImageServiceImplTest {
         assertEquals(request, result.get(0).getRequest());
         assertEquals(request, result.get(1).getRequest());
 
-        verify(imageValidator).validateMaxImagesPerRequest(anyList(), eq(newImages));
         verify(fileStorageService).createDir(requestId);
-        verify(imageValidator, times(2)).validateImageFileSizeAndFormat(any(MultipartFile.class));
         verify(fileStorageService, times(2)).save(eq(requestId), any(MultipartFile.class));
     }
 
@@ -83,16 +84,12 @@ class ImageServiceImplTest {
                 new MockMultipartFile("file2", "image2.jpg", "image/jpeg", "test content".getBytes())
         };
 
-        doThrow(new ValidationException("Tối đa 5 ảnh cho mỗi yêu cầu"))
-                .when(imageValidator).validateMaxImagesPerRequest(anyList(), any(MultipartFile[].class));
-
         ValidationException exception = assertThrows(ValidationException.class,
                 () -> imageService.uploadImages(requestId, existingImages, newImages, request));
 
         assertEquals("Tối đa 5 ảnh cho mỗi yêu cầu", exception.getMessage());
         verify(fileStorageService, never()).createDir(any(UUID.class));
         verify(fileStorageService, never()).save(any(UUID.class), any(MultipartFile.class));
-        verify(imageValidator, never()).validateImageFileSizeAndFormat(any(MultipartFile.class));
     }
 
     @Test
@@ -101,10 +98,7 @@ class ImageServiceImplTest {
                 new MockMultipartFile("file1", "document.txt", "text/plain", "test content".getBytes())
         };
 
-        doNothing().when(imageValidator).validateMaxImagesPerRequest(anyList(), any(MultipartFile[].class));
         doNothing().when(fileStorageService).createDir(requestId);
-        doThrow(new ValidationException("Chỉ hỗ trợ ảnh (PNG, JPG)"))
-                .when(imageValidator).validateImageFileSizeAndFormat(any(MultipartFile.class));
 
         ValidationException exception = assertThrows(ValidationException.class,
                 () -> imageService.uploadImages(requestId, currentImages, newImages, request));
@@ -121,9 +115,7 @@ class ImageServiceImplTest {
                 new MockMultipartFile("file2", "image2.jpg", "image/jpeg", "test content".getBytes())
         };
 
-        doNothing().when(imageValidator).validateMaxImagesPerRequest(anyList(), any(MultipartFile[].class));
         doNothing().when(fileStorageService).createDir(requestId);
-        doNothing().when(imageValidator).validateImageFileSizeAndFormat(any(MultipartFile.class));
         when(fileStorageService.save(eq(requestId), any(MultipartFile.class)))
                 .thenReturn("generated_filename_1.jpg")
                 .thenReturn("generated_filename_2.jpg");
@@ -131,7 +123,6 @@ class ImageServiceImplTest {
         List<RequestImage> result = imageService.uploadImages(requestId, existingImages, newImages, request);
 
         assertEquals(5, result.size());
-        verify(imageValidator).validateMaxImagesPerRequest(anyList(), eq(newImages));
         verify(fileStorageService, times(2)).save(eq(requestId), any(MultipartFile.class));
     }
 
@@ -141,9 +132,7 @@ class ImageServiceImplTest {
                 new MockMultipartFile("file1", "image1.jpg", "image/jpeg", "test content".getBytes())
         };
 
-        doNothing().when(imageValidator).validateMaxImagesPerRequest(anyList(), any(MultipartFile[].class));
         doNothing().when(fileStorageService).createDir(requestId);
-        doNothing().when(imageValidator).validateImageFileSizeAndFormat(any(MultipartFile.class));
         when(fileStorageService.save(eq(requestId), any(MultipartFile.class)))
                 .thenThrow(new IOException("Disk full"));
 
