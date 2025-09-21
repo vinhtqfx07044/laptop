@@ -5,6 +5,7 @@ import com.laptoprepair.exception.CSVImportException;
 import com.laptoprepair.exception.ValidationException;
 import com.laptoprepair.exception.NotFoundException;
 import com.laptoprepair.service.ServiceItemService;
+import com.laptoprepair.utils.ValidationErrorUtil;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -18,6 +19,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import java.util.UUID;
@@ -38,6 +40,7 @@ public class ServiceItemController {
     private int defaultPageSize;
 
     private final ServiceItemService serviceItemService;
+    private final ValidationErrorUtil validationErrorUtil;
 
     @GetMapping
     public String list(
@@ -84,11 +87,17 @@ public class ServiceItemController {
     }
 
     @PostMapping("/create")
-    public String create(@ModelAttribute ServiceItem serviceItem,
+    public String create(@Valid @ModelAttribute ServiceItem serviceItem,
             BindingResult bindingResult,
             Model model,
             RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
+            // Add centralized error messages for header display
+            model.addAttribute("errorMessages", validationErrorUtil.extractErrorMessages(bindingResult));
+            
+            // Add field-specific error status for enhanced styling
+            model.addAttribute("fieldHasErrors", validationErrorUtil.getFieldErrorStatus(bindingResult));
+            
             return list(0, null, null, null, model);
         }
 
@@ -104,11 +113,17 @@ public class ServiceItemController {
 
     @PostMapping("/update/{id}")
     public String update(@PathVariable UUID id,
-            @ModelAttribute ServiceItem serviceItem,
+            @Valid @ModelAttribute ServiceItem serviceItem,
             BindingResult bindingResult,
             Model model,
             RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
+            // Add centralized error messages for header display
+            model.addAttribute("errorMessages", validationErrorUtil.extractErrorMessages(bindingResult));
+            
+            // Add field-specific error status for enhanced styling
+            model.addAttribute("fieldHasErrors", validationErrorUtil.getFieldErrorStatus(bindingResult));
+            
             return list(0, null, null, null, model);
         }
 

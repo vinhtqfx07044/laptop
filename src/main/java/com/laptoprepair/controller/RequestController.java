@@ -5,6 +5,7 @@ import com.laptoprepair.enums.RequestStatus;
 import com.laptoprepair.exception.ValidationException;
 import com.laptoprepair.exception.NotFoundException;
 import com.laptoprepair.service.RequestService;
+import com.laptoprepair.utils.ValidationErrorUtil;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -35,6 +36,7 @@ import java.util.UUID;
 public class RequestController {
 
     private final RequestService requestService;
+    private final ValidationErrorUtil validationErrorUtil;
 
     @Value("${app.pagination.default-page-size.requests}")
     private int defaultPageSize;
@@ -99,6 +101,12 @@ public class RequestController {
             RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
+            // Add centralized error messages for header display
+            model.addAttribute("errorMessages", validationErrorUtil.extractErrorMessages(bindingResult));
+            
+            // Add field-specific error status for enhanced styling
+            model.addAttribute("fieldHasErrors", validationErrorUtil.getFieldErrorStatus(bindingResult));
+            
             populateForCreate(model, request);
             model.addAttribute("request", incomingRequest); // Override with form data
             return "staff/request-form";
@@ -128,6 +136,12 @@ public class RequestController {
             RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
+            // Add centralized error messages for header display
+            model.addAttribute("errorMessages", validationErrorUtil.extractErrorMessages(bindingResult));
+            
+            // Add field-specific error status for enhanced styling
+            model.addAttribute("fieldHasErrors", validationErrorUtil.getFieldErrorStatus(bindingResult));
+            
             // Load full request from DB when validation fails
             Request existingRequest = requestService.findById(id);
             populateForEdit(existingRequest, model, request);

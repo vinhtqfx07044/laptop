@@ -6,6 +6,7 @@ import com.laptoprepair.exception.NotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import com.laptoprepair.service.RequestService;
+import com.laptoprepair.utils.ValidationErrorUtil;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ import java.util.UUID;
 public class PublicController {
 
     private final RequestService requestService;
+    private final ValidationErrorUtil validationErrorUtil;
 
     @GetMapping("/login")
     public String login() {
@@ -68,6 +70,12 @@ public class PublicController {
             Model model,
             RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
+            // Add centralized error messages for header display
+            model.addAttribute("errorMessages", validationErrorUtil.extractErrorMessages(bindingResult));
+            
+            // Add field-specific error status for enhanced styling
+            model.addAttribute("fieldHasErrors", validationErrorUtil.getFieldErrorStatus(bindingResult));
+            
             model.addAttribute("request", request);
             return "public/request-submit";
         }

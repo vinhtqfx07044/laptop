@@ -15,14 +15,15 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="name" class="form-label">Tên khách hàng *</label>
-                            <input type="text" class="form-control" id="name" th:field="*{name}" required minlength="3"
-                                maxlength="100">
+                            <input type="text" class="form-control" th:classappend="${fieldHasErrors != null and fieldHasErrors.containsKey('name')} ? 'has-error' : ''"
+                                   id="name" th:field="*{name}" required minlength="3" maxlength="100">
                             <div class="invalid-feedback">Tên khách hàng phải có ít nhất 3 ký tự.</div>
                         </div>
                         <div class="col-md-6">
                             <label for="phone" class="form-label">Số điện thoại *</label>
-                            <input type="tel" class="form-control" id="phone" th:field="*{phone}" required
-                                pattern="0\d{9}" title="Số điện thoại phải có 10 chữ số và bắt đầu bằng 0">
+                            <input type="tel" class="form-control" th:classappend="${fieldHasErrors != null and fieldHasErrors.containsKey('phone')} ? 'has-error' : ''"
+                                   id="phone" th:field="*{phone}" required pattern="0\d{9}"
+                                   title="Số điện thoại phải có 10 chữ số và bắt đầu bằng 0">
                             <div class="invalid-feedback">Số điện thoại phải có 10 chữ số và bắt đầu bằng 0.</div>
                         </div>
                     </div>
@@ -31,12 +32,14 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" th:field="*{email}">
+                            <input type="email" class="form-control" th:classappend="${fieldHasErrors != null and fieldHasErrors.containsKey('email')} ? 'has-error' : ''"
+                                   id="email" th:field="*{email}">
                             <div class="invalid-feedback">Vui lòng nhập địa chỉ email hợp lệ.</div>
                         </div>
                         <div class="col-md-6">
                             <label for="address" class="form-label">Địa chỉ</label>
-                            <input type="text" class="form-control" id="address" th:field="*{address}">
+                            <input type="text" class="form-control" th:classappend="${fieldHasErrors != null and fieldHasErrors.containsKey('address')} ? 'has-error' : ''"
+                                   id="address" th:field="*{address}">
                         </div>
                     </div>
 
@@ -44,32 +47,35 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="brandModel" class="form-label">Hãng và Model laptop</label>
-                            <input type="text" class="form-control" id="brandModel" th:field="*{brandModel}"
-                                placeholder="Ví dụ: Dell Inspiron 15, MacBook Pro 13...">
+                            <input type="text" class="form-control" th:classappend="${fieldHasErrors != null and fieldHasErrors.containsKey('brandModel')} ? 'has-error' : ''"
+                                   id="brandModel" th:field="*{brandModel}"
+                                   placeholder="Ví dụ: Dell Inspiron 15, MacBook Pro 13...">
                         </div>
                         <div class="col-md-6">
                             <label for="serialNumber" class="form-label">Serial Number</label>
-                            <input type="text" class="form-control" id="serialNumber" th:field="*{serialNumber}"
-                                placeholder="Số seri của thiết bị (nếu có)">
+                            <input type="text" class="form-control" th:classappend="${fieldHasErrors != null and fieldHasErrors.containsKey('serialNumber')} ? 'has-error' : ''"
+                                   id="serialNumber" th:field="*{serialNumber}"
+                                   placeholder="Số seri của thiết bị (nếu có)">
                         </div>
                     </div>
 
                     <!-- Appointment Date -->
                     <div class="mb-3">
                         <label for="appointmentDate" class="form-label">Ngày hẹn *</label>
-                        <input type="datetime-local" class="form-control" id="appointmentDate"
-                            th:field="*{appointmentDate}"
-                            th:value="${request.appointmentDate != null ? #temporals.format(request.appointmentDate, 'yyyy-MM-dd''T''HH:mm') : ''}"
-                            required>
+                        <input type="datetime-local" class="form-control" th:classappend="${fieldHasErrors != null and fieldHasErrors.containsKey('appointmentDate')} ? 'has-error' : ''"
+                               id="appointmentDate" th:field="*{appointmentDate}"
+                               th:value="${request.appointmentDate != null ? #temporals.format(request.appointmentDate, 'yyyy-MM-dd''T''HH:mm') : ''}"
+                               required>
                         <div class="invalid-feedback">Vui lòng chọn ngày hẹn.</div>
                     </div>
 
                     <!-- Description of the issue -->
                     <div class="mb-3">
                         <label for="description" class="form-label">Mô tả tình trạng thiết bị *</label>
-                        <textarea class="form-control" id="description" th:field="*{description}" rows="3" required
-                            minlength="10" maxlength="1000"
-                            placeholder="Mô tả chi tiết các lỗi, triệu chứng mà thiết bị gặp phải..."></textarea>
+                        <textarea class="form-control" th:classappend="${fieldHasErrors != null and fieldHasErrors.containsKey('description')} ? 'has-error' : ''"
+                                  id="description" th:field="*{description}" rows="3" required
+                                  minlength="10" maxlength="1000"
+                                  placeholder="Mô tả chi tiết các lỗi, triệu chứng mà thiết bị gặp phải..."></textarea>
                         <div class="invalid-feedback">Mô tả phải có ít nhất 10 ký tự.</div>
                     </div>
 
