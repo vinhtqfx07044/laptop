@@ -46,13 +46,7 @@ public interface RequestRepository extends JpaRepository<Request, UUID> {
                      "       LOWER(r.brand_model) LIKE LOWER(CONCAT('%',:search,'%')) OR " +
                      "       LOWER(r.serial_number) LIKE LOWER(CONCAT('%',:search,'%'))) " +
                      "AND (:status IS NULL OR r.status = CAST(:status AS VARCHAR)) " +
-                     "ORDER BY r.appointment_date DESC", countQuery = "SELECT COUNT(*) FROM request r " +
-                                   "WHERE (:search IS NULL OR " +
-                                   "       LOWER(r.name) LIKE LOWER(CONCAT('%',:search,'%')) OR " +
-                                   "       LOWER(r.phone) LIKE LOWER(CONCAT('%',:search,'%')) OR " +
-                                   "       LOWER(r.brand_model) LIKE LOWER(CONCAT('%',:search,'%')) OR " +
-                                   "       LOWER(r.serial_number) LIKE LOWER(CONCAT('%',:search,'%'))) " +
-                                   "AND (:status IS NULL OR r.status = CAST(:status AS VARCHAR))", nativeQuery = true)
+                     "ORDER BY r.appointment_date DESC", nativeQuery = true)
        Page<Request> findWithFilters(@Param("search") String search,
                      @Param("status") String status,
                      Pageable pageable);

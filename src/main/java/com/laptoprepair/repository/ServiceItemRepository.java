@@ -31,10 +31,7 @@ public interface ServiceItemRepository extends JpaRepository<ServiceItem, UUID> 
        @Query(value = "SELECT * FROM service_item s WHERE " +
                      "(:keyword IS NULL OR :keyword = '' OR LOWER(s.name) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
                      "AND (:activeOnly IS NULL OR s.active = :activeOnly) " +
-                     "ORDER BY s.name ASC", countQuery = "SELECT COUNT(*) FROM service_item s WHERE " +
-                                   "(:keyword IS NULL OR :keyword = '' OR LOWER(s.name) LIKE LOWER(CONCAT('%', :keyword, '%'))) "
-                                   +
-                                   "AND (:activeOnly IS NULL OR s.active = :activeOnly)", nativeQuery = true)
+                     "ORDER BY s.name ASC", nativeQuery = true)
        Page<ServiceItem> findWithFilters(
                      @Param("keyword") String keyword,
                      @Param("activeOnly") Boolean activeOnly,

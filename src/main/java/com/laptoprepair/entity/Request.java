@@ -2,7 +2,6 @@ package com.laptoprepair.entity;
 
 import com.laptoprepair.enums.RequestStatus;
 import com.laptoprepair.utils.CurrencyUtils;
-import com.laptoprepair.validation.ValidationConstants;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Data;
@@ -22,15 +21,15 @@ import java.util.*;
 @EqualsAndHashCode(callSuper = true)
 public class Request extends BaseEntity {
 
-    @NotBlank(message = ValidationConstants.REQUEST_NAME_BLANK_MSG)
-    @Size(min = ValidationConstants.REQUEST_NAME_MIN_LENGTH, max = ValidationConstants.REQUEST_NAME_MAX_LENGTH, message = ValidationConstants.REQUEST_NAME_SIZE_MSG)
+    @NotBlank(message = "Tên khách hàng là bắt buộc")
+    @Size(min = 3, max = 100, message = "Tên khách hàng phải có từ 3-100 ký tự")
     private String name;
 
-    @NotBlank(message = ValidationConstants.REQUEST_PHONE_BLANK_MSG)
-    @Pattern(regexp = ValidationConstants.REQUEST_PHONE_PATTERN, message = ValidationConstants.REQUEST_PHONE_PATTERN_MSG)
+    @NotBlank(message = "Số điện thoại là bắt buộc")
+    @Pattern(regexp = "0\\d{9}", message = "Số điện thoại phải có 10 chữ số và bắt đầu bằng 0")
     private String phone;
 
-    @Email(message = ValidationConstants.REQUEST_EMAIL_FORMAT_MSG)
+    @Email(message = "Email không đúng định dạng")
     private String email;
 
     private String address;
@@ -39,11 +38,11 @@ public class Request extends BaseEntity {
     @Column(name = "serial_number")
     private String serialNumber;
 
-    @NotNull(message = ValidationConstants.REQUEST_APPOINTMENT_DATE_NULL_MSG)
+    @NotNull(message = "Ngày hẹn là bắt buộc")
     private LocalDateTime appointmentDate;
 
-    @NotBlank(message = ValidationConstants.REQUEST_DESCRIPTION_BLANK_MSG)
-    @Size(min = ValidationConstants.REQUEST_DESCRIPTION_MIN_LENGTH, max = ValidationConstants.REQUEST_DESCRIPTION_MAX_LENGTH, message = ValidationConstants.REQUEST_DESCRIPTION_SIZE_MSG)
+    @NotBlank(message = "Mô tả tình trạng thiết bị là bắt buộc")
+    @Size(min = 10, max = 1000, message = "Mô tả phải có từ 10-1000 ký tự")
     private String description;
 
     @Enumerated(EnumType.STRING)
