@@ -28,7 +28,47 @@ document.addEventListener('DOMContentLoaded', function () {
             editServiceItem(d.id, d.name, parseFloat(d.price), parseFloat(d.vatRate), parseInt(d.warrantyDays), d.active === 'true');
         });
     });
+
+    // Initialize simple CSV file validation
+    initializeCSVValidation();
 });
+
+/**
+ * Simple CSV file validation
+ */
+function initializeCSVValidation() {
+    const csvFileInput = document.getElementById('csvFile');
+    const csvImportForm = csvFileInput?.closest('form');
+
+    if (!csvFileInput || !csvImportForm) {
+        return;
+    }
+
+    // Simple validation on form submission
+    csvImportForm.addEventListener('submit', function(event) {
+        const file = csvFileInput.files[0];
+        
+        if (!file) {
+            event.preventDefault();
+            alert('Vui lòng chọn file CSV để import.');
+            return;
+        }
+
+        // Check file extension
+        if (!file.name.toLowerCase().endsWith('.csv')) {
+            event.preventDefault();
+            alert('Chỉ chấp nhận file có định dạng .csv');
+            return;
+        }
+
+        // Check file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+            event.preventDefault();
+            alert('File CSV quá lớn. Kích thước tối đa cho phép: 5MB');
+            return;
+        }
+    });
+}
 
 /**
  * Populates the modal form with existing service item data for editing.

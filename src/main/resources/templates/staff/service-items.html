@@ -234,25 +234,63 @@
 
     <!--
         CSV Import Modal: A Bootstrap modal for uploading a CSV file to import service items.
+        Features comprehensive validation for file type, size, and CSV structure.
     -->
     <div class="modal fade" id="csvImportModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Import CSV</h5>
+                    <h5 class="modal-title">
+                        <i class="fas fa-upload me-2"></i>Import CSV Dịch vụ
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form th:action="@{/staff/service-items/import}" method="post" enctype="multipart/form-data">
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label for="csvFile" class="form-label">Chọn file CSV</label>
+                            <label for="csvFile" class="form-label">
+                                <strong>Chọn file CSV</strong> <span class="text-danger">*</span>
+                            </label>
                             <input type="file" class="form-control" id="csvFile" name="file" accept=".csv" required>
-                            <div class="form-text">Chỉ chấp nhận file .csv</div>
+                        </div>
+                        
+                        <!-- Enhanced documentation and requirements -->
+                        <div class="alert alert-info mb-3">
+                            <h6 class="alert-heading mb-2">
+                                Yêu cầu file CSV:
+                            </h6>
+                            <ul class="mb-2 ps-3">
+                                <li><strong>Định dạng:</strong> Chỉ chấp nhận file .csv</li>
+                                <li><strong>Kích thước:</strong> Tối đa 5MB</li>
+                                <li><strong>Mã hóa:</strong> UTF-8</li>
+                                <li><strong>Header bắt buộc:</strong> name, price, vatRate, warrantyDays, active</li>
+                            </ul>
+                            <small class="text-muted">
+                                Hệ thống sẽ kiểm tra tự động: định dạng file, kích thước, và cấu trúc CSV
+                            </small>
+                        </div>
+
+                        <div class="alert alert-light">
+                            <h6 class="mb-2">
+                                Ví dụ định dạng CSV:
+                            </h6>
+                            <code class="d-block bg-white p-2 border rounded small">
+name,price,vatRate,warrantyDays,active<br>
+Thay màn hình laptop,500000,0.1,30,true<br>
+Thay pin laptop,300000,0.1,15,true
+                            </code>
+                            <small class="text-muted mt-2 d-block">
+                                <strong>Lưu ý:</strong> vatRate là số thập phân (0.1 = 10%), active là true/false
+                            </small>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-outline-primary">Import</button>
+                        <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>Hủy
+                        </button>
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="fas fa-upload me-1"></i>Import CSV
+                        </button>
                     </div>
                 </form>
             </div>
