@@ -164,11 +164,22 @@ function renderTable() {
             `<button type="button" class="btn btn-sm btn-danger" onclick="removeItem(${i})"><i class="fas fa-trash"></i></button>`;
 
         // Create hidden inputs properly using DOM to avoid HTML attribute escaping issues
-        const hiddenInputsHtml = ['serviceItemId', 'quantity', 'discount', 'vatRate', 'warrantyDays', 'name', 'price']
+        // Include 'id' field to preserve existing items' database IDs
+        const hiddenInputsHtml = ['id', 'serviceItemId', 'quantity', 'discount', 'vatRate', 'warrantyDays', 'name', 'price']
             .map(field => {
-                const value = String(it[field] || (field === 'quantity' ? 1 : 0));
+                let value;
+                if (field === 'id') {
+                    // For id field: use actual UUID or empty string (which becomes null in backend)
+                    value = it[field] || '';
+                } else if (field === 'quantity') {
+                    value = it[field] || 1;
+                } else {
+                    value = it[field] || 0;
+                }
+                
+                const stringValue = String(value);
                 // Use proper HTML attribute escaping for double quotes
-                const escapedValue = value.replace(/"/g, '&quot;');
+                const escapedValue = stringValue.replace(/"/g, '&quot;');
                 return `<input type="hidden" name="items[${i}].${field}" value="${escapedValue}">`;
             })
             .join('');

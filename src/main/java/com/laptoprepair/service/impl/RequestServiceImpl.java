@@ -266,13 +266,25 @@ public class RequestServiceImpl implements RequestService {
                 throw new NotFoundException("Không tìm dịch vụ sửa chửa: " + item.getName());
             }
 
-            // Validate critical data consistency between frontend and database
-            validateServiceItemDataConsistency(item, serviceItem);
-
-            // Copy latest data from ServiceItem, preserving user-customizable fields
-            BeanUtils.copyProperties(serviceItem, item, "id", "serviceItemId", "active", "createdAt", "updatedAt",
-                    "quantity", "discount");
-
+            // Debug logging to understand item processing
+            boolean isNew = isNewRequestItem(item);
+            log.debug("Processing RequestItem: id={}, name='{}', serviceItemId={}, isNew={}",
+                item.getId(), item.getName(), item.getServiceItemId(), isNew);
+            
+            if (isNew) {
+                // For NEW items: validate consistency and copy all ServiceItem data
+                log.debug("Applying validation and data copy for NEW item: {}", item.getName());
+                validateServiceItemDataConsistency(item, serviceItem);
+                
+                // Copy latest data from ServiceItem, preserving user-customizable fields
+                BeanUtils.copyProperties(serviceItem, item, "id", "serviceItemId", "active", "createdAt", "updatedAt",
+                        "quantity", "discount");
+            } else {
+                // For EXISTING items: preserve ALL data as complete snapshots
+                // No validation, no data copying, no changes whatsoever
+                log.debug("Preserving complete snapshot for EXISTING item: {} (no changes applied)", item.getName());
+            }
+            
             if (item.getDiscount().compareTo(item.getPrice()) > 0) {
                 throw new ValidationException("Giảm giá vượt quá giá gốc: " + item.getName());
             }
@@ -280,40 +292,68 @@ public class RequestServiceImpl implements RequestService {
     }
 
     private void validateServiceItemDataConsistency(RequestItem requestItem, ServiceItem serviceItem) {
+        log.debug("Validating data consistency for item '{}'. RequestItem - Price: {}, VAT: {}, Warranty: {}. ServiceItem - Price: {}, VAT: {}, Warranty: {}",
+                requestItem.getName(),
+                requestItem.getPrice(), requestItem.getVatRate(), requestItem.getWarrantyDays(),
+                serviceItem.getPrice(), serviceItem.getVatRate(), serviceItem.getWarrantyDays());
+        
         StringBuilder errors = new StringBuilder();
 
         // Check price consistency
         if (requestItem.getPrice() != null &&
                 requestItem.getPrice().compareTo(serviceItem.getPrice()) != 0) {
-            errors.append(String.format("Giá dịch vụ '%s' đã thay đổi từ %s thành %s. ",
+            String error = String.format("Giá dịch vụ '%s' đã thay đổi từ %s thành %s. ",
                     serviceItem.getName(),
                     requestItem.getPrice(),
-                    serviceItem.getPrice()));
+                    serviceItem.getPrice());
+            log.debug("Price inconsistency detected: {}", error);
+            errors.append(error);
         }
 
         // Check VAT rate consistency
         if (requestItem.getVatRate() != null &&
                 requestItem.getVatRate().compareTo(serviceItem.getVatRate()) != 0) {
-            errors.append(String.format("VAT dịch vụ '%s' đã thay đổi từ %s%% thành %s%%. ",
+            String error = String.format("VAT dịch vụ '%s' đã thay đổi từ %s%% thành %s%%. ",
                     serviceItem.getName(),
                     requestItem.getVatRate().multiply(new BigDecimal("100")),
-                    serviceItem.getVatRate().multiply(new BigDecimal("100"))));
+                    serviceItem.getVatRate().multiply(new BigDecimal("100")));
+            log.debug("VAT rate inconsistency detected: {}", error);
+            errors.append(error);
         }
 
         // Check warranty period consistency
         if (requestItem.getWarrantyDays() != null &&
                 !requestItem.getWarrantyDays().equals(serviceItem.getWarrantyDays())) {
-            errors.append(String.format("Thời hạn bảo hành dịch vụ '%s' đã thay đổi từ %d ngày thành %d ngày. ",
+            String error = String.format("Thời hạn bảo hành dịch vụ '%s' đã thay đổi từ %d ngày thành %d ngày. ",
                     serviceItem.getName(),
                     requestItem.getWarrantyDays(),
-                    serviceItem.getWarrantyDays()));
+                    serviceItem.getWarrantyDays());
+            log.debug("Warranty period inconsistency detected: {}", error);
+            errors.append(error);
         }
 
         // If there are any inconsistencies, throw validation error
         if (errors.length() > 0) {
             errors.append("Vui lòng làm mới trang và thử lại.");
+            log.warn("Service item data consistency validation failed: {}", errors.toString());
             throw new ValidationException(errors.toString());
+        } else {
+            log.debug("Data consistency validation passed for item: {}", requestItem.getName());
         }
+    }
+
+    /**
+     * Determines if a RequestItem is new (not yet persisted to database).
+     * New items have id == null and need data consistency validation.
+     * Existing items have id != null and skip validation since they were already quoted.
+     *
+     * @param item The RequestItem to check
+     * @return true if the item is new (id == null), false if existing (id != null)
+     */
+    private boolean isNewRequestItem(RequestItem item) {
+        boolean isNew = item.getId() == null;
+        log.debug("Checking if RequestItem '{}' is new: id={}, result={}", item.getName(), item.getId(), isNew);
+        return isNew;
     }
 
     private Request copyRequestFields(Request target, Request source, boolean deepCopyCollections) {
