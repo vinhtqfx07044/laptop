@@ -38,8 +38,7 @@ public class RequestController {
     private final RequestService requestService;
     private final ValidationErrorUtil validationErrorUtil;
 
-    @Value("${app.pagination.default-page-size.requests}")
-    private int defaultPageSize;
+    private static final int DEFAULT_PAGE_SIZE = 10;
 
     @Value("${app.upload.max-images-per-request}")
     private int maxImagesPerRequest;
@@ -53,7 +52,7 @@ public class RequestController {
             Model model) {
 
         if (size == null) {
-            size = defaultPageSize;
+            size = DEFAULT_PAGE_SIZE;
         }
 
         Page<Request> requests = requestService.list(search, status, PageRequest.of(page, size));

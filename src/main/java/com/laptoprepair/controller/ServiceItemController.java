@@ -36,8 +36,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ServiceItemController {
 
-    @Value("${app.pagination.default-page-size.service-items}")
-    private int defaultPageSize;
+    private static final int DEFAULT_PAGE_SIZE = 10;
 
     private final ServiceItemService serviceItemService;
     private final ValidationErrorUtil validationErrorUtil;
@@ -50,7 +49,7 @@ public class ServiceItemController {
             @RequestParam(required = false) Boolean activeOnly,
             Model model) {
         if (size == null) {
-            size = defaultPageSize;
+            size = DEFAULT_PAGE_SIZE;
         }
 
         Page<ServiceItem> serviceItems = serviceItemService.list(search, activeOnly, PageRequest.of(page, size));
@@ -144,7 +143,7 @@ public class ServiceItemController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) Integer size) {
         if (size == null) {
-            size = defaultPageSize;
+            size = DEFAULT_PAGE_SIZE;
         }
         // Only return active items for search
         return serviceItemService.list(query, true, PageRequest.of(page, size));

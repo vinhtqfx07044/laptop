@@ -27,8 +27,7 @@ public class SecurityConfig {
 
         private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
 
-        @Value("${app.security.login.default-success-url}")
-        private String defaultSuccessUrl;
+        private static final String DEFAULT_SUCCESS_URL = "/staff/requests/list";
 
         private final Environment environment;
 
@@ -67,7 +66,7 @@ public class SecurityConfig {
                                 .formLogin(form -> form
                                                 .loginPage(LOGIN_PATH)
                                                 .loginProcessingUrl(LOGIN_PATH)
-                                                .defaultSuccessUrl(defaultSuccessUrl, true)
+                                                .defaultSuccessUrl(DEFAULT_SUCCESS_URL, true)
                                                 .failureUrl("/login?error")
                                                 .permitAll())
                                 .exceptionHandling(ex -> ex

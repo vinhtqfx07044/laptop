@@ -30,8 +30,7 @@ public class RateLimiter {
     @Value("${app.rate-limiter.chat.max-requests-per-minute:20}")
     private int chatMaxRequestsPerMinute;
 
-    @Value("${app.rate-limiter.window-size-seconds:60}")
-    private int windowSizeSeconds;
+    private static final int WINDOW_SIZE_SECONDS = 60;
 
     /**
      * Checks if a request is allowed based on a specific rate limit key prefix.
@@ -60,7 +59,7 @@ public class RateLimiter {
             Instant now = Instant.now();
 
             buckets.compute(clientKey, (key, bucket) -> {
-                if (bucket == null || now.isAfter(bucket.windowStart.plusSeconds(windowSizeSeconds))) {
+                if (bucket == null || now.isAfter(bucket.windowStart.plusSeconds(WINDOW_SIZE_SECONDS))) {
                     return new Bucket(now, new AtomicInteger(1));
                 } else {
                     bucket.count.incrementAndGet();
@@ -109,7 +108,7 @@ public class RateLimiter {
 
     @Scheduled(fixedRate = 300000) // Run every 5 minutes
     public void cleanupExpiredBuckets() {
-        Instant cutoff = Instant.now().minusSeconds(windowSizeSeconds);
+        Instant cutoff = Instant.now().minusSeconds(WINDOW_SIZE_SECONDS);
         buckets.entrySet().removeIf(entry -> entry.getValue().windowStart.isBefore(cutoff));
     }
 }
