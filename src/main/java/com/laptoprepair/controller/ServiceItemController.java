@@ -7,7 +7,6 @@ import com.laptoprepair.exception.NotFoundException;
 import com.laptoprepair.service.ServiceItemService;
 import com.laptoprepair.utils.ValidationErrorUtil;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
@@ -93,10 +92,10 @@ public class ServiceItemController {
         if (bindingResult.hasErrors()) {
             // Add centralized error messages for header display
             model.addAttribute("errorMessages", validationErrorUtil.extractErrorMessages(bindingResult));
-            
+
             // Add field-specific error status for enhanced styling
             model.addAttribute("fieldHasErrors", validationErrorUtil.getFieldErrorStatus(bindingResult));
-            
+
             return list(0, null, null, null, model);
         }
 
@@ -119,10 +118,10 @@ public class ServiceItemController {
         if (bindingResult.hasErrors()) {
             // Add centralized error messages for header display
             model.addAttribute("errorMessages", validationErrorUtil.extractErrorMessages(bindingResult));
-            
+
             // Add field-specific error status for enhanced styling
             model.addAttribute("fieldHasErrors", validationErrorUtil.getFieldErrorStatus(bindingResult));
-            
+
             return list(0, null, null, null, model);
         }
 

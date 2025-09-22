@@ -9,7 +9,6 @@ import com.laptoprepair.validation.ServiceItemValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
@@ -39,10 +38,10 @@ class ServiceItemServiceImplTest {
         void setUp() {
                 // Create real validator with mock repository
                 serviceItemValidator = new ServiceItemValidator(serviceItemRepository);
-                
+
                 // Create service with mock repository and real validator
                 serviceItemService = new ServiceItemServiceImpl(serviceItemRepository, serviceItemValidator);
-                
+
                 testServiceItemId = UUID.randomUUID();
                 testServiceItem = new ServiceItem();
                 testServiceItem.setId(testServiceItemId);
@@ -77,7 +76,7 @@ class ServiceItemServiceImplTest {
                 assertEquals(new BigDecimal("0.10"), result.getVatRate());
                 assertEquals(30, result.getWarrantyDays());
                 assertTrue(result.isActive());
-                
+
                 // Verify validator called repository to check uniqueness
                 verify(serviceItemRepository).findByName("Laptop Cleaning");
                 verify(serviceItemRepository).save(inputServiceItem);
@@ -101,7 +100,7 @@ class ServiceItemServiceImplTest {
                                 () -> serviceItemService.create(inputServiceItem));
 
                 assertEquals("Tên dịch vụ đã tồn tại. Vui lòng chọn tên khác", exception.getMessage());
-                
+
                 // Verify validator called repository to check uniqueness but didn't call save
                 verify(serviceItemRepository).findByName("Existing Service Name");
                 verify(serviceItemRepository, never()).save(any(ServiceItem.class));
@@ -144,7 +143,7 @@ class ServiceItemServiceImplTest {
                 assertEquals(new BigDecimal("0.12"), result.getVatRate());
                 assertEquals(60, result.getWarrantyDays());
                 assertFalse(result.isActive());
-                
+
                 // Verify validator called repository to check uniqueness
                 verify(serviceItemRepository).existsByNameAndIdNot("Updated Cleaning Service", testServiceItemId);
                 verify(serviceItemRepository).save(any(ServiceItem.class));
@@ -163,7 +162,7 @@ class ServiceItemServiceImplTest {
                                 () -> serviceItemService.update(nonExistentId, incomingServiceItem));
 
                 assertEquals("Không tìm thấy dịch vụ với ID: " + nonExistentId, exception.getMessage());
-                
+
                 // Verify repository was called to find the item
                 verify(serviceItemRepository).findById(nonExistentId);
         }
@@ -190,9 +189,10 @@ class ServiceItemServiceImplTest {
                                 () -> serviceItemService.update(testServiceItemId, incomingServiceItem));
 
                 assertEquals("Tên dịch vụ đã tồn tại. Vui lòng chọn tên khác", exception.getMessage());
-                
+
                 // Verify validator called repository to check uniqueness but didn't save
-                verify(serviceItemRepository).existsByNameAndIdNot("Name of another existing service", testServiceItemId);
+                verify(serviceItemRepository).existsByNameAndIdNot("Name of another existing service",
+                                testServiceItemId);
                 verify(serviceItemRepository, never()).save(any(ServiceItem.class));
         }
 
@@ -227,7 +227,7 @@ class ServiceItemServiceImplTest {
                 assertEquals("Original Service Name", result.getName());
                 assertEquals(new BigDecimal("250000"), result.getPrice());
                 assertFalse(result.isActive());
-                
+
                 // Verify validator called repository to check uniqueness
                 verify(serviceItemRepository).existsByNameAndIdNot("Original Service Name", testServiceItemId);
                 verify(serviceItemRepository).save(any(ServiceItem.class));
@@ -249,7 +249,7 @@ class ServiceItemServiceImplTest {
 
                 // Act & Assert
                 assertDoesNotThrow(() -> serviceItemService.importCSV(file));
-                
+
                 // Verify repository interactions
                 verify(serviceItemRepository).findByName("New Service A");
                 verify(serviceItemRepository).findByName("New Service B");
@@ -277,7 +277,7 @@ class ServiceItemServiceImplTest {
 
                 // Act & Assert
                 assertDoesNotThrow(() -> serviceItemService.importCSV(file));
-                
+
                 // Verify repository interactions
                 verify(serviceItemRepository).findByName("Existing Service C");
                 verify(serviceItemRepository).findByName("New Service D");

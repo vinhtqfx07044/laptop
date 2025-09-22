@@ -28,17 +28,15 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ServiceItemValidator {
     private final ServiceItemRepository repo;
-    
+
     // Expected CSV headers
     private static final List<String> EXPECTED_CSV_HEADERS = Arrays.asList(
-        "name", "price", "vatRate", "warrantyDays", "active"
-    );
-    
+            "name", "price", "vatRate", "warrantyDays", "active");
+
     // Accepted CSV MIME types
     private static final List<String> ACCEPTED_CSV_MIME_TYPES = Arrays.asList(
-        "text/csv", "application/csv", "text/plain"
-    );
-    
+            "text/csv", "application/csv", "text/plain");
+
     // Maximum CSV file size (5MB)
     private static final long MAX_CSV_FILE_SIZE = 5_000_000L;
 
@@ -58,13 +56,13 @@ public class ServiceItemValidator {
         if (file == null || file.isEmpty()) {
             throw new CSVImportException("File CSV trống hoặc không hợp lệ");
         }
-        
+
         validateFileExtension(file);
         validateFileMimeType(file);
         validateFileSize(file);
         validateCSVStructure(file);
     }
-    
+
     /**
      * Validates that the file has a .csv extension
      */
@@ -73,13 +71,13 @@ public class ServiceItemValidator {
         if (originalFilename == null || originalFilename.trim().isEmpty()) {
             throw new CSVImportException("Tên file không hợp lệ");
         }
-        
+
         String fileExtension = originalFilename.toLowerCase();
         if (!fileExtension.endsWith(".csv")) {
             throw new CSVImportException("Chỉ chấp nhận file có định dạng .csv. File được chọn: " + originalFilename);
         }
     }
-    
+
     /**
      * Validates the MIME content type of the file
      */
@@ -87,37 +85,40 @@ public class ServiceItemValidator {
         String contentType = file.getContentType();
         if (contentType == null || !ACCEPTED_CSV_MIME_TYPES.contains(contentType.toLowerCase())) {
             throw new CSVImportException("Loại file không được hỗ trợ. Chỉ chấp nhận file CSV. Loại file hiện tại: " +
-                (contentType != null ? contentType : "không xác định"));
+                    (contentType != null ? contentType : "không xác định"));
         }
     }
-    
+
     /**
      * Validates the file size
      */
     private void validateFileSize(MultipartFile file) throws CSVImportException {
         if (file.getSize() > MAX_CSV_FILE_SIZE) {
             throw new CSVImportException("File CSV quá lớn. Kích thước tối đa cho phép: " +
-                (MAX_CSV_FILE_SIZE / 1_000_000) + "MB");
+                    (MAX_CSV_FILE_SIZE / 1_000_000) + "MB");
         }
     }
-    
+
     /**
-     * Validates the CSV file structure and headers using the same format as the actual import
+     * Validates the CSV file structure and headers using the same format as the
+     * actual import
      */
     private void validateCSVStructure(MultipartFile file) throws CSVImportException {
         try (Reader reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8);
-             CSVParser parser = new CSVParser(reader, CSVFormat.Builder.create()
-                     .setHeader("name", "price", "vatRate", "warrantyDays", "active")
-                     .setSkipHeaderRecord(true)
-                     .build())) {
-            
+                CSVParser parser = new CSVParser(reader, CSVFormat.Builder.create()
+                        .setHeader("name", "price", "vatRate", "warrantyDays", "active")
+                        .setSkipHeaderRecord(true)
+                        .build())) {
+
             // Try to read first data record to ensure file has data after header
             boolean hasDataRows = parser.iterator().hasNext();
             if (!hasDataRows) {
-                throw new CSVImportException("File CSV không có dữ liệu. Vui lòng thêm ít nhất một dòng dữ liệu sau header.");
+                throw new CSVImportException(
+                        "File CSV không có dữ liệu. Vui lòng thêm ít nhất một dòng dữ liệu sau header.");
             }
-            
-            // Try to access each expected field from first record to validate header structure
+
+            // Try to access each expected field from first record to validate header
+            // structure
             CSVRecord firstRecord = parser.iterator().next();
             try {
                 firstRecord.get("name");
@@ -127,9 +128,9 @@ public class ServiceItemValidator {
                 firstRecord.get("active");
             } catch (IllegalArgumentException e) {
                 throw new CSVImportException("File CSV thiếu hoặc sai tên cột. " +
-                    "Các cột bắt buộc phải có tên chính xác: name, price, vatRate, warrantyDays, active");
+                        "Các cột bắt buộc phải có tên chính xác: name, price, vatRate, warrantyDays, active");
             }
-            
+
         } catch (IOException e) {
             throw new CSVImportException("Lỗi đọc file CSV: " + e.getMessage());
         } catch (CSVImportException e) {

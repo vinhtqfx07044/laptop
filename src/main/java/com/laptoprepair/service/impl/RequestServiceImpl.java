@@ -269,13 +269,13 @@ public class RequestServiceImpl implements RequestService {
             // Debug logging to understand item processing
             boolean isNew = isNewRequestItem(item);
             log.debug("Processing RequestItem: id={}, name='{}', serviceItemId={}, isNew={}",
-                item.getId(), item.getName(), item.getServiceItemId(), isNew);
-            
+                    item.getId(), item.getName(), item.getServiceItemId(), isNew);
+
             if (isNew) {
                 // For NEW items: validate consistency and copy all ServiceItem data
                 log.debug("Applying validation and data copy for NEW item: {}", item.getName());
                 validateServiceItemDataConsistency(item, serviceItem);
-                
+
                 // Copy latest data from ServiceItem, preserving user-customizable fields
                 BeanUtils.copyProperties(serviceItem, item, "id", "serviceItemId", "active", "createdAt", "updatedAt",
                         "quantity", "discount");
@@ -284,7 +284,7 @@ public class RequestServiceImpl implements RequestService {
                 // No validation, no data copying, no changes whatsoever
                 log.debug("Preserving complete snapshot for EXISTING item: {} (no changes applied)", item.getName());
             }
-            
+
             if (item.getDiscount().compareTo(item.getPrice()) > 0) {
                 throw new ValidationException("Giảm giá vượt quá giá gốc: " + item.getName());
             }
@@ -292,11 +292,12 @@ public class RequestServiceImpl implements RequestService {
     }
 
     private void validateServiceItemDataConsistency(RequestItem requestItem, ServiceItem serviceItem) {
-        log.debug("Validating data consistency for item '{}'. RequestItem - Price: {}, VAT: {}, Warranty: {}. ServiceItem - Price: {}, VAT: {}, Warranty: {}",
+        log.debug(
+                "Validating data consistency for item '{}'. RequestItem - Price: {}, VAT: {}, Warranty: {}. ServiceItem - Price: {}, VAT: {}, Warranty: {}",
                 requestItem.getName(),
                 requestItem.getPrice(), requestItem.getVatRate(), requestItem.getWarrantyDays(),
                 serviceItem.getPrice(), serviceItem.getVatRate(), serviceItem.getWarrantyDays());
-        
+
         StringBuilder errors = new StringBuilder();
 
         // Check price consistency
@@ -345,7 +346,8 @@ public class RequestServiceImpl implements RequestService {
     /**
      * Determines if a RequestItem is new (not yet persisted to database).
      * New items have id == null and need data consistency validation.
-     * Existing items have id != null and skip validation since they were already quoted.
+     * Existing items have id != null and skip validation since they were already
+     * quoted.
      *
      * @param item The RequestItem to check
      * @return true if the item is new (id == null), false if existing (id != null)

@@ -176,7 +176,7 @@ function renderTable() {
                 } else {
                     value = it[field] || 0;
                 }
-                
+
                 const stringValue = String(value);
                 // Use proper HTML attribute escaping for double quotes
                 const escapedValue = stringValue.replace(/"/g, '&quot;');

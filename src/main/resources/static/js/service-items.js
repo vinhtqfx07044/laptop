@@ -45,9 +45,9 @@ function initializeCSVValidation() {
     }
 
     // Simple validation on form submission
-    csvImportForm.addEventListener('submit', function(event) {
+    csvImportForm.addEventListener('submit', function (event) {
         const file = csvFileInput.files[0];
-        
+
         if (!file) {
             event.preventDefault();
             alert('Vui lòng chọn file CSV để import.');

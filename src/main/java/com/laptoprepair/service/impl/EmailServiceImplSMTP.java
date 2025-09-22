@@ -17,7 +17,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * SMTP-based implementation of the {@link EmailService} interface for dev environment.
+ * SMTP-based implementation of the {@link EmailService} interface for dev
+ * environment.
  * Uses Spring Boot Mail with SMTP (MailHog) for local development.
  */
 @Service
@@ -82,7 +83,8 @@ public class EmailServiceImplSMTP implements EmailService {
     }
 
     /**
-     * Sends a recovery email containing links to all requests associated with a given email address.
+     * Sends a recovery email containing links to all requests associated with a
+     * given email address.
      */
     @Override
     @Async("emailTaskExecutor")

@@ -102,10 +102,10 @@ public class RequestController {
         if (bindingResult.hasErrors()) {
             // Add centralized error messages for header display
             model.addAttribute("errorMessages", validationErrorUtil.extractErrorMessages(bindingResult));
-            
+
             // Add field-specific error status for enhanced styling
             model.addAttribute("fieldHasErrors", validationErrorUtil.getFieldErrorStatus(bindingResult));
-            
+
             populateForCreate(model, request);
             model.addAttribute("request", incomingRequest); // Override with form data
             return "staff/request-form";
@@ -137,10 +137,10 @@ public class RequestController {
         if (bindingResult.hasErrors()) {
             // Add centralized error messages for header display
             model.addAttribute("errorMessages", validationErrorUtil.extractErrorMessages(bindingResult));
-            
+
             // Add field-specific error status for enhanced styling
             model.addAttribute("fieldHasErrors", validationErrorUtil.getFieldErrorStatus(bindingResult));
-            
+
             // Load full request from DB when validation fails
             Request existingRequest = requestService.findById(id);
             populateForEdit(existingRequest, model, request);

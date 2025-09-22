@@ -20,8 +20,10 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * SendGrid-based implementation of the {@link EmailService} interface for production.
- * Handles sending various email notifications related to repair requests using SendGrid.
+ * SendGrid-based implementation of the {@link EmailService} interface for
+ * production.
+ * Handles sending various email notifications related to repair requests using
+ * SendGrid.
  */
 @Service
 @Profile("prod")

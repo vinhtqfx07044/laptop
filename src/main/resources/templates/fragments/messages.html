@@ -5,8 +5,8 @@
     <div th:fragment="flashMessages" class="container mt-3">
         <!-- Unified error display for both single and multiple errors -->
         <div th:if="${errorMessage != null or (errorMessages != null and #lists.size(errorMessages) > 0)}"
-             class="alert alert-danger alert-dismissible fade show" role="alert">
-            
+            class="alert alert-danger alert-dismissible fade show" role="alert">
+
             <!-- Header row with icon, message and close button -->
             <div class="d-flex justify-content-between align-items-start">
                 <div class="d-flex align-items-center">
@@ -15,7 +15,7 @@
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-            
+
             <!-- Error list (always as bulleted list) -->
             <ul class="mb-0 mt-2">
                 <!-- Single error converted to list item -->

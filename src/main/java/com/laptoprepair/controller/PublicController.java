@@ -72,10 +72,10 @@ public class PublicController {
         if (bindingResult.hasErrors()) {
             // Add centralized error messages for header display
             model.addAttribute("errorMessages", validationErrorUtil.extractErrorMessages(bindingResult));
-            
+
             // Add field-specific error status for enhanced styling
             model.addAttribute("fieldHasErrors", validationErrorUtil.getFieldErrorStatus(bindingResult));
-            
+
             model.addAttribute("request", request);
             return "public/request-submit";
         }

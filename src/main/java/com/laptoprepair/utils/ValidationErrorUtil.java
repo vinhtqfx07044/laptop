@@ -9,7 +9,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Utility class for extracting and formatting validation errors from BindingResult.
+ * Utility class for extracting and formatting validation errors from
+ * BindingResult.
  * Used to centralize Jakarta validation error handling and display.
  */
 @Component
@@ -18,15 +19,16 @@ public class ValidationErrorUtil {
     /**
      * Extracts clean error messages from BindingResult for Vietnamese display.
      * Returns only the localized message content without field name prefix,
-     * as Vietnamese validation messages are already complete and contextually clear.
+     * as Vietnamese validation messages are already complete and contextually
+     * clear.
      *
      * @param bindingResult the Spring validation result
      * @return list of clean Vietnamese error messages for header display
      */
     public List<String> extractErrorMessages(BindingResult bindingResult) {
         return bindingResult.getFieldErrors().stream()
-            .map(FieldError::getDefaultMessage)
-            .collect(Collectors.toList());
+                .map(FieldError::getDefaultMessage)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -38,11 +40,10 @@ public class ValidationErrorUtil {
      */
     public Map<String, Boolean> getFieldErrorStatus(BindingResult bindingResult) {
         return bindingResult.getFieldErrors().stream()
-            .collect(Collectors.toMap(
-                FieldError::getField,
-                error -> true,
-                (existing, replacement) -> existing
-            ));
+                .collect(Collectors.toMap(
+                        FieldError::getField,
+                        error -> true,
+                        (existing, replacement) -> existing));
     }
 
     /**
@@ -54,11 +55,10 @@ public class ValidationErrorUtil {
      */
     public Map<String, String> getFieldErrorMessages(BindingResult bindingResult) {
         return bindingResult.getFieldErrors().stream()
-            .collect(Collectors.toMap(
-                FieldError::getField,
-                FieldError::getDefaultMessage,
-                (existing, replacement) -> existing
-            ));
+                .collect(Collectors.toMap(
+                        FieldError::getField,
+                        FieldError::getDefaultMessage,
+                        (existing, replacement) -> existing));
     }
 
     /**

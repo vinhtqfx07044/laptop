@@ -19,7 +19,6 @@ import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
@@ -66,12 +65,12 @@ class RequestServiceImplTest {
         void setUp() {
                 // Create real validator with mock HistoryService dependency
                 requestValidator = new RequestValidator(historyService);
-                
+
                 // Create service with all dependencies
                 requestService = new RequestServiceImpl(reqRepo, serviceItemRepository,
-                                                      historyService, imageService, emailService,
-                                                      requestValidator, vietnamTimeProvider);
-                
+                                historyService, imageService, emailService,
+                                requestValidator, vietnamTimeProvider);
+
                 testRequest = new Request();
                 testRequest.setName("John Doe");
                 testRequest.setPhone("0901234567");
@@ -110,7 +109,7 @@ class RequestServiceImplTest {
                 assertEquals(RequestStatus.SCHEDULED, result.getStatus());
                 assertTrue(result.getItems().isEmpty());
                 assertTrue(result.getImages().isEmpty());
-                
+
                 // Verify interactions
                 verify(reqRepo).save(any(Request.class));
                 verify(historyService).addRequestHistoryRecord(any(Request.class), eq("Tạo mới yêu cầu"), eq("Khách"));
@@ -122,12 +121,13 @@ class RequestServiceImplTest {
                 // Arrange - Set past date so real validator will throw exception
                 testRequest.setAppointmentDate(LocalDateTime.now().minusDays(1));
 
-                // Act & Assert - Real validator will automatically throw exception for past date
+                // Act & Assert - Real validator will automatically throw exception for past
+                // date
                 ValidationException exception = assertThrows(ValidationException.class,
                                 () -> requestService.publicCreate(testRequest));
 
                 assertEquals("Ngày hẹn phải sau thời điểm hiện tại", exception.getMessage());
-                
+
                 // Verify no save operations occurred due to early validation failure
                 verify(reqRepo, never()).save(any(Request.class));
                 verify(historyService, never()).addRequestHistoryRecord(any(), any(), any());
@@ -156,8 +156,9 @@ class RequestServiceImplTest {
                 // Assert
                 assertNotNull(result);
                 assertEquals(RequestStatus.SCHEDULED, result.getStatus());
-                
-                // Verify interactions - email service is still called (handles null email internally)
+
+                // Verify interactions - email service is still called (handles null email
+                // internally)
                 verify(reqRepo).save(any(Request.class));
                 verify(historyService).addRequestHistoryRecord(any(Request.class), eq("Tạo mới yêu cầu"), eq("Khách"));
                 verify(emailService).sendConfirmationEmail(any(Request.class));
@@ -226,7 +227,8 @@ class RequestServiceImplTest {
                 processedImages.add(new RequestImage());
                 processedImages.add(new RequestImage());
 
-                // Mock repository and service behaviors - real validator will handle validations
+                // Mock repository and service behaviors - real validator will handle
+                // validations
                 when(reqRepo.findByIdWithItems(requestId)).thenReturn(Optional.of(existingRequest));
                 when(serviceItemRepository.findAllByIdInAndActive(anyList()))
                                 .thenReturn(List.of(serviceItem1, serviceItem2));
@@ -248,7 +250,7 @@ class RequestServiceImplTest {
                 assertEquals(RequestStatus.QUOTED, result.getStatus());
                 assertEquals(2, result.getItems().size());
                 assertEquals(2, result.getImages().size());
-                
+
                 // Verify interactions
                 verify(reqRepo).findByIdWithItems(requestId);
                 verify(serviceItemRepository).findAllByIdInAndActive(anyList());
@@ -268,7 +270,7 @@ class RequestServiceImplTest {
                                 () -> requestService.update(nonExistentId, incomingRequest, null, null, null));
 
                 assertEquals("Không tìm thấy yêu cầu với ID: " + nonExistentId, exception.getMessage());
-                
+
                 // Verify repository was called but no further processing occurred
                 verify(reqRepo).findByIdWithItems(nonExistentId);
                 verify(reqRepo, never()).save(any(Request.class));
@@ -306,8 +308,9 @@ class RequestServiceImplTest {
                 incomingRequest.setItems(new ArrayList<>(List.of(requestItem)));
 
                 LocalDateTime completionTime = LocalDateTime.of(2025, 8, 27, 15, 33);
-                
-                // Mock repository and service behaviors - real validator will handle validations
+
+                // Mock repository and service behaviors - real validator will handle
+                // validations
                 when(vietnamTimeProvider.now()).thenReturn(completionTime);
                 when(reqRepo.findByIdWithItems(requestId)).thenReturn(Optional.of(existingRequest));
                 when(serviceItemRepository.findAllByIdInAndActive(anyList())).thenReturn(List.of(serviceItem));
@@ -327,7 +330,7 @@ class RequestServiceImplTest {
                 assertNotNull(result);
                 assertEquals(RequestStatus.COMPLETED, result.getStatus());
                 assertEquals(completionTime, result.getCompletedAt());
-                
+
                 // Verify interactions
                 verify(vietnamTimeProvider).now();
                 verify(reqRepo).save(any(Request.class));
@@ -346,7 +349,8 @@ class RequestServiceImplTest {
                 Request incomingRequest = new Request();
                 incomingRequest.setStatus(RequestStatus.IN_PROGRESS);
 
-                // Mock repository - real validator will automatically throw exception for CANCELLED transition
+                // Mock repository - real validator will automatically throw exception for
+                // CANCELLED transition
                 when(reqRepo.findByIdWithItems(requestId)).thenReturn(Optional.of(existingRequest));
 
                 // Act & Assert - Real validator will throw exception for cancelled status
@@ -355,7 +359,7 @@ class RequestServiceImplTest {
 
                 // Real validator throws from validateEditable() for CANCELLED status
                 assertEquals("Không thể chỉnh sửa phiếu ở trạng thái \"Đã hủy\"", exception.getMessage());
-                
+
                 // Verify repository was called but no save occurred due to validation failure
                 verify(reqRepo).findByIdWithItems(requestId);
                 verify(reqRepo, never()).save(any(Request.class));
@@ -376,7 +380,8 @@ class RequestServiceImplTest {
                 incomingRequest.setStatus(RequestStatus.SCHEDULED);
                 incomingRequest.setItems(new ArrayList<>());
 
-                // Mock repository and service behaviors - real validator will pass for valid scenarios
+                // Mock repository and service behaviors - real validator will pass for valid
+                // scenarios
                 when(reqRepo.findByIdWithItems(requestId)).thenReturn(Optional.of(existingRequest));
                 when(historyService.computeRequestChanges(any(Request.class), any(Request.class))).thenReturn("");
                 when(reqRepo.save(any(Request.class))).thenReturn(existingRequest);
@@ -391,7 +396,7 @@ class RequestServiceImplTest {
 
                 // Assert
                 assertNotNull(result);
-                
+
                 // Verify interactions
                 verify(reqRepo).findByIdWithItems(requestId);
                 verify(reqRepo).save(any(Request.class));
@@ -439,7 +444,7 @@ class RequestServiceImplTest {
 
                 assertTrue(exception.getMessage().contains("Giá dịch vụ"));
                 assertTrue(exception.getMessage().contains("đã thay đổi"));
-                
+
                 // Verify repository was called but no save occurred due to validation failure
                 verify(reqRepo).findByIdWithItems(requestId);
                 verify(serviceItemRepository).findAllByIdInAndActive(anyList());
@@ -458,19 +463,23 @@ class RequestServiceImplTest {
 
                 Request incomingRequest = new Request();
                 incomingRequest.setStatus(RequestStatus.COMPLETED);
-                incomingRequest.setItems(new ArrayList<>(List.of(new RequestItem(), new RequestItem()))); // Different number of items
+                incomingRequest.setItems(new ArrayList<>(List.of(new RequestItem(), new RequestItem()))); // Different
+                                                                                                          // number of
+                                                                                                          // items
 
-                // Mock repository and services - real validator + mock HistoryService will detect locked modification
+                // Mock repository and services - real validator + mock HistoryService will
+                // detect locked modification
                 when(reqRepo.findByIdWithItems(requestId)).thenReturn(Optional.of(existingRequest));
                 when(historyService.areRequestItemsEqual(any(), any())).thenReturn(false); // Items are different
 
-                // Act & Assert - Real validator will throw exception for locked item modification
+                // Act & Assert - Real validator will throw exception for locked item
+                // modification
                 ValidationException exception = assertThrows(ValidationException.class,
                                 () -> requestService.update(requestId, incomingRequest, null, null, null));
 
                 assertTrue(exception.getMessage().contains("Hoàn thành"));
                 assertTrue(exception.getMessage().contains("không thể thay đổi hạng mục"));
-                
+
                 // Verify repository was called but no save occurred due to validation failure
                 verify(reqRepo).findByIdWithItems(requestId);
                 verify(historyService).areRequestItemsEqual(any(), any());

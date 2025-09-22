@@ -70,9 +70,9 @@
                     <div class="mb-3">
                         <label for="name" class="form-label fw-bold">Tên khách hàng *</label>
                         <!-- Edit mode: input field with validation attributes -->
-                        <input th:if="${isEditMode}" id="name" th:field="*{name}"
-                               class="form-control" th:classappend="${fieldHasErrors != null and fieldHasErrors.containsKey('name')} ? 'has-error' : ''"
-                               required minlength="3" maxlength="100" />
+                        <input th:if="${isEditMode}" id="name" th:field="*{name}" class="form-control"
+                            th:classappend="${fieldHasErrors != null and fieldHasErrors.containsKey('name')} ? 'has-error' : ''"
+                            required minlength="3" maxlength="100" />
                         <div class="invalid-feedback">Tên khách hàng phải có ít nhất 3 ký tự.</div>
                         <!-- View mode: plain text -->
                         <p th:unless="${isEditMode}" class="form-control-plaintext" th:text="${request.name}"></p>
@@ -83,9 +83,9 @@
                     <div class="mb-3">
                         <label for="phone" class="form-label fw-bold">Điện thoại *</label>
                         <!-- Edit mode: input field with pattern for phone number validation -->
-                        <input th:if="${isEditMode}" id="phone" th:field="*{phone}"
-                               class="form-control" th:classappend="${fieldHasErrors != null and fieldHasErrors.containsKey('phone')} ? 'has-error' : ''"
-                               pattern="0\d{9}" required />
+                        <input th:if="${isEditMode}" id="phone" th:field="*{phone}" class="form-control"
+                            th:classappend="${fieldHasErrors != null and fieldHasErrors.containsKey('phone')} ? 'has-error' : ''"
+                            pattern="0\d{9}" required />
                         <div class="invalid-feedback">Số điện thoại phải có 10 chữ số và bắt đầu bằng 0.</div>
                         <!-- View mode: plain text -->
                         <p th:unless="${isEditMode}" class="form-control-plaintext" th:text="${request.phone}"></p>
@@ -96,9 +96,9 @@
                     <div class="mb-3">
                         <label for="email" class="form-label fw-bold">Email</label>
                         <!-- Edit mode: email input type -->
-                        <input th:if="${isEditMode}" id="email" th:field="*{email}"
-                               class="form-control" th:classappend="${fieldHasErrors != null and fieldHasErrors.containsKey('email')} ? 'has-error' : ''"
-                               type="email" />
+                        <input th:if="${isEditMode}" id="email" th:field="*{email}" class="form-control"
+                            th:classappend="${fieldHasErrors != null and fieldHasErrors.containsKey('email')} ? 'has-error' : ''"
+                            type="email" />
                         <div class="invalid-feedback">Vui lòng nhập địa chỉ email hợp lệ.</div>
                         <!-- View mode: plain text -->
                         <p th:unless="${isEditMode}" class="form-control-plaintext" th:text="${request.email}"></p>
@@ -109,8 +109,8 @@
                     <div class="mb-3">
                         <label for="address" class="form-label fw-bold">Địa chỉ</label>
                         <!-- Edit mode: input field -->
-                        <input th:if="${isEditMode}" id="address" th:field="*{address}"
-                               class="form-control" th:classappend="${fieldHasErrors != null and fieldHasErrors.containsKey('address')} ? 'has-error' : ''" />
+                        <input th:if="${isEditMode}" id="address" th:field="*{address}" class="form-control"
+                            th:classappend="${fieldHasErrors != null and fieldHasErrors.containsKey('address')} ? 'has-error' : ''" />
                         <!-- View mode: plain text -->
                         <p th:unless="${isEditMode}" class="form-control-plaintext" th:text="${request.address}"></p>
                     </div>
@@ -124,8 +124,8 @@
                     <div class="mb-3">
                         <label for="brandModel" class="form-label fw-bold">Thiết bị</label>
                         <!-- Edit mode: input field -->
-                        <input th:if="${isEditMode}" id="brandModel" th:field="*{brandModel}"
-                               class="form-control" th:classappend="${fieldHasErrors != null and fieldHasErrors.containsKey('brandModel')} ? 'has-error' : ''" />
+                        <input th:if="${isEditMode}" id="brandModel" th:field="*{brandModel}" class="form-control"
+                            th:classappend="${fieldHasErrors != null and fieldHasErrors.containsKey('brandModel')} ? 'has-error' : ''" />
                         <!-- View mode: plain text -->
                         <p th:unless="${isEditMode}" class="form-control-plaintext" th:text="${request.brandModel}"></p>
                     </div>
@@ -135,8 +135,8 @@
                     <div class="mb-3">
                         <label for="serialNumber" class="form-label fw-bold">Serial Number</label>
                         <!-- Edit mode: input field -->
-                        <input th:if="${isEditMode}" id="serialNumber" th:field="*{serialNumber}"
-                               class="form-control" th:classappend="${fieldHasErrors != null and fieldHasErrors.containsKey('serialNumber')} ? 'has-error' : ''" />
+                        <input th:if="${isEditMode}" id="serialNumber" th:field="*{serialNumber}" class="form-control"
+                            th:classappend="${fieldHasErrors != null and fieldHasErrors.containsKey('serialNumber')} ? 'has-error' : ''" />
                         <!-- View mode: plain text -->
                         <p th:unless="${isEditMode}" class="form-control-plaintext" th:text="${request.serialNumber}">
                         </p>
@@ -148,8 +148,9 @@
                         <label for="appointmentDate" class="form-label fw-bold">Ngày hẹn *</label>
                         <!-- Edit mode: datetime-local input type with required attribute -->
                         <input th:if="${isEditMode}" id="appointmentDate" th:field="*{appointmentDate}"
-                               class="form-control" th:classappend="${fieldHasErrors != null and fieldHasErrors.containsKey('appointmentDate')} ? 'has-error' : ''"
-                               type="datetime-local" required />
+                            class="form-control"
+                            th:classappend="${fieldHasErrors != null and fieldHasErrors.containsKey('appointmentDate')} ? 'has-error' : ''"
+                            type="datetime-local" required />
                         <div class="invalid-feedback">Vui lòng chọn ngày hẹn.</div>
                         <!--
                             View mode: plain text, formatted using Thymeleaf's temporals utility.
@@ -165,9 +166,9 @@
                     <div class="mb-3">
                         <label for="description" class="form-label fw-bold">Mô tả *</label>
                         <!-- Edit mode: textarea with validation attributes -->
-                        <textarea th:if="${isEditMode}" id="description" th:field="*{description}"
-                                  class="form-control" th:classappend="${fieldHasErrors != null and fieldHasErrors.containsKey('description')} ? 'has-error' : ''"
-                                  rows="1" required minlength="10" maxlength="1000"></textarea>
+                        <textarea th:if="${isEditMode}" id="description" th:field="*{description}" class="form-control"
+                            th:classappend="${fieldHasErrors != null and fieldHasErrors.containsKey('description')} ? 'has-error' : ''"
+                            rows="1" required minlength="10" maxlength="1000"></textarea>
                         <div class="invalid-feedback">Mô tả phải có ít nhất 10 ký tự.</div>
                         <!--
                             View mode: plain text.

@@ -16,7 +16,8 @@ import java.util.List;
 
 /**
  * Global exception handler for the application.
- * This class provides centralized exception handling for various types of exceptions
+ * This class provides centralized exception handling for various types of
+ * exceptions
  * and returns appropriate responses or redirects.
  */
 @ControllerAdvice
@@ -110,7 +111,7 @@ public class GlobalExceptionHandler {
     private RedirectView createRedirectView(HttpServletRequest request) {
         String requestURI = request.getRequestURI();
         String redirectUrl = "/";
-        
+
         // FIX: Smart redirect strategy thay vì dùng referer để tránh mất flash message
         if (requestURI.contains("/staff/requests")) {
             redirectUrl = "/staff/requests/list";
@@ -121,7 +122,7 @@ public class GlobalExceptionHandler {
         } else if (requestURI.contains("/public/")) {
             redirectUrl = "/";
         }
-        
+
         log.info("Global error redirect: {} -> {}", requestURI, redirectUrl);
         return new RedirectView(redirectUrl);
     }

@@ -43,11 +43,11 @@ class ImageServiceImplTest {
         request = new Request();
         request.setId(requestId);
         currentImages = new ArrayList<>();
-        
+
         // Create real ImageValidator with test configuration
         imageValidator = new ImageValidator();
         ReflectionTestUtils.setField(imageValidator, "maxImages", 5);
-        
+
         // Manual dependency injection
         imageService = new ImageServiceImpl(imageValidator, fileStorageService);
     }
