@@ -3,16 +3,13 @@ package com.laptoprepair.service.impl;
 import com.laptoprepair.entity.Request;
 import com.laptoprepair.service.EmailService;
 
-import com.sendgrid.Method;
-import com.sendgrid.SendGrid;
-import com.sendgrid.helpers.mail.Mail;
-import com.sendgrid.helpers.mail.objects.Content;
-import com.sendgrid.helpers.mail.objects.Email;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -20,15 +17,17 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * SendGrid-based implementation of the {@link EmailService} interface for production.
- * Handles sending various email notifications related to repair requests using SendGrid.
+ * SMTP-based implementation of the {@link EmailService} interface for dev environment.
+ * Uses Spring Boot Mail with SMTP (MailHog) for local development.
  */
 @Service
-@Profile("prod")
+@Profile("dev")
 @RequiredArgsConstructor
-public class EmailServiceImpl implements EmailService {
+public class EmailServiceImplSMTP implements EmailService {
 
-    private static final Logger log = LoggerFactory.getLogger(EmailServiceImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(EmailServiceImplSMTP.class);
+
+    private final JavaMailSender mailSender;
 
     @Value("${app.public-request-base-url}")
     private String publicRequestBaseUrl;
@@ -42,9 +41,6 @@ public class EmailServiceImpl implements EmailService {
     @Value("${app.shop.name}")
     private String shopName;
 
-    @Value("${sendgrid.api.key}")
-    private String sendGridApiKey;
-
     private static final String THANK_YOU_MESSAGE = "Cảm ơn bạn đã sử dụng dịch vụ!";
     private static final String CONFIRMATION_SUBJECT = "Xác nhận yêu cầu sửa chữa tại %s";
     private static final String UPDATE_SUBJECT = "Cập nhật về yêu cầu sửa chữa của bạn tại %s";
@@ -52,9 +48,6 @@ public class EmailServiceImpl implements EmailService {
 
     /**
      * Sends a confirmation email for a new repair request.
-     * The email includes the request ID and a link to track the request.
-     * 
-     * @param request The Request object for which to send the confirmation.
      */
     @Override
     @Async("emailTaskExecutor")
@@ -72,10 +65,6 @@ public class EmailServiceImpl implements EmailService {
 
     /**
      * Sends an update email for an existing repair request.
-     * The email includes the request ID, a tracking link, and a summary of changes.
-     * 
-     * @param request The Request object that was updated.
-     * @param changes A string describing the changes made to the request.
      */
     @Override
     @Async("emailTaskExecutor")
@@ -93,11 +82,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     /**
-     * Sends a recovery email containing links to all requests associated with a
-     * given email address.
-     * 
-     * @param email    The email address to send the recovery information to.
-     * @param requests A list of Request objects associated with the email.
+     * Sends a recovery email containing links to all requests associated with a given email address.
      */
     @Override
     @Async("emailTaskExecutor")
@@ -121,34 +106,24 @@ public class EmailServiceImpl implements EmailService {
 
         return CompletableFuture.runAsync(() -> {
             try {
-                log.debug("Sending email to: {} with subject: {}", toEmail, subject);
+                log.debug("Sending email via SMTP to: {} with subject: {}", toEmail, subject);
 
-                Email from = new Email(fromEmail);
-                Email to = new Email(toEmail);
-                Content content = new Content("text/plain", body);
-                Mail mail = new Mail(from, subject, to, content);
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setFrom(fromEmail);
+                message.setTo(toEmail);
+                message.setSubject(subject);
+                message.setText(body);
 
+                // Add CC if configured
                 if (ccEmail != null && !ccEmail.trim().isEmpty()) {
-                    Email cc = new Email(ccEmail);
-                    mail.personalization.get(0).addCc(cc);
+                    message.setCc(ccEmail);
                 }
 
-                SendGrid sg = new SendGrid(sendGridApiKey);
-                com.sendgrid.Request request = new com.sendgrid.Request();
-                request.setMethod(Method.POST);
-                request.setEndpoint("mail/send");
-                request.setBody(mail.build());
-
-                com.sendgrid.Response response = sg.api(request);
-
-                if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
-                    log.info("Email sent successfully to: {} via SendGrid", toEmail);
-                } else {
-                    log.error("SendGrid API error. Status: {}, Body: {}", response.getStatusCode(), response.getBody());
-                }
+                mailSender.send(message);
+                log.info("Email sent successfully via SMTP to: {}", toEmail);
 
             } catch (Exception e) {
-                log.error("Email sending failed to {}: {}", toEmail, e.getMessage(), e);
+                log.error("SMTP email sending failed to {}: {}", toEmail, e.getMessage(), e);
             }
         });
     }

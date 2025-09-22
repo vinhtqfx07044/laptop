@@ -103,6 +103,12 @@
         </dependency>
 
 
+        <!-- Spring Boot Mail Starter for SMTP -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
         <!-- SendGrid for email delivery -->
         <dependency>
             <groupId>com.sendgrid</groupId>
