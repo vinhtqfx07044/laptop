@@ -16,15 +16,16 @@ import java.util.stream.Collectors;
 public class ValidationErrorUtil {
 
     /**
-     * Extracts field-specific error messages from BindingResult.
-     * Format: "fieldName: error message"
+     * Extracts clean error messages from BindingResult for Vietnamese display.
+     * Returns only the localized message content without field name prefix,
+     * as Vietnamese validation messages are already complete and contextually clear.
      *
      * @param bindingResult the Spring validation result
-     * @return list of formatted error messages for header display
+     * @return list of clean Vietnamese error messages for header display
      */
     public List<String> extractErrorMessages(BindingResult bindingResult) {
         return bindingResult.getFieldErrors().stream()
-            .map(error -> error.getField() + ": " + error.getDefaultMessage())
+            .map(FieldError::getDefaultMessage)
             .collect(Collectors.toList());
     }
 

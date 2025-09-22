@@ -3,21 +3,26 @@
 
 <body>
     <div th:fragment="flashMessages" class="container mt-3">
-        <!-- Conditional display for a single error message -->
-        <div th:if="${errorMessage != null}" class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            <span th:text="${errorMessage}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-
-        <!-- Conditional display for multiple error messages (e.g., from validation) -->
-        <div th:if="${errorMessages != null and #lists.size(errorMessages) > 0}"
-            class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-triangle me-2"></i>
+        <!-- Unified error display for both single and multiple errors -->
+        <div th:if="${errorMessage != null or (errorMessages != null and #lists.size(errorMessages) > 0)}"
+             class="alert alert-danger alert-dismissible fade show" role="alert">
+            
+            <!-- Header row with icon, message and close button -->
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span class="fw-bold">Đã có lỗi xảy ra:</span>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            
+            <!-- Error list (always as bulleted list) -->
             <ul class="mb-0 mt-2">
-                <li th:each="msg : ${errorMessages}" th:text="${msg}"></li>
+                <!-- Single error converted to list item -->
+                <li th:if="${errorMessage != null}" th:text="${errorMessage}"></li>
+                <!-- Multiple errors as list items -->
+                <li th:each="msg : ${errorMessages}" th:if="${errorMessages != null}" th:text="${msg}"></li>
             </ul>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
         <!-- Conditional display for a success message -->
