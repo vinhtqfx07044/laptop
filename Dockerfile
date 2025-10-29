@@ -23,18 +23,11 @@ RUN ./mvnw clean package -DskipTests -B
 # Runtime stage - use smaller JRE image
 FROM eclipse-temurin:21-jre-alpine
 
-# Add metadata labels
-LABEL org.opencontainers.image.title="Laptop Repair Management System"
-LABEL org.opencontainers.image.description="Spring Boot app with AI Assistant & Document Intelligence (pgvector)"
-LABEL org.opencontainers.image.version="1.0.0"
-LABEL org.opencontainers.image.vendor="ShopLaptop"
-
 # Create app directory
 WORKDIR /app
 
 # Create uploads directory for file uploads and logs
-RUN mkdir -p uploads logs && \
-  chmod 755 uploads logs
+RUN mkdir -p images documents logs && chmod 755 images documents logs
 
 # Copy the built JAR from build stage
 COPY --from=build /app/target/*.jar app.jar
@@ -49,4 +42,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
 
 # Run the application with production profile and Railway environment variables
 # Use PORT from Railway if available, otherwise default to 8080
-CMD ["java", "-Xms256m", "-Xmx512m", "-Dspring.profiles.active=prod", "-Dserver.port=${PORT:-8080}", "-jar", "app.jar"]
+CMD ["java", "-Xms256m", "-Xmx512m", "-Dserver.port=${PORT:-8080}", "-jar", "app.jar"]
