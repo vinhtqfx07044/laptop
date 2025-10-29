@@ -27,7 +27,7 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # Create uploads directory for file uploads
-RUN mkdir -p uploads logs
+RUN mkdir -p images documents logs
 
 # Copy the built JAR from build stage
 COPY --from=build /app/target/*.jar app.jar
