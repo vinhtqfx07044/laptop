@@ -21,13 +21,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Attaches click listeners to all edit buttons.
-    document.querySelectorAll('.edit-btn').forEach(button => {
+    for (const button of document.querySelectorAll('.edit-btn')) {
         button.addEventListener('click', function () {
             const d = this.dataset; // Gets data attributes from the button.
             // Calls editServiceItem with data from the button.
-            editServiceItem(d.id, d.name, parseFloat(d.price), parseFloat(d.vatRate), parseInt(d.warrantyDays), d.active === 'true');
+            editServiceItem(d.id, d.name, Number.parseFloat(d.price), Number.parseFloat(d.vatRate), Number.parseInt(d.warrantyDays), d.active === 'true');
         });
-    });
+    }
 
     // Initialize simple CSV file validation
     initializeCSVValidation();
@@ -65,7 +65,6 @@ function initializeCSVValidation() {
         if (file.size > 5 * 1024 * 1024) {
             event.preventDefault();
             alert('File CSV quá lớn. Kích thước tối đa cho phép: 5MB');
-            return;
         }
     });
 }
@@ -76,7 +75,9 @@ function initializeCSVValidation() {
 function editServiceItem(id, name, price, vatRate, warrantyDays, active) {
     // Maps data to form fields.
     const fields = { serviceItemId: id, name, price, vatRate, warrantyDays };
-    Object.entries(fields).forEach(([key, value]) => document.getElementById(key).value = value);
+    for (const [key, value] of Object.entries(fields)) {
+        document.getElementById(key).value = value;
+    }
 
     // Sets the checked state of the 'active' checkbox.
     document.getElementById('active').checked = active === true || active === 'true';
@@ -109,7 +110,7 @@ document.getElementById('serviceItemModal').addEventListener('hidden.bs.modal', 
     document.getElementById('serviceItemForm').action = '/staff/service-items/create';
 
     // Removes validation classes from form controls.
-    document.querySelectorAll('#serviceItemForm .form-control').forEach(input => {
+    for (const input of document.querySelectorAll('#serviceItemForm .form-control')) {
         input.classList.remove('is-valid', 'is-invalid');
-    });
+    }
 });

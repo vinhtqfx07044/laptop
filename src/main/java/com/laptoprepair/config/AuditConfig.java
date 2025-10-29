@@ -1,43 +1,38 @@
 package com.laptoprepair.config;
 
+import java.util.Optional;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.auditing.DateTimeProvider;
 import org.springframework.data.domain.AuditorAware;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.Optional;
+import com.laptoprepair.service.SecurityService;
+import com.laptoprepair.utils.TimeUtils;
 
 @Configuration
 public class AuditConfig {
 
+    private final SecurityService securityService;
+
+    public AuditConfig(SecurityService securityService) {
+        this.securityService = securityService;
+    }
+
     /**
      * Custom DateTimeProvider that provides current time in Vietnam timezone.
+     * Uses the centralized TimeUtils for consistency.
      */
     @Bean(name = "dateTimeProvider")
     public DateTimeProvider dateTimeProvider() {
-        return () -> Optional.of(vietnamTime());
+        return () -> Optional.of(TimeUtils.nowInVietnam());
     }
 
     /**
-     * AuditorAware implementation that returns current username or "anonymousUser"
-     * for unauthenticated users.
+     * AuditorAware implementation that returns current username.
      */
     @Bean
     public AuditorAware<String> auditorAware() {
-        return () -> {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            return Optional.of(auth != null ? auth.getName() : "anonymous User");
-        };
-    }
-
-    private LocalDateTime vietnamTime() {
-        return ZonedDateTime.now(ZoneId.of("UTC"))
-                .withZoneSameInstant(ZoneId.of("Asia/Ho_Chi_Minh"))
-                .toLocalDateTime();
+        return () -> Optional.of(securityService.getCurrentUsername());
     }
 }

@@ -10,12 +10,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Implements a simple rate limiting mechanism based on client IP address and
- * request type.
- * It uses a sliding window approach to limit the number of requests within a
- * specified time frame.
- */
 @Component
 public class RateLimiter {
 
@@ -24,23 +18,14 @@ public class RateLimiter {
 
     private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
 
-    @Value("${app.rate-limiter.public.max-requests-per-minute:10}")
+    @Value("${laptoprepair.security.rate-limit.public.requests-per-minute:20}")
     private int publicMaxRequestsPerMinute;
 
-    @Value("${app.rate-limiter.chat.max-requests-per-minute:20}")
+    @Value("${laptoprepair.security.rate-limit.chat.requests-per-minute:10}")
     private int chatMaxRequestsPerMinute;
 
     private static final int WINDOW_SIZE_SECONDS = 60;
 
-    /**
-     * Checks if a request is allowed based on a specific rate limit key prefix.
-     * Requests to staff endpoints and static resources are always allowed.
-     * 
-     * @param request   The HttpServletRequest to check.
-     * @param keyPrefix A prefix to categorize the rate limit (e.g., "public",
-     *                  "chat").
-     * @return true if the request is allowed, false otherwise.
-     */
     public boolean isAllowed(HttpServletRequest request, String keyPrefix) {
         String requestPath = request.getRequestURI();
 

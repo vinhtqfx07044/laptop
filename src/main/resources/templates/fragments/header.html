@@ -2,6 +2,10 @@
 <html lang="vi" xml:lang="vi" xmlns:th="http://www.thymeleaf.org"
     xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
+<head>
+    <title>Shop Laptop</title>
+</head>
+
 <body>
     <div th:fragment="header">
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -14,34 +18,51 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
-                    <!--
-                        Public menu items, displayed only when the user is NOT authenticated.
-                        `sec:authorize="!isAuthenticated()"` is a Spring Security Thymeleaf dialect expression.
-                    -->
+                    <!-- Public menu items, displayed only when the user is NOT authenticated.
+                         `sec:authorize="!isAuthenticated()"` is a Spring Security Thymeleaf dialect expression. -->
                     <ul class="navbar-nav me-auto" sec:authorize="!isAuthenticated()">
-                        <li class="nav-item"><a class="nav-link" th:href="@{/submit}">Đặt lịch</a></li>
-                        <li class="nav-item"><a class="nav-link" th:href="@{/about}">Giới thiệu</a></li>
+                        <li class="nav-item"><a class="nav-link" th:href="@{/submit}">
+                                <i class="fas fa-calendar-plus me-1"></i>
+                                Đặt lịch
+                            </a></li>
+                        <li class="nav-item"><a class="nav-link" th:href="@{/about}">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Giới thiệu
+                            </a></li>
+                        <li class="nav-item"><a class="nav-link" th:href="@{/documents}">
+                                <i class="fas fa-file-pdf me-1"></i>
+                                Tài liệu
+                            </a></li>
                     </ul>
-                    <!--
-                        Staff menu items, displayed only when the user IS authenticated.
-                        `sec:authorize="isAuthenticated()"` is a Spring Security Thymeleaf dialect expression.
-                    -->
+                    <!-- Staff menu items, displayed only when the user IS authenticated.
+                         `sec:authorize="isAuthenticated()"` is a Spring Security Thymeleaf dialect expression. -->
                     <ul class="navbar-nav me-auto" sec:authorize="isAuthenticated()">
                         <li class="nav-item">
                             <a class="nav-link" th:href="@{/staff/requests/list}">
+                                <i class="fas fa-wrench me-1"></i>
                                 Quản lý sửa chữa
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" th:href="@{/staff/service-items}">
+                                <i class="fas fa-cogs me-1"></i>
                                 Quản lý dịch vụ
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/staff/documents}">
+                                <i class="fas fa-file-pdf me-1"></i>
+                                Quản lý tài liệu
                             </a>
                         </li>
                     </ul>
                     <ul class="navbar-nav">
                         <!-- Login link, displayed only when the user is NOT authenticated -->
                         <li class="nav-item" sec:authorize="!isAuthenticated()">
-                            <a class="nav-link" th:href="@{/login}">Đăng nhập</a>
+                            <a class="nav-link" th:href="@{/login}">
+                                <i class="fas fa-sign-in-alt me-1"></i>
+                                Đăng nhập
+                            </a>
                         </li>
                         <!--
                             User dropdown menu, displayed only when the user IS authenticated.

@@ -5,11 +5,8 @@ import com.laptoprepair.entity.RequestImage;
 import com.laptoprepair.exception.ValidationException;
 import com.laptoprepair.service.FileStorageService;
 import com.laptoprepair.service.ImageService;
-import com.laptoprepair.validation.ImageValidator;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,21 +15,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Implementation of the {@link ImageService} interface.
- * Handles the business logic for managing images associated with repair
- * requests,
- * including deletion, uploading, and updating.
- */
 @Service
-@Slf4j
 @RequiredArgsConstructor
 public class ImageServiceImpl implements ImageService {
 
-    @Value("${app.upload.max-images-per-request}")
-    private int maxImagesPerRequest;
+    private static final int MAX_IMAGES_PER_REQUEST = 5;
 
-    private final ImageValidator imageValidator;
     private final FileStorageService fileStorageService;
 
     /**
@@ -85,36 +73,78 @@ public class ImageServiceImpl implements ImageService {
             return currentImages;
         }
 
-        // Convert to filenames for validation
-        List<String> currentFilenames = currentImages.stream()
-                .map(RequestImage::getFilename)
-                .toList();
-        imageValidator.validateMaxImagesPerRequest(currentFilenames, newImages);
+        validateImageCount(currentImages, newImages);
+        ensureDirectoryExists(requestId);
 
+        return processImageFiles(requestId, currentImages, newImages, request);
+    }
+
+    private void validateImageCount(List<RequestImage> currentImages, MultipartFile[] newImages)
+            throws ValidationException {
+        int nonEmptyImageCount = countNonEmptyImages(newImages);
+        int totalImages = currentImages.size() + nonEmptyImageCount;
+
+        if (totalImages > MAX_IMAGES_PER_REQUEST) {
+            throw new ValidationException("Tối đa " + MAX_IMAGES_PER_REQUEST + " ảnh cho mỗi yêu cầu");
+        }
+    }
+
+    private int countNonEmptyImages(MultipartFile[] newImages) {
+        int count = 0;
+        for (MultipartFile file : newImages) {
+            if (!file.isEmpty()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private void ensureDirectoryExists(UUID requestId) throws ValidationException {
         try {
             fileStorageService.createDir(requestId);
         } catch (IOException e) {
             throw new ValidationException("Lỗi tạo thư mục lưu ảnh: " + e.getMessage());
         }
+    }
 
+    private List<RequestImage> processImageFiles(UUID requestId, List<RequestImage> currentImages,
+            MultipartFile[] newImages, Request request) throws ValidationException {
         List<RequestImage> updatedImages = new ArrayList<>(currentImages);
 
         for (MultipartFile file : newImages) {
             if (!file.isEmpty()) {
-                imageValidator.validateImageFileSizeAndFormat(file);
-                try {
-                    String filename = fileStorageService.save(requestId, file);
-                    RequestImage requestImage = new RequestImage();
-                    requestImage.setFilename(filename);
-                    requestImage.setRequest(request);
-                    updatedImages.add(requestImage);
-                } catch (IOException e) {
-                    throw new ValidationException("Lỗi lưu ảnh: " + e.getMessage());
-                }
+                validateImageFile(file);
+                String filename = saveImageFile(requestId, file);
+                addRequestImage(updatedImages, filename, request);
             }
         }
 
         return updatedImages;
+    }
+
+    private void validateImageFile(MultipartFile file) throws ValidationException {
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new ValidationException("Chỉ hỗ trợ ảnh (PNG, JPG)");
+        }
+        if (file.getSize() > 5_000_000) {
+            throw new ValidationException("Ảnh quá lớn (tối đa 5MB)");
+        }
+    }
+
+    private String saveImageFile(UUID requestId, MultipartFile file) throws ValidationException {
+        try {
+            return fileStorageService.save(requestId, file);
+        } catch (IOException e) {
+            throw new ValidationException("Lỗi lưu ảnh: " + e.getMessage());
+        }
+    }
+
+    private void addRequestImage(List<RequestImage> updatedImages, String filename, Request request) {
+        RequestImage requestImage = new RequestImage();
+        requestImage.setFilename(filename);
+        requestImage.setRequest(request);
+        updatedImages.add(requestImage);
     }
 
     /**

@@ -4,14 +4,12 @@ import com.laptoprepair.entity.Request;
 import com.laptoprepair.entity.RequestImage;
 import com.laptoprepair.exception.ValidationException;
 import com.laptoprepair.service.FileStorageService;
-import com.laptoprepair.validation.ImageValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -25,8 +23,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ImageServiceImplTest {
-
-    private ImageValidator imageValidator;
 
     @Mock
     private FileStorageService fileStorageService;
@@ -44,12 +40,8 @@ class ImageServiceImplTest {
         request.setId(requestId);
         currentImages = new ArrayList<>();
 
-        // Create real ImageValidator with test configuration
-        imageValidator = new ImageValidator();
-        ReflectionTestUtils.setField(imageValidator, "maxImages", 5);
-
         // Manual dependency injection
-        imageService = new ImageServiceImpl(imageValidator, fileStorageService);
+        imageService = new ImageServiceImpl(fileStorageService);
     }
 
     @Test

@@ -11,7 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @ComponentScan(basePackages = { "com.laptoprepair" })
 @EnableAsync
 @EnableScheduling
-@EnableJpaAuditing(dateTimeProviderRef = "dateTimeProvider")
+@EnableJpaAuditing(auditorAwareRef = "auditorAware", dateTimeProviderRef = "dateTimeProvider")
 public class LaptopRepairApplication {
 
     public static void main(String[] args) {

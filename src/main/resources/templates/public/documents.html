@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi" xml:lang="vi">
+
+<head th:replace="~{fragments/head :: commonHead('Tài liệu', false)}"></head>
+
+<body class="d-flex flex-column min-vh-100">
+    <div th:insert="~{fragments/header :: header}"></div>
+
+    <main class="container flex-grow-1 mt-4">
+        <!-- Page Header -->
+        <div class="row mb-2">
+            <div class="col-12">
+                <h1 class="mb-3">Danh sách tài liệu</h1>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <span th:text="${successMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span th:text="${errorMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Documents List -->
+        <div class="row">
+            <div class="col-12">
+                <!-- Calculate completed documents for display -->
+                <th:block
+                    th:with="completedDocuments=${documents != null ? documents.?[processingStatus != null and (processingStatus.name() == 'COMPLETED' or processingStatus.toString() == 'COMPLETED')] : null}">
+
+
+                    <!-- Empty State -->
+                    <div th:if="${completedDocuments == null or #lists.isEmpty(completedDocuments)}"
+                        class="text-center py-5">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-5">
+                                <i class="fas fa-folder-open fa-4x text-muted mb-4"></i>
+                                <h3 class="text-muted mb-3">Chưa có tài liệu nào</h3>
+                                <p class="text-muted mb-4">
+                                    Hiện tại chưa có tài liệu nào sẵn sàng để tải về.
+                                    Vui lòng quay lại sau hoặc liên hệ để được hỗ trợ.
+                                </p>
+                                <div class="d-flex justify-content-center gap-3">
+                                    <a th:href="@{/}" class="btn btn-outline-primary">
+                                        <i class="fas fa-home me-2"></i>
+                                        Về trang chủ
+                                    </a>
+                                    <a th:href="@{/about}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Liên hệ hỗ trợ
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Documents Table (Public version - simplified) -->
+                    <div th:if="${completedDocuments != null and !#lists.isEmpty(completedDocuments)}">
+                        <div class="card shadow-sm">
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="border-0">Tên tài liệu</th>
+                                                <th class="border-0">File</th>
+                                                <th class="border-0 d-none d-lg-table-cell" style="width: 150px;">Kích
+                                                    thước</th>
+                                                <th class="border-0 text-end" style="width: 100px;">Thao tác</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr th:each="document : ${completedDocuments}" class="align-middle">
+                                                <!-- Document Title Column -->
+                                                <td>
+                                                    <span class="fw-bold"
+                                                        th:text="${document.title != null ? document.title : '—'}"></span>
+                                                </td>
+
+                                                <!-- File Name Column -->
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="fas fa-file-pdf text-danger me-2"></i>
+                                                        <span
+                                                            th:text="${document.fileName != null ? document.fileName : ''}"></span>
+                                                    </div>
+                                                </td>
+
+                                                <!-- File Size Column (Hidden on mobile/tablet) - Now in KB -->
+                                                <td class="d-none d-lg-table-cell">
+                                                    <span
+                                                        th:text="${document.fileSizeBytes != null ? #numbers.formatDecimal(document.fileSizeBytes / 1024.0, 1, 1, 'POINT') + ' KB' : '—'}"></span>
+                                                </td>
+
+                                                <!-- Actions Column -->
+                                                <td class="text-end">
+                                                    <a th:if="${document.id != null}"
+                                                        th:href="@{/documents/download/{id}(id=${document.id})}"
+                                                        class="btn btn-outline-primary btn-sm" title="Tải về tài liệu">
+                                                        <i class="fas fa-download me-1"></i>
+                                                        <span class="d-none d-sm-inline">Tải về</span>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </th:block>
+            </div>
+        </div>
+
+    </main>
+
+    <div th:insert="~{fragments/footer :: footer}"></div>
+    <div th:replace="~{fragments/chat :: chatWidget}"></div>
+</body>
+
+</html>

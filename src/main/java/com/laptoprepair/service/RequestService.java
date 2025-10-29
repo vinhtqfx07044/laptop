@@ -1,7 +1,7 @@
 package com.laptoprepair.service;
 
 import com.laptoprepair.entity.Request;
-import com.laptoprepair.enums.RequestStatus;
+import com.laptoprepair.entity.Request.RequestStatus;
 import com.laptoprepair.exception.ValidationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +19,10 @@ public interface RequestService {
             throws ValidationException;
 
     Request findById(UUID id);
+
+    Request findByIdWithItemsAndImages(UUID id);
+
+    Request mergeFormRequestWithExisting(Request existingRequest, Request incomingRequest);
 
     Page<Request> list(String search, RequestStatus status, Pageable pageable);
 

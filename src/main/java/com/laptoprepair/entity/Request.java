@@ -1,20 +1,30 @@
 package com.laptoprepair.entity;
 
-import com.laptoprepair.enums.RequestStatus;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.laptoprepair.utils.CurrencyUtils;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.OneToMany;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.*;
-
 /**
- * Represents a repair request made by a customer.
- * Contains details about the customer, the device, the requested service, and
- * the status of the request.
+ * Represents a repair request made by a customer. Contains details about the customer, the device,
+ * the requested service, and the status of the request.
  */
 @Entity
 @Data
@@ -61,5 +71,63 @@ public class Request extends BaseEntity {
 
     public BigDecimal getTotal() {
         return CurrencyUtils.calculateRequestTotal(items);
+    }
+
+    @Override
+    public String toString() {
+        return "Request{" +
+                "id=" + getId() +
+                ", createdAt=" + getCreatedAt() +
+                ", createdBy='" + getCreatedBy() + '\'' +
+                ", updatedAt=" + getUpdatedAt() +
+                ", updatedBy='" + getUpdatedBy() + '\'' +
+                ", name='" + name + '\'' +
+                ", phone='" + phone + '\'' +
+                ", email='" + email + '\'' +
+                ", address='" + address + '\'' +
+                ", brandModel='" + brandModel + '\'' +
+                ", serialNumber='" + serialNumber + '\'' +
+                ", appointmentDate=" + appointmentDate +
+                ", description='" + description + '\'' +
+                ", status=" + status +
+                ", completedAt=" + completedAt +
+                ", items=" + items +
+                ", images=" + images +
+                ", history=" + history +
+                '}';
+    }
+
+    /**
+     * Defines the possible statuses for a repair request.
+     */
+    public enum RequestStatus {
+        SCHEDULED("Đã lên lịch"),
+        QUOTED("Đã báo giá"),
+        APPROVE_QUOTED("Đã duyệt báo giá"),
+        IN_PROGRESS("Đang thực hiện"),
+        COMPLETED("Hoàn thành"),
+        UNDER_WARRANTY("Đang bảo hành"),
+        CANCELLED("Đã hủy");
+
+        private final String value;
+
+        RequestStatus(String value) {
+            this.value = value;
+        }
+
+        @JsonValue
+        public String getValue() {
+            return value;
+        }
+
+        // Check if request items can be edited based on status
+        public boolean isRequestItemsLocked() {
+            return this == COMPLETED || this == UNDER_WARRANTY || this == CANCELLED;
+        }
+
+        @Override
+        public String toString() {
+            return value;
+        }
     }
 }

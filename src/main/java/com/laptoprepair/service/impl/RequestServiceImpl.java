@@ -1,26 +1,16 @@
 package com.laptoprepair.service.impl;
 
-import com.laptoprepair.entity.Request;
-import com.laptoprepair.entity.RequestImage;
-import com.laptoprepair.entity.RequestItem;
-import com.laptoprepair.entity.ServiceItem;
-import com.laptoprepair.enums.RequestStatus;
-import com.laptoprepair.exception.NotFoundException;
-import com.laptoprepair.exception.ValidationException;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
-import com.laptoprepair.repository.RequestRepository;
-import com.laptoprepair.repository.ServiceItemRepository;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import com.laptoprepair.service.EmailService;
-import com.laptoprepair.service.HistoryService;
-import com.laptoprepair.service.ImageService;
-import com.laptoprepair.service.RequestService;
-import com.laptoprepair.config.VietnamTimeProvider;
-import com.laptoprepair.validation.RequestValidator;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,53 +18,107 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import com.laptoprepair.entity.Request;
+import com.laptoprepair.entity.Request.RequestStatus;
+import com.laptoprepair.entity.RequestImage;
+import com.laptoprepair.entity.RequestItem;
+import com.laptoprepair.entity.ServiceItem;
+import com.laptoprepair.exception.NotFoundException;
+import com.laptoprepair.exception.ValidationException;
+import com.laptoprepair.repository.RequestRepository;
+import com.laptoprepair.repository.ServiceItemRepository;
+import com.laptoprepair.service.EmailService;
+import com.laptoprepair.service.HistoryService;
+import com.laptoprepair.service.ImageService;
+import com.laptoprepair.service.RequestService;
+import com.laptoprepair.service.SecurityService;
+import com.laptoprepair.utils.TimeUtils;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 /**
- * Implementation of the {@link RequestService} interface.
- * Provides business logic for managing repair requests, including CRUD
- * operations,
- * image handling, history tracking, and email notifications.
+ * Service implementation for managing laptop repair requests.
+ * Provides comprehensive functionality for creating, updating, retrieving, and
+ * managing repair requests
+ * with support for service items, images, email notifications, and audit
+ * history.
+ *
+ * @author Laptop Repair System
+ * @since 1.0
  */
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class RequestServiceImpl implements RequestService {
+
+    private static final Logger log = LoggerFactory.getLogger(RequestServiceImpl.class);
+    private static final String REQUEST_NOT_FOUND_MSG = "Không tìm thấy yêu cầu với ID: ";
 
     private final RequestRepository reqRepo;
     private final ServiceItemRepository serviceItemRepository;
     private final HistoryService historyService;
     private final ImageService imageService;
     private final EmailService emailService;
-    private final RequestValidator requestValidator;
-    private final VietnamTimeProvider vietnamTimeProvider;
+    private final SecurityService securityService;
 
     /**
-     * Finds a request by its ID.
-     * 
-     * @param id The UUID of the request to find.
-     * @return The found Request entity.
-     * @throws NotFoundException if the request with the given ID is not found.
+     * Finds a request by its unique identifier.
+     *
+     * @param id the unique identifier of the request, must not be null
+     * @return the found request
+     * @throws NotFoundException if no request exists with the given ID
      */
     @Transactional(readOnly = true)
     @Override
-    public Request findById(UUID id) {
+    public Request findById(@NonNull UUID id) {
         return reqRepo.findById(id)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy yêu cầu với ID: " + id));
+                .orElseThrow(() -> new NotFoundException(REQUEST_NOT_FOUND_MSG + id));
     }
 
     /**
-     * Retrieves a paginated list of requests based on search criteria and status.
-     * 
-     * @param search   Optional search string to filter requests.
-     * @param status   Optional RequestStatus to filter requests.
-     * @param pageable Pagination information.
-     * @return A Page of Request entities.
+     * Merges form data from an incoming request into an existing request.
+     * This method is typically used during form validation failures to preserve
+     * user input.
+     *
+     * @param existingRequest the existing request to merge into
+     * @param incomingRequest the incoming request with form data to merge
+     * @return the merged existing request
+     */
+    public Request mergeFormRequestWithExisting(Request existingRequest, Request incomingRequest) {
+        copyRequest(existingRequest, incomingRequest, false, false);
+        return existingRequest;
+    }
+
+    /**
+     * Finds a request by ID with all associated items and images loaded.
+     * Performs two separate queries to fetch items and images and merges the
+     * results.
+     *
+     * @param id the unique identifier of the request, must not be null
+     * @return the request with items and images populated
+     * @throws NotFoundException if no request exists with the given ID
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public Request findByIdWithItemsAndImages(@NonNull UUID id) {
+        Request request = reqRepo.findByIdWithItems(id)
+                .orElseThrow(() -> new NotFoundException(REQUEST_NOT_FOUND_MSG + id));
+        Request requestWithImages = reqRepo.findByIdWithImages(id)
+                .orElseThrow(() -> new NotFoundException(REQUEST_NOT_FOUND_MSG + id));
+        request.setImages(requestWithImages.getImages());
+        return request;
+    }
+
+    /**
+     * Retrieves a paginated list of requests with optional filtering by search term
+     * and status.
+     *
+     * @param search   the search term to filter requests (can be null for no search
+     *                 filter)
+     * @param status   the status to filter requests by (can be null for no status
+     *                 filter)
+     * @param pageable the pagination information
+     * @return a page of filtered requests
      */
     @Override
     public Page<Request> list(String search, RequestStatus status, Pageable pageable) {
@@ -83,73 +127,72 @@ public class RequestServiceImpl implements RequestService {
     }
 
     /**
-     * Creates a new request submitted by a public user (non-staff).
-     * Sets default status to SCHEDULED and sends a confirmation email.
-     * 
-     * @param incomingRequest The Request object submitted by the public user.
-     * @return The saved Request entity.
-     * @throws ValidationException if the appointment date is not in the future.
+     * Creates a new request from public access (no authentication required).
+     * Validates appointment date, sets initial status, and sends confirmation
+     * email.
+     *
+     * @param incomingRequest the request data to create
+     * @return the created request with generated ID and initial values set
+     * @throws ValidationException if the appointment date is in the past
      */
     @Override
     public Request publicCreate(Request incomingRequest) throws ValidationException {
-        requestValidator.validateAppointmentDateInFuture(incomingRequest.getAppointmentDate());
+        LocalDateTime appointmentDate = incomingRequest.getAppointmentDate();
+        if (appointmentDate != null && appointmentDate.isBefore(LocalDateTime.now())) {
+            throw new ValidationException("Ngày hẹn phải sau thời điểm hiện tại");
+        }
 
-        // Set minimal defaults for public submission
         incomingRequest.setStatus(RequestStatus.SCHEDULED);
         incomingRequest.setItems(List.of());
         incomingRequest.setImages(List.of());
 
-        // Add history entry
-        historyService.addRequestHistoryRecord(incomingRequest, "Tạo mới yêu cầu", "Khách");
+        historyService.addRequestHistoryRecord(incomingRequest, "Tạo mới yêu cầu", "anonymous");
 
-        // Save request
         Request savedRequest = reqRepo.save(incomingRequest);
-
-        // Send confirmation email
         emailService.sendConfirmationEmail(savedRequest);
-
         return savedRequest;
     }
 
     /**
-     * Creates a new repair request by a staff member.
-     * Handles setting default status, processing service items, adding history, and
-     * uploading images.
-     * 
-     * @param incomingRequest The Request object containing details for the new
-     *                        request.
-     * @param newImages       An array of MultipartFile objects representing images
-     *                        to be uploaded.
-     * @param note            An optional note to be added to the request history.
-     * @return The newly created and saved Request entity.
-     * @throws ValidationException if there are validation errors during creation.
+     * Creates a new request with full functionality including service items and
+     * images.
+     * Enriches request items with service data, processes image uploads, creates
+     * history records,
+     * and sends confirmation emails.
+     *
+     * @param incomingRequest the request data to create
+     * @param newImages       array of image files to upload (can be null or empty)
+     * @param note            optional note for the history record
+     * @return the created request with generated ID, processed items, and uploaded
+     *         images
+     * @throws ValidationException if service item validation fails
      */
     @Override
     @Transactional
-    public Request create(Request incomingRequest, MultipartFile[] newImages, String note) throws ValidationException {
+    public Request create(Request incomingRequest, MultipartFile[] newImages, String note)
+            throws ValidationException {
         incomingRequest.setStatus(RequestStatus.SCHEDULED);
 
-        // Set request reference for items and snapshot service items BEFORE saving
+        if (incomingRequest.getItems() == null) {
+            incomingRequest.setItems(new ArrayList<>());
+        }
         for (RequestItem item : incomingRequest.getItems()) {
             item.setRequest(incomingRequest);
         }
-        copyServiceItemsFields(incomingRequest.getItems());
+        enrichRequestItems(incomingRequest.getItems());
 
-        // Build note after all data preparation
         StringBuilder noteBuilder = new StringBuilder("Tạo mới yêu cầu");
         if (note != null && !note.trim().isEmpty()) {
-            noteBuilder.append("\nGhi chú: " + note.trim());
+            noteBuilder.append("\nGhi chú: ").append(note.trim());
         }
 
         historyService.addRequestHistoryRecord(incomingRequest, noteBuilder.toString(),
-                getCurrentUsername());
+                securityService.getCurrentUsername());
 
-        // Create request with properly linked items
         Request savedRequest = reqRepo.save(incomingRequest);
 
-        // Process images if provided
-        List<RequestImage> images = imageService.uploadImages(savedRequest.getId(), new ArrayList<>(), newImages,
-                savedRequest);
+        List<RequestImage> images = imageService.uploadImages(savedRequest.getId(),
+                new ArrayList<>(), newImages, savedRequest);
         savedRequest.setImages(new ArrayList<>(images));
 
         savedRequest = reqRepo.save(savedRequest);
@@ -158,79 +201,67 @@ public class RequestServiceImpl implements RequestService {
     }
 
     /**
-     * Updates an existing repair request.
-     * Handles validation, status transitions, image updates, and history tracking.
-     * 
-     * @param id              The UUID of the request to update.
-     * @param incomingRequest The Request object containing updated details.
-     * @param newImages       An array of MultipartFile objects for new images to
-     *                        add.
-     * @param toDelete        An array of filenames of images to delete.
-     * @param note            An optional note to add to the request history.
-     * @return The updated and saved Request entity.
-     * @throws ValidationException if there are validation errors or the request is
-     *                             not found.
+     * Updates an existing request with new data, images, and handles image
+     * deletions.
+     * Validates update permissions, manages status transitions, processes images,
+     * records history, and sends notification emails.
+     *
+     * @param id              the unique identifier of the request to update
+     * @param incomingRequest the updated request data (can be null for partial
+     *                        updates)
+     * @param newImages       array of new image files to upload (can be null or
+     *                        empty)
+     * @param toDelete        array of image IDs to delete (can be null or empty)
+     * @param note            optional note for the history record
+     * @return the updated request
+     * @throws ValidationException if update validation fails or request is not
+     *                             found
      */
     @Override
     @Transactional
-    public Request update(UUID id, Request incomingRequest, MultipartFile[] newImages, String[] toDelete,
-            String note) throws ValidationException {
-        // Load existing request with items and images eagerly fetched
+    public Request update(UUID id, Request incomingRequest, MultipartFile[] newImages,
+            String[] toDelete, String note) throws ValidationException {
+
         Request existingRequest = reqRepo.findByIdWithItems(id)
-                .orElseThrow(() -> new ValidationException("Không tìm thấy yêu cầu với ID: " + id));
+                .orElseThrow(() -> new ValidationException(REQUEST_NOT_FOUND_MSG + id));
 
-        // Validate early to fail fast
-        requestValidator.validateEditable(existingRequest);
-        requestValidator.validateStatusTransition(existingRequest, incomingRequest);
-        requestValidator.validateItemsForStatus(incomingRequest);
-        requestValidator.validateNoItemModificationWhenLocked(existingRequest, incomingRequest);
+        ensureRequestCanBeUpdated(existingRequest, incomingRequest);
 
-        // Snapshot for history tracking
-        Request archivedRequest = new Request();
-        copyRequestFields(archivedRequest, existingRequest, true);
+        Request snapshot = snapshotRequest(existingRequest);
 
-        // Set completion date if status is changing to COMPLETED
-        if (existingRequest.getStatus() != RequestStatus.COMPLETED
+        if (incomingRequest != null
+                && existingRequest.getStatus() != RequestStatus.COMPLETED
                 && incomingRequest.getStatus() == RequestStatus.COMPLETED) {
-            incomingRequest.setCompletedAt(vietnamTimeProvider.now());
+            incomingRequest.setCompletedAt(TimeUtils.nowInVietnam());
         }
 
-        // Process images BEFORE copying fields (to preserve existing images)
-        List<RequestImage> currentImages = imageService.updateRequestServiceImages(existingRequest, newImages,
-                toDelete);
+        List<RequestImage> currentImages = imageService.updateRequestServiceImages(existingRequest,
+                newImages, toDelete);
 
-        // Snapshot service items, copy all fields and save
-        if (!existingRequest.getStatus().isRequestItemsLocked()) {
-            copyServiceItemsFields(incomingRequest.getItems());
+        if (incomingRequest != null && !existingRequest.getStatus().isRequestItemsLocked()) {
+            enrichRequestItems(incomingRequest.getItems());
         }
 
-        copyRequestFields(existingRequest, incomingRequest, false);
+        copyRequest(existingRequest, incomingRequest, false, false);
 
-        // Apply processed images after field copy
-        existingRequest.getImages().clear();
+        if (existingRequest.getImages() == null) {
+            existingRequest.setImages(new ArrayList<>());
+        } else {
+            existingRequest.getImages().clear();
+        }
         existingRequest.getImages().addAll(currentImages);
 
-        // Build note with user input and computed changes
-        StringBuilder noteBuilder = new StringBuilder(
-                (note != null && !note.trim().isEmpty()) ? "Ghi chú: " + note.trim() + "\n" : "");
-        noteBuilder.append(historyService.computeRequestChanges(archivedRequest, existingRequest));
-
-        // Add history if there are actual changes OR if there's a modal note
-        if (!noteBuilder.toString().trim().isEmpty()) {
-            historyService.addRequestHistoryRecord(existingRequest, noteBuilder.toString(),
-                    getCurrentUsername());
-        }
-
-        Request saved = reqRepo.save(existingRequest);
-        emailService.sendUpdateEmail(saved, noteBuilder.toString());
-        return saved;
+        persistUpdate(existingRequest, snapshot, note);
+        return existingRequest;
     }
 
     /**
-     * Recovers request information by sending an email with tracking links to the
-     * provided email address.
-     * 
-     * @param email The email address for which to recover requests.
+     * Sends a recovery email containing all requests associated with the given
+     * email address.
+     * If no requests are found for the email, no action is taken.
+     *
+     * @param email the email address to search requests for and send recovery
+     *              information to
      */
     @Override
     public void recover(String email) {
@@ -241,163 +272,292 @@ public class RequestServiceImpl implements RequestService {
         emailService.sendRecoverEmail(email, requests);
     }
 
-    private void copyServiceItemsFields(List<RequestItem> items) {
-        if (items == null || items.isEmpty()) {
-            return;
+    /**
+     * Validates whether a request can be updated based on its current status and
+     * incoming changes.
+     * Prevents updates to cancelled requests, ensures service items are present for
+     * certain statuses,
+     * and prevents item modification when the request is in a locked state.
+     *
+     * @param existingRequest the current request state
+     * @param incomingRequest the incoming request changes (can be null)
+     * @throws ValidationException if the request cannot be updated due to status
+     *                             constraints
+     */
+    private void ensureRequestCanBeUpdated(Request existingRequest, Request incomingRequest)
+            throws ValidationException {
+        if (existingRequest.getStatus() == RequestStatus.CANCELLED) {
+            throw new ValidationException(
+                    "Không thể chỉnh sửa phiếu ở trạng thái \"" + existingRequest.getStatus().getValue() + "\"");
         }
 
-        // Batch fetching to avoid N+1 query problem
-        // Step 1: Collect all service item IDs
-        List<UUID> serviceItemIds = items.stream()
-                .map(RequestItem::getServiceItemId)
-                .collect(Collectors.toList());
-
-        // Step 2: Fetch all service items in a single query
-        List<ServiceItem> serviceItems = serviceItemRepository.findAllByIdInAndActive(serviceItemIds);
-
-        // Step 3: Convert to Map for O(1) lookup
-        Map<UUID, ServiceItem> serviceItemMap = serviceItems.stream()
-                .collect(Collectors.toMap(ServiceItem::getId, serviceItem -> serviceItem));
-
-        // Step 4: Process each RequestItem using the pre-loaded Map
-        for (RequestItem item : items) {
-            ServiceItem serviceItem = serviceItemMap.get(item.getServiceItemId());
-            if (serviceItem == null) {
-                throw new NotFoundException("Không tìm dịch vụ sửa chửa: " + item.getName());
-            }
-
-            // Debug logging to understand item processing
-            boolean isNew = isNewRequestItem(item);
-            log.debug("Processing RequestItem: id={}, name='{}', serviceItemId={}, isNew={}",
-                    item.getId(), item.getName(), item.getServiceItemId(), isNew);
-
-            if (isNew) {
-                // For NEW items: validate consistency and copy all ServiceItem data
-                log.debug("Applying validation and data copy for NEW item: {}", item.getName());
-                validateServiceItemDataConsistency(item, serviceItem);
-
-                // Copy latest data from ServiceItem, preserving user-customizable fields
-                BeanUtils.copyProperties(serviceItem, item, "id", "serviceItemId", "active", "createdAt", "updatedAt",
-                        "quantity", "discount");
-            } else {
-                // For EXISTING items: preserve ALL data as complete snapshots
-                // No validation, no data copying, no changes whatsoever
-                log.debug("Preserving complete snapshot for EXISTING item: {} (no changes applied)", item.getName());
-            }
-
-            if (item.getDiscount().compareTo(item.getPrice()) > 0) {
-                throw new ValidationException("Giảm giá vượt quá giá gốc: " + item.getName());
+        if (incomingRequest != null && incomingRequest.getStatus() != null) {
+            RequestStatus status = incomingRequest.getStatus();
+            if (status != RequestStatus.SCHEDULED && status != RequestStatus.CANCELLED
+                    && (incomingRequest.getItems() == null || incomingRequest.getItems().isEmpty())) {
+                throw new ValidationException("Phiếu ở trạng thái \"" + status.getValue()
+                        + "\" phải có ít nhất một hạng mục dịch vụ");
             }
         }
-    }
 
-    private void validateServiceItemDataConsistency(RequestItem requestItem, ServiceItem serviceItem) {
-        log.debug(
-                "Validating data consistency for item '{}'. RequestItem - Price: {}, VAT: {}, Warranty: {}. ServiceItem - Price: {}, VAT: {}, Warranty: {}",
-                requestItem.getName(),
-                requestItem.getPrice(), requestItem.getVatRate(), requestItem.getWarrantyDays(),
-                serviceItem.getPrice(), serviceItem.getVatRate(), serviceItem.getWarrantyDays());
-
-        StringBuilder errors = new StringBuilder();
-
-        // Check price consistency
-        if (requestItem.getPrice() != null &&
-                requestItem.getPrice().compareTo(serviceItem.getPrice()) != 0) {
-            String error = String.format("Giá dịch vụ '%s' đã thay đổi từ %s thành %s. ",
-                    serviceItem.getName(),
-                    requestItem.getPrice(),
-                    serviceItem.getPrice());
-            log.debug("Price inconsistency detected: {}", error);
-            errors.append(error);
-        }
-
-        // Check VAT rate consistency
-        if (requestItem.getVatRate() != null &&
-                requestItem.getVatRate().compareTo(serviceItem.getVatRate()) != 0) {
-            String error = String.format("VAT dịch vụ '%s' đã thay đổi từ %s%% thành %s%%. ",
-                    serviceItem.getName(),
-                    requestItem.getVatRate().multiply(new BigDecimal("100")),
-                    serviceItem.getVatRate().multiply(new BigDecimal("100")));
-            log.debug("VAT rate inconsistency detected: {}", error);
-            errors.append(error);
-        }
-
-        // Check warranty period consistency
-        if (requestItem.getWarrantyDays() != null &&
-                !requestItem.getWarrantyDays().equals(serviceItem.getWarrantyDays())) {
-            String error = String.format("Thời hạn bảo hành dịch vụ '%s' đã thay đổi từ %d ngày thành %d ngày. ",
-                    serviceItem.getName(),
-                    requestItem.getWarrantyDays(),
-                    serviceItem.getWarrantyDays());
-            log.debug("Warranty period inconsistency detected: {}", error);
-            errors.append(error);
-        }
-
-        // If there are any inconsistencies, throw validation error
-        if (errors.length() > 0) {
-            errors.append("Vui lòng làm mới trang và thử lại.");
-            log.warn("Service item data consistency validation failed: {}", errors.toString());
-            throw new ValidationException(errors.toString());
-        } else {
-            log.debug("Data consistency validation passed for item: {}", requestItem.getName());
+        if (existingRequest.getStatus().isRequestItemsLocked()
+                && !historyService.areRequestItemsEqual(existingRequest.getItems(),
+                        incomingRequest != null ? incomingRequest.getItems() : null)) {
+            throw new ValidationException("Phiếu đã ở trạng thái \""
+                    + existingRequest.getStatus().getValue()
+                    + "\" và không thể thay đổi hạng mục.");
         }
     }
 
     /**
-     * Determines if a RequestItem is new (not yet persisted to database).
-     * New items have id == null and need data consistency validation.
-     * Existing items have id != null and skip validation since they were already
-     * quoted.
+     * Creates a deep copy snapshot of a request for tracking changes.
+     * Used for history tracking to compare before/after states.
      *
-     * @param item The RequestItem to check
-     * @return true if the item is new (id == null), false if existing (id != null)
+     * @param existingRequest the request to create a snapshot of
+     * @return a deep copy of the request without ID-specific fields
      */
-    private boolean isNewRequestItem(RequestItem item) {
-        boolean isNew = item.getId() == null;
-        log.debug("Checking if RequestItem '{}' is new: id={}, result={}", item.getName(), item.getId(), isNew);
-        return isNew;
+    private Request snapshotRequest(Request existingRequest) {
+        Request snapshot = new Request();
+        copyRequest(snapshot, existingRequest, true, false);
+        return snapshot;
     }
 
-    private Request copyRequestFields(Request target, Request source, boolean deepCopyCollections) {
-        BeanUtils.copyProperties(source, target, "id", "items", "images", "history",
-                "createdAt", "updatedAt", "createdBy", "updatedBy");
-
-        if (deepCopyCollections) {
-            if (source.getItems() == null) {
-                target.setItems(null);
-                return target;
-            }
-
-            List<RequestItem> copiedItems = new ArrayList<>();
-            for (RequestItem item : source.getItems()) {
-                RequestItem newItem = new RequestItem();
-                BeanUtils.copyProperties(item, newItem, "id", "request");
-                newItem.setRequest(target);
-                copiedItems.add(newItem);
-            }
-            target.setItems(copiedItems);
-        } else {
-            // For updating - only change reference
-            if (source.getItems() != null) {
-                target.getItems().clear();
-                source.getItems().forEach(item -> item.setRequest(target));
-                target.getItems().addAll(source.getItems());
-            }
-            if (source.getImages() != null) {
-                target.getImages().clear();
-                source.getImages().forEach(image -> image.setRequest(target));
-                target.getImages().addAll(source.getImages());
-            }
+    /**
+     * Enriches request items with current service item data and validates
+     * consistency.
+     * For new items, copies latest service data and validates price/VAT/warranty
+     * consistency.
+     * For existing items, only validates discount amounts.
+     *
+     * @param items the list of request items to enrich and validate
+     * @throws NotFoundException   if a service item is not found or inactive
+     * @throws ValidationException if data consistency validation fails or discount
+     *                             exceeds price
+     */
+    private void enrichRequestItems(List<RequestItem> items) {
+        if (items == null || items.isEmpty()) {
+            return;
         }
 
-        return target;
+        Map<UUID, ServiceItem> serviceItemMap = loadServiceItemsMap(items);
+
+        for (RequestItem item : items) {
+            if (item == null) {
+                continue;
+            }
+            processRequestItem(item, serviceItemMap);
+        }
     }
 
-    private String getCurrentUsername() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName()))
-                ? auth.getName()
-                : "Public";
+    private Map<UUID, ServiceItem> loadServiceItemsMap(List<RequestItem> items) {
+        List<UUID> serviceItemIds = items.stream()
+                .filter(Objects::nonNull)
+                .map(RequestItem::getServiceItemId)
+                .filter(Objects::nonNull)
+                .toList();
+
+        List<ServiceItem> serviceItems = serviceItemRepository.findAllByIdInAndActive(serviceItemIds);
+        return serviceItems.stream()
+                .collect(Collectors.toMap(ServiceItem::getId, serviceItem -> serviceItem));
     }
 
+    private void processRequestItem(RequestItem item, Map<UUID, ServiceItem> serviceItemMap) {
+        ServiceItem serviceItem = serviceItemMap.get(item.getServiceItemId());
+        if (serviceItem == null) {
+            throw new NotFoundException("Không tìm dịch vụ sửa chửa: " + item.getName());
+        }
+
+        boolean isNew = item.getId() == null;
+        log.debug("Processing RequestItem: id={}, name='{}', serviceItemId={}, isNew={}",
+                item.getId(), item.getName(), item.getServiceItemId(), isNew);
+
+        if (isNew) {
+            validateAndCopyServiceItemData(item, serviceItem);
+        }
+
+        validateDiscount(item);
+    }
+
+    private void validateAndCopyServiceItemData(RequestItem item, ServiceItem serviceItem) {
+        StringBuilder errors = new StringBuilder();
+
+        validatePrice(item, serviceItem, errors);
+        validateVatRate(item, serviceItem, errors);
+        validateWarrantyDays(item, serviceItem, errors);
+
+        if (!errors.isEmpty()) {
+            errors.append("Vui lòng làm mới trang và thử lại.");
+            log.warn("Service item data consistency validation failed: {}", errors);
+            throw new ValidationException(errors.toString());
+        }
+
+        BeanUtils.copyProperties(serviceItem, item, "id", "serviceItemId", "active",
+                "createdAt", "updatedAt", "quantity", "discount");
+    }
+
+    private void validatePrice(RequestItem item, ServiceItem serviceItem, StringBuilder errors) {
+        if (item.getPrice() != null && item.getPrice().compareTo(serviceItem.getPrice()) != 0) {
+            String error = String.format("Giá dịch vụ '%s' đã thay đổi từ %s thành %s. ",
+                    serviceItem.getName(), item.getPrice(), serviceItem.getPrice());
+            log.debug("Price inconsistency detected: {}", error);
+            errors.append(error);
+        }
+    }
+
+    private void validateVatRate(RequestItem item, ServiceItem serviceItem, StringBuilder errors) {
+        if (item.getVatRate() != null && item.getVatRate().compareTo(serviceItem.getVatRate()) != 0) {
+            String error = String.format("VAT dịch vụ '%s' đã thay đổi từ %s%% thành %s%%. ",
+                    serviceItem.getName(),
+                    item.getVatRate().multiply(new BigDecimal("100")),
+                    serviceItem.getVatRate().multiply(new BigDecimal("100")));
+            log.debug("VAT rate inconsistency detected: {}", error);
+            errors.append(error);
+        }
+    }
+
+    private void validateWarrantyDays(RequestItem item, ServiceItem serviceItem, StringBuilder errors) {
+        if (item.getWarrantyDays() != null
+                && !item.getWarrantyDays().equals(serviceItem.getWarrantyDays())) {
+            String error = String.format(
+                    "Thời hạn bảo hành dịch vụ '%s' đã thay đổi từ %d ngày thành %d ngày. ",
+                    serviceItem.getName(), item.getWarrantyDays(),
+                    serviceItem.getWarrantyDays());
+            log.debug("Warranty period inconsistency detected: {}", error);
+            errors.append(error);
+        }
+    }
+
+    private void validateDiscount(RequestItem item) {
+        if (item.getDiscount() != null && item.getPrice() != null
+                && item.getDiscount().compareTo(item.getPrice()) > 0) {
+            throw new ValidationException("Giảm giá vượt quá giá gốc: " + item.getName());
+        }
+    }
+
+    /**
+     * Copies request data from source to target with configurable collection
+     * handling.
+     * Supports both shallow and deep copying of items and images collections.
+     *
+     * @param target              the request to copy data to
+     * @param source              the request to copy data from
+     * @param deepCopyCollections if true, creates new instances of collection
+     *                            items; if false, reuses existing items
+     * @param copyImages          if true, copies image collections; if false, skips
+     *                            image processing
+     */
+    private void copyRequest(Request target, Request source, boolean deepCopyCollections,
+            boolean copyImages) {
+        if (target == null || source == null) {
+            return;
+        }
+
+        BeanUtils.copyProperties(source, target, "id", "items", "images", "history", "createdAt",
+                "updatedAt", "createdBy", "updatedBy");
+
+        copyRequestItems(target, source, deepCopyCollections);
+
+        if (copyImages) {
+            copyRequestImages(target, source, deepCopyCollections);
+        }
+    }
+
+    private void copyRequestItems(Request target, Request source, boolean deepCopyCollections) {
+        if (source.getItems() == null) {
+            if (deepCopyCollections) {
+                target.setItems(null);
+            }
+            return;
+        }
+
+        if (deepCopyCollections) {
+            target.setItems(deepCopyItems(source.getItems(), target));
+        } else {
+            shallowCopyItems(target, source);
+        }
+    }
+
+    private List<RequestItem> deepCopyItems(List<RequestItem> sourceItems, Request targetRequest) {
+        List<RequestItem> clonedItems = new ArrayList<>();
+        for (RequestItem item : sourceItems) {
+            if (item == null) {
+                continue;
+            }
+            RequestItem clone = new RequestItem();
+            BeanUtils.copyProperties(item, clone, "id", "request");
+            clone.setRequest(targetRequest);
+            clonedItems.add(clone);
+        }
+        return clonedItems;
+    }
+
+    private void shallowCopyItems(Request target, Request source) {
+        if (target.getItems() == null) {
+            target.setItems(new ArrayList<>());
+        } else {
+            target.getItems().clear();
+        }
+        for (RequestItem item : source.getItems()) {
+            if (item == null) {
+                continue;
+            }
+            item.setRequest(target);
+            target.getItems().add(item);
+        }
+    }
+
+    private void copyRequestImages(Request target, Request source, boolean deepCopyCollections) {
+        if (source.getImages() == null) {
+            if (deepCopyCollections) {
+                target.setImages(null);
+            }
+            return;
+        }
+
+        if (target.getImages() == null) {
+            target.setImages(new ArrayList<>());
+        } else {
+            target.getImages().clear();
+        }
+
+        for (RequestImage image : source.getImages()) {
+            if (image == null) {
+                continue;
+            }
+            image.setRequest(target);
+            target.getImages().add(image);
+        }
+    }
+
+    /**
+     * Persists request updates, creates history records, and sends notification
+     * emails.
+     * Compares the snapshot with current request state to track changes and creates
+     * comprehensive history records with notes and change details.
+     *
+     * @param request  the request to persist
+     * @param snapshot the previous state of the request for comparison
+     * @param note     optional note to include in the history record
+     */
+    private void persistUpdate(@NonNull Request request, Request snapshot, String note) {
+        StringBuilder noteBuilder = new StringBuilder();
+
+        if (note != null && !note.trim().isEmpty()) {
+            noteBuilder.append("Ghi chú: ").append(note.trim()).append("\n");
+        }
+
+        String changes = historyService.computeRequestChanges(snapshot, request);
+        if (changes != null && !changes.isBlank()) {
+            noteBuilder.append(changes);
+        }
+
+        String historyNote = noteBuilder.toString();
+        if (!historyNote.trim().isEmpty()) {
+            historyService.addRequestHistoryRecord(request, historyNote,
+                    securityService.getCurrentUsername());
+        }
+
+        Request saved = reqRepo.save(request);
+        emailService.sendUpdateEmail(saved, historyNote);
+    }
 }

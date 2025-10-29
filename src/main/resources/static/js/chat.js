@@ -1,11 +1,42 @@
 // Defines the ChatWidget class to manage chat functionality.
 class ChatWidget {
+    isOpen = false; // Tracks if the chat box is open.
+    isStreaming = false; // Tracks if a message stream is active.
+    eventSource = null; // Holds the EventSource object for server-sent events.
+    conversationId = null; // Stores the current conversation ID.
+    storageKey = 'chatWidgetState'; // Session storage key
+
     constructor() {
-        this.isOpen = false; // Tracks if the chat box is open.
-        this.isStreaming = false; // Tracks if a message stream is active.
-        this.eventSource = null; // Holds the EventSource object for server-sent events.
-        this.conversationId = null; // Stores the current conversation ID.
         this.init(); // Calls the initialization method.
+    }
+
+    /**
+     * Renders markdown to safe HTML with support for bold, italic, headings, and links.
+     * @param {string} text - The markdown text to render.
+     * @returns {string} The safe HTML content.
+     */
+    renderMarkdown(text) {
+        // First escape HTML to prevent XSS
+        let html = this.escapeHtml(text);
+
+        // Replace markdown patterns with safe HTML - order matters!
+        html = html
+            // Headings (h1-h6) - must be before links to avoid conflicts
+            .replaceAll(/^# (.*$)/gm, '<h1>$1</h1>')              // # Heading 1
+            .replaceAll(/^## (.*$)/gm, '<h2>$1</h2>')             // ## Heading 2
+            .replaceAll(/^### (.*$)/gm, '<h3>$1</h3>')            // ### Heading 3
+            .replaceAll(/^#### (.*$)/gm, '<h4>$1</h4>')           // #### Heading 4
+            .replaceAll(/^##### (.*$)/gm, '<h5>$1</h5>')          // ##### Heading 5
+            .replaceAll(/^###### (.*$)/gm, '<h6>$1</h6>')         // ###### Heading 6
+            // Links - must be after headings to avoid conflicts
+            .replaceAll(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+            // Bold and italic
+            .replaceAll(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // **bold**
+            .replaceAll(/\*(.*?)\*/g, '<em>$1</em>')              // *italic*
+            // Line breaks
+            .replaceAll('\n', '<br>');                            // line breaks
+
+        return html;
     }
 
     /**
@@ -20,7 +51,188 @@ class ChatWidget {
     }
 
     init() {
+        this.loadState();
         this.attachEvents();
+    }
+
+    /**
+     * Saves the current chat state to session storage.
+     */
+    saveState() {
+        try {
+            const messages = this.getMessages();
+            const state = {
+                conversationId: this.conversationId,
+                messages: messages,
+                isOpen: this.isOpen
+            };
+
+            console.log('Saving chat state:', {
+                conversationId: this.conversationId,
+                messageCount: messages.length,
+                isOpen: this.isOpen,
+                messages: messages.map(m => ({ type: m.type, content: m.content.substring(0, 50) + '...' }))
+            });
+
+            sessionStorage.setItem(this.storageKey, JSON.stringify(state));
+        } catch (error) {
+            console.warn('Không thể lưu trạng thái chat:', error);
+        }
+    }
+
+    /**
+     * Loads chat state from session storage.
+     */
+    loadState() {
+        try {
+            const savedState = sessionStorage.getItem(this.storageKey);
+            if (savedState) {
+                const state = JSON.parse(savedState);
+
+                console.log('Loading chat state:', {
+                    conversationId: state.conversationId,
+                    messageCount: state.messages ? state.messages.length : 0,
+                    isOpen: state.isOpen,
+                    messages: state.messages ? state.messages.map(m => ({ type: m.type, content: m.content.substring(0, 50) + '...' })) : []
+                });
+
+                this.conversationId = state.conversationId || null;
+                this.isOpen = state.isOpen || false;
+
+                // Restore messages if they exist
+                if (state.messages && state.messages.length > 0) {
+                    this.restoreMessages(state.messages);
+                }
+
+                // Restore chat box visibility
+                this.restoreChatBoxVisibility();
+            }
+        } catch (error) {
+            console.warn('Không thể khôi phục trạng thái chat:', error);
+            // If there's an error loading state, ensure we have a clean state
+            this.newChat();
+        }
+    }
+
+    /**
+     * Gets all messages from the chat container.
+     */
+    getMessages() {
+        const container = document.getElementById('chat-messages');
+        if (!container) return [];
+
+        const messages = [];
+        const messageElements = container.querySelectorAll('.message');
+
+        for (const element of messageElements) {
+            const type = this.getMessageType(element);
+            const content = this.getMessageContent(element);
+
+            // Only save messages that have actual content
+            if (content !== null && content !== undefined) {
+                messages.push({ type, content });
+            }
+        }
+
+        return messages;
+    }
+
+    /**
+     * Determines message type from element classes.
+     */
+    getMessageType(element) {
+        if (element.classList.contains('user')) return 'user';
+        if (element.classList.contains('bot')) return 'bot';
+        if (element.classList.contains('error')) return 'error';
+        return 'bot'; // default
+    }
+
+    /**
+     * Extracts message content from element, excluding icons and typing indicators.
+     */
+    getMessageContent(element) {
+        // Clone the element to avoid modifying the original
+        const clone = element.cloneNode(true);
+
+        // Remove all icons and typing indicators
+        const icons = clone.querySelectorAll('i, .typing-indicator');
+        for (const icon of icons) {
+            icon.remove();
+        }
+
+        // Get the remaining text content
+        const content = clone.textContent.trim();
+
+        // Check if this is an empty or loading bot message
+        if (!content && element.classList.contains('bot')) {
+            return null; // Don't save empty/loading bot messages
+        }
+
+        return content;
+    }
+
+    /**
+     * Restores messages to the chat container.
+     */
+    restoreMessages(messages) {
+        const container = document.getElementById('chat-messages');
+        if (!container) return;
+
+        container.innerHTML = '';
+        for (const message of messages) {
+            this.addMessageWithoutScrolling(message.type, message.content);
+        }
+
+        this.scrollToBottom();
+    }
+
+    /**
+     * Adds a message without auto-scrolling (used during bulk restore).
+     */
+    addMessageWithoutScrolling(type, content) {
+        const container = document.getElementById('chat-messages');
+        const message = document.createElement('div');
+        message.className = `message ${type}`;
+
+        if (type === 'user') {
+            message.innerHTML = `<i class="fas fa-user text-white me-2"></i>${this.escapeHtml(content)}`;
+        } else if (type === 'error') {
+            message.innerHTML = `<i class="fas fa-exclamation-triangle text-danger me-2"></i>${this.escapeHtml(content)}`;
+        } else {
+            message.innerHTML = `<i class="fas fa-robot text-primary me-2"></i>${this.escapeHtml(content)}`;
+        }
+
+        container.appendChild(message);
+        return message;
+    }
+
+    /**
+     * Restores chat box visibility based on saved state.
+     */
+    restoreChatBoxVisibility() {
+        const chatBox = document.getElementById('chat-box');
+        const toggle = document.getElementById('chat-toggle');
+
+        if (!chatBox || !toggle) return;
+
+        chatBox.style.display = this.isOpen ? 'block' : 'none';
+        toggle.innerHTML = this.isOpen ? '<i class="fas fa-times"></i>' : '<i class="fas fa-comments"></i>';
+
+        if (this.isOpen) {
+            // Delay scroll to ensure DOM is ready
+            setTimeout(() => this.scrollToBottom(), 100);
+        }
+    }
+
+    /**
+     * Clears saved chat state.
+     */
+    clearSavedState() {
+        try {
+            sessionStorage.removeItem(this.storageKey);
+        } catch (error) {
+            console.warn('Không thể xóa trạng thái chat:', error);
+        }
     }
 
     /**
@@ -54,6 +266,9 @@ class ChatWidget {
         chatBox.style.display = this.isOpen ? 'block' : 'none'; // Shows or hides the chat box.
         // Changes the toggle button icon based on the chat box state.
         toggle.innerHTML = this.isOpen ? '<i class="fas fa-times"></i>' : '<i class="fas fa-comments"></i>';
+
+        // Save state after toggling
+        this.saveState();
 
         if (this.isOpen) this.scrollToBottom();
     }
@@ -98,6 +313,10 @@ class ChatWidget {
                 this.conversationId = crypto.randomUUID();
             }
 
+            // Hiển thị loading indicator ngay lập tức
+            const botMessage = this.addMessage('bot', '');
+            botMessage.innerHTML = `<i class="fas fa-robot text-primary me-2"></i><span class="typing-indicator"><span></span><span></span><span></span></span>`;
+
             // Prepares URL parameters for the SSE request.
             const params = new URLSearchParams({
                 message,
@@ -106,14 +325,12 @@ class ChatWidget {
 
             const url = `/api/chat/stream?${params}`;
             this.eventSource = new EventSource(url);
-            let botMessage = null;
             let content = '';
             let hasReceivedMessage = false;
 
             // Handles incoming messages from the SSE stream.
             this.eventSource.onmessage = (event) => {
                 hasReceivedMessage = true;
-                if (!botMessage) botMessage = this.addMessage('bot', '');
 
                 const chatResponse = JSON.parse(event.data);
                 const chunk = chatResponse.results?.[0]?.output?.text || '';
@@ -129,14 +346,21 @@ class ChatWidget {
                 content += chunk;
 
                 // Updates the bot message display.
-                botMessage.innerHTML = `<i class="fas fa-robot text-primary me-2"></i>${this.escapeHtml(content)}`;
+                botMessage.innerHTML = `<i class="fas fa-robot text-primary me-2"></i><div class="bot-message">${this.renderMarkdown(content)}</div>`;
                 this.scrollToBottom();
+
+                // Save state during streaming to capture partial bot responses
+                this.saveState();
             };
 
             // Handles errors from the SSE stream.
             this.eventSource.onerror = (error) => {
                 // Only shows an error message if no data has been received (indicates a connection error).
                 if (!hasReceivedMessage) {
+                    // Xóa loading indicator
+                    if (botMessage?.parentNode) {
+                        botMessage.remove();
+                    }
                     this.addMessage('error', 'Không thể kết nối tới server. Vui lòng thử lại sau.');
                 }
 
@@ -147,6 +371,8 @@ class ChatWidget {
             // Event listener for when the SSE connection is closed.
             this.eventSource.addEventListener('close', () => {
                 this.cleanup();
+                // Save final state after the conversation is complete
+                this.saveState();
                 resolve();
             });
         });
@@ -171,7 +397,7 @@ class ChatWidget {
      */
     handleErrorMessage(botMessage, errorText) {
         if (botMessage?.parentNode) {
-            botMessage.parentNode.removeChild(botMessage); // Removes the incomplete bot message.
+            botMessage.remove(); // Removes the incomplete bot message.
         }
         this.addMessage('error', errorText);
     }
@@ -187,17 +413,24 @@ class ChatWidget {
         const message = document.createElement('div');
         message.className = `message ${type}`; // Sets CSS class based on message type.
 
-        // Sets inner HTML with appropriate icon and escaped content.
+        // Sets inner HTML with appropriate icon and rendered content.
         if (type === 'user') {
-            message.innerHTML = `<i class="fas fa-user text-white me-2"></i>${this.escapeHtml(content)}`;
+            // User messages: escape HTML to prevent any formatting
+            message.innerHTML = `<i class="fas fa-user text-white me-2"></i><span class="user-message">${this.escapeHtml(content)}</span>`;
         } else if (type === 'error') {
-            message.innerHTML = `<i class="fas fa-exclamation-triangle text-danger me-2"></i>${this.escapeHtml(content)}`;
+            // Error messages: escape HTML to prevent any formatting
+            message.innerHTML = `<i class="fas fa-exclamation-triangle text-danger me-2"></i><span class="error-message">${this.escapeHtml(content)}</span>`;
         } else {
-            message.innerHTML = `<i class="fas fa-robot text-primary me-2"></i>${this.escapeHtml(content)}`;
+            // Bot messages: render markdown for rich formatting
+            message.innerHTML = `<i class="fas fa-robot text-primary me-2"></i><div class="bot-message">${this.renderMarkdown(content)}</div>`;
         }
 
         container.appendChild(message);
         this.scrollToBottom();
+
+        // Save state after adding each message
+        this.saveState();
+
         return message;
     }
 
@@ -211,13 +444,11 @@ class ChatWidget {
 
     newChat() {
         this.conversationId = null;
-        document.getElementById('chat-messages').innerHTML = `
-            <div class="message bot">
-                <i class="fas fa-robot text-primary me-2"></i>
-                Xin chào! Tôi là trợ lý ảo. Bạn cần hỗ trợ gì?
-            </div>
-        `;
+        document.getElementById('chat-messages').innerHTML = `<div class="message bot"><i class="fas fa-robot text-primary me-2"></i>Xin chào! Tôi là trợ lý ảo. Bạn cần hỗ trợ gì?</div>`;
         this.scrollToBottom();
+
+        // Clear saved state when starting new chat
+        this.clearSavedState();
     }
 
     cleanup() {
@@ -240,6 +471,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatBox = document.getElementById('chat-box');
 
     if (chatToggle && chatBox) {
-        new ChatWidget();
+        // Initialize the chat widget
+        const chatWidget = new ChatWidget();
+        // Optionally store the instance if needed later
+        globalThis.chatWidget = chatWidget;
     }
 });

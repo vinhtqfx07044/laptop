@@ -31,13 +31,11 @@
                     </div>
                 </div>
 
-                <!--
-                    Main form for creating/editing a request.
-                    `th:action="@{${requestUri}}"` sets the form submission URL dynamically.
-                    `th:object="${request}"` binds the form to a `request` object.
-                    `enctype="multipart/form-data"` is required for file uploads (images).
-                    `needs-validation` and `novalidate` are Bootstrap 5 classes for client-side form validation.
-                -->
+                <!-- Main form for creating/editing a request.
+                     `th:action="@{${requestUri}}"` sets the form submission URL dynamically.
+                     `th:object="${request}"` binds the form to a `request` object.
+                     `enctype="multipart/form-data"` is required for file uploads (images).
+                     `needs-validation` and `novalidate` are Bootstrap 5 classes for client-side form validation. -->
                 <form th:action="@{${requestUri}}" th:object="${request}" method="post" enctype="multipart/form-data"
                     id="requestForm" class="needs-validation" novalidate>
 
@@ -216,11 +214,12 @@
     </div>
 
     <div th:insert="~{fragments/footer :: footer}"></div>
+    <div th:replace="~{fragments/chat :: chatWidget}"></div>
 
     <!-- JavaScript section to pass server-side data to client-side JavaScript. -->
     <script th:inline="javascript">
-        window.serverItems = /*[[${request.items}]]*/[];
-        window.isRequestLocked = /*[[${request.status != null and request.status.isRequestItemsLocked}]]*/ false;
+        globalThis.serverItems = /*[[${request.items}]]*/[];
+        globalThis.isRequestLocked = /*[[${request.status != null and request.status.isRequestItemsLocked}]]*/ false;
     </script>
     <script th:src="@{/js/global.js}"></script>
     <script th:src="@{/js/request-edit.js}"></script>

@@ -1,13 +1,11 @@
 package com.laptoprepair.controller;
 
 import com.laptoprepair.entity.Request;
-import com.laptoprepair.enums.RequestStatus;
+import com.laptoprepair.entity.Request.RequestStatus;
 import com.laptoprepair.exception.ValidationException;
 import com.laptoprepair.exception.NotFoundException;
 import com.laptoprepair.service.RequestService;
 import com.laptoprepair.utils.ValidationErrorUtil;
-
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
@@ -35,13 +33,14 @@ import java.util.UUID;
 @Slf4j
 public class RequestController {
 
+    private static final String REQUEST_ATTRIBUTE = "request";
+    private static final String REQUEST_FORM_VIEW = "staff/request-form";
+
     private final RequestService requestService;
     private final ValidationErrorUtil validationErrorUtil;
 
     private static final int DEFAULT_PAGE_SIZE = 10;
-
-    @Value("${app.upload.max-images-per-request}")
-    private int maxImagesPerRequest;
+    private static final int MAX_IMAGES_PER_REQUEST = 5;
 
     @GetMapping("/list")
     public String list(
@@ -65,26 +64,28 @@ public class RequestController {
     @GetMapping("/create")
     public String createForm(Model model, HttpServletRequest request) {
         populateForCreate(model, request);
-        return "staff/request-form";
+        return REQUEST_FORM_VIEW;
     }
 
     @GetMapping("/edit/{id}")
     public String editForm(@PathVariable UUID id, Model model, HttpServletRequest request) {
-        Request existingRequest = requestService.findById(id);
-
-        // Redirect to detail view if request is cancelled
+        log.info("Loading edit form for request ID: {}", id);
+        Request existingRequest = requestService.findByIdWithItemsAndImages(id);
+        log.info("Request loaded - ID: {}, Items count: {}, Images count: {}",
+                existingRequest.getId(),
+                existingRequest.getItems().size(),
+                existingRequest.getImages().size());
         if (existingRequest.getStatus() == RequestStatus.CANCELLED) {
             return "redirect:/staff/requests/view/" + id;
         }
-
         populateForEdit(existingRequest, model, request);
-        return "staff/request-form";
+        return REQUEST_FORM_VIEW;
     }
 
     @GetMapping("/view/{id}")
     public String view(@PathVariable UUID id, Model model) {
         Request existingRequest = requestService.findById(id);
-        model.addAttribute("request", existingRequest);
+        model.addAttribute(REQUEST_ATTRIBUTE, existingRequest);
         model.addAttribute("isStaff", true);
         log.info("Staff view accessed for request {}, isStaff set to true", id);
         return "staff/request-detail";
@@ -100,15 +101,11 @@ public class RequestController {
             RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
-            // Add centralized error messages for header display
             model.addAttribute("errorMessages", validationErrorUtil.extractErrorMessages(bindingResult));
-
-            // Add field-specific error status for enhanced styling
             model.addAttribute("fieldHasErrors", validationErrorUtil.getFieldErrorStatus(bindingResult));
-
             populateForCreate(model, request);
-            model.addAttribute("request", incomingRequest); // Override with form data
-            return "staff/request-form";
+            model.addAttribute(REQUEST_ATTRIBUTE, incomingRequest); // Override with form data
+            return REQUEST_FORM_VIEW;
         }
 
         try {
@@ -117,9 +114,9 @@ public class RequestController {
             return "redirect:/staff/requests/edit/" + saved.getId();
         } catch (ValidationException | NotFoundException ex) {
             populateForCreate(model, request);
-            model.addAttribute("request", incomingRequest);
+            model.addAttribute(REQUEST_ATTRIBUTE, incomingRequest);
             model.addAttribute("errorMessage", ex.getMessage());
-            return "staff/request-form";
+            return REQUEST_FORM_VIEW;
         }
     }
 
@@ -135,17 +132,21 @@ public class RequestController {
             RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
-            // Add centralized error messages for header display
+            log.info("Validation failed for request ID: {}, reloading edit form", id);
             model.addAttribute("errorMessages", validationErrorUtil.extractErrorMessages(bindingResult));
-
-            // Add field-specific error status for enhanced styling
             model.addAttribute("fieldHasErrors", validationErrorUtil.getFieldErrorStatus(bindingResult));
 
-            // Load full request from DB when validation fails
-            Request existingRequest = requestService.findById(id);
-            populateForEdit(existingRequest, model, request);
-            model.addAttribute("request", incomingRequest); // Override with form data
-            return "staff/request-form";
+            // Load full request with items and images from DB when validation fails
+            Request existingRequest = requestService.findByIdWithItemsAndImages(id);
+            log.info("Reloaded request after validation failure - ID: {}, Items count: {}, Images count: {}",
+                    existingRequest.getId(),
+                    existingRequest.getItems().size(),
+                    existingRequest.getImages().size());
+
+            // Merge form data with existing request to preserve images
+            Request mergedRequest = requestService.mergeFormRequestWithExisting(existingRequest, incomingRequest);
+            populateForEdit(mergedRequest, model, request);
+            return REQUEST_FORM_VIEW;
         }
 
         try {
@@ -153,25 +154,28 @@ public class RequestController {
             redirectAttributes.addFlashAttribute("successMessage", "Yêu cầu đã được cập nhật thành công!");
             return "redirect:/staff/requests/edit/" + updated.getId();
         } catch (ValidationException | NotFoundException ex) {
-            Request existingRequest = requestService.findById(id);
-            populateForEdit(existingRequest, model, request);
-            model.addAttribute("request", incomingRequest);
+            Request existingRequest = requestService.findByIdWithItemsAndImages(id);
+            Request mergedRequest = requestService.mergeFormRequestWithExisting(existingRequest, incomingRequest);
+            populateForEdit(mergedRequest, model, request);
             model.addAttribute("errorMessage", ex.getMessage());
-            return "staff/request-form";
+            return REQUEST_FORM_VIEW;
         }
     }
 
     private void populateForCreate(Model model, HttpServletRequest request) {
-        model.addAttribute("request", new Request());
+        model.addAttribute(REQUEST_ATTRIBUTE, new Request());
         model.addAttribute("requestUri", request.getRequestURI());
-        model.addAttribute("maxImages", maxImagesPerRequest);
+        model.addAttribute("maxImages", MAX_IMAGES_PER_REQUEST);
     }
 
     private void populateForEdit(Request existing, Model model, HttpServletRequest request) {
-        model.addAttribute("request", existing);
+        log.info("populateForEdit called - Request ID: {}, Items: {}, Images: {}",
+                existing.getId(), existing.getItems().size(), existing.getImages().size());
+        model.addAttribute(REQUEST_ATTRIBUTE, existing);
         model.addAttribute("requestUri", request.getRequestURI());
-        model.addAttribute("maxImages", maxImagesPerRequest);
+        model.addAttribute("maxImages", MAX_IMAGES_PER_REQUEST);
         model.addAttribute("isRequestItemsLocked",
                 existing.getStatus() != null && existing.getStatus().isRequestItemsLocked());
+        log.info("populateForEdit completed - Request added to model with {} images", existing.getImages().size());
     }
 }

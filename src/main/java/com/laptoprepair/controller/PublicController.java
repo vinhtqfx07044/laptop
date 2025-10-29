@@ -3,9 +3,8 @@ package com.laptoprepair.controller;
 import com.laptoprepair.entity.Request;
 import com.laptoprepair.exception.ValidationException;
 import com.laptoprepair.exception.NotFoundException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import com.laptoprepair.service.RequestService;
+import com.laptoprepair.service.SecurityService;
 import com.laptoprepair.utils.ValidationErrorUtil;
 
 import lombok.RequiredArgsConstructor;
@@ -29,12 +28,19 @@ import java.util.UUID;
 @Slf4j
 public class PublicController {
 
+    private static final String REQUEST_ATTRIBUTE = "request";
+    private static final String REQUEST_SUBMIT_VIEW = "public/request-submit";
+
     private final RequestService requestService;
     private final ValidationErrorUtil validationErrorUtil;
+    private final SecurityService securityService;
 
     @GetMapping("/login")
     public String login() {
-        if (isStaff()) {
+        boolean isStaff = securityService.getCurrentAuthentication()
+                .map(auth -> securityService.hasRole(auth, "ROLE_STAFF"))
+                .orElse(false);
+        if (isStaff) {
             return "redirect:/staff/requests/list";
         }
         return "public/login";
@@ -42,7 +48,10 @@ public class PublicController {
 
     @GetMapping("/")
     public String index(Model model) {
-        if (isStaff()) {
+        boolean isStaff = securityService.getCurrentAuthentication()
+                .map(auth -> securityService.hasRole(auth, "ROLE_STAFF"))
+                .orElse(false);
+        if (isStaff) {
             return "redirect:/staff/requests/list";
         }
         return "public/index";
@@ -60,8 +69,8 @@ public class PublicController {
 
     @GetMapping("/submit")
     public String submitForm(Model model) {
-        model.addAttribute("request", new Request());
-        return "public/request-submit";
+        model.addAttribute(REQUEST_ATTRIBUTE, new Request());
+        return REQUEST_SUBMIT_VIEW;
     }
 
     @PostMapping("/submit")
@@ -70,14 +79,10 @@ public class PublicController {
             Model model,
             RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
-            // Add centralized error messages for header display
             model.addAttribute("errorMessages", validationErrorUtil.extractErrorMessages(bindingResult));
-
-            // Add field-specific error status for enhanced styling
             model.addAttribute("fieldHasErrors", validationErrorUtil.getFieldErrorStatus(bindingResult));
-
-            model.addAttribute("request", request);
-            return "public/request-submit";
+            model.addAttribute(REQUEST_ATTRIBUTE, request);
+            return REQUEST_SUBMIT_VIEW;
         }
 
         try {
@@ -87,9 +92,9 @@ public class PublicController {
             redirectAttributes.addFlashAttribute("requestId", saved.getId());
             return "redirect:/submit";
         } catch (ValidationException ex) {
-            model.addAttribute("request", request);
+            model.addAttribute(REQUEST_ATTRIBUTE, request);
             model.addAttribute("errorMessage", ex.getMessage());
-            return "public/request-submit";
+            return REQUEST_SUBMIT_VIEW;
         }
     }
 
@@ -106,7 +111,7 @@ public class PublicController {
     public String viewRequestDetail(@PathVariable UUID id, Model model, RedirectAttributes redirectAttributes) {
         try {
             Request request = requestService.findById(id);
-            model.addAttribute("request", request);
+            model.addAttribute(REQUEST_ATTRIBUTE, request);
             model.addAttribute("isStaff", false);
             return "staff/request-detail";
         } catch (NotFoundException ex) {
@@ -114,12 +119,4 @@ public class PublicController {
             return "redirect:/";
         }
     }
-
-    private boolean isStaff() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return auth != null && auth.isAuthenticated() &&
-                auth.getAuthorities().stream()
-                        .anyMatch(a -> a.getAuthority().equals("ROLE_STAFF"));
-    }
-
 }

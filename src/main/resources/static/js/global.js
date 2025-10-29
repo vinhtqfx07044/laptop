@@ -6,7 +6,7 @@ function doLogout() {
         if (logoutForm) {
             logoutForm.submit();
         } else {
-            window.location.href = '/logout';
+            globalThis.location.href = '/logout';
         }
     }
 }
@@ -28,10 +28,10 @@ document.addEventListener('DOMContentLoaded', function () {
 // Iterates through all elements with the 'currency-format' class and formats their content.
 function formatAllCurrencyElements() {
     const currencyElements = document.querySelectorAll('.currency-format');
-    currencyElements.forEach(element => {
-        const amount = element.getAttribute('data-amount');
+    for (const element of currencyElements) {
+        const amount = element.dataset.amount;
         if (amount !== null) {
-            element.textContent = formatVietnameseCurrency(parseFloat(amount));
+            element.textContent = formatVietnameseCurrency(Number.parseFloat(amount));
         }
-    });
+    }
 }

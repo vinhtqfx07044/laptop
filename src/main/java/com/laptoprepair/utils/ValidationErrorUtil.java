@@ -28,7 +28,7 @@ public class ValidationErrorUtil {
     public List<String> extractErrorMessages(BindingResult bindingResult) {
         return bindingResult.getFieldErrors().stream()
                 .map(FieldError::getDefaultMessage)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**

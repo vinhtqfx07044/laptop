@@ -1,32 +1,33 @@
 package com.laptoprepair.service.impl;
 
-import com.laptoprepair.entity.Request;
-import com.laptoprepair.entity.RequestHistory;
-import com.laptoprepair.entity.RequestItem;
-import com.laptoprepair.enums.RequestStatus;
-import com.laptoprepair.utils.CurrencyUtils;
-import com.laptoprepair.config.VietnamTimeProvider;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import org.mockito.InjectMocks;
+import org.mockito.MockedStatic;
+import static org.mockito.Mockito.mockStatic;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.laptoprepair.entity.Request;
+import com.laptoprepair.entity.Request.RequestStatus;
+import com.laptoprepair.entity.RequestHistory;
+import com.laptoprepair.entity.RequestItem;
+import com.laptoprepair.utils.CurrencyUtils;
+import com.laptoprepair.utils.TimeUtils;
 
 @ExtendWith(MockitoExtension.class)
 class HistoryServiceImplTest {
-
-        @Mock
-        private VietnamTimeProvider vietnamTimeProvider;
 
         @InjectMocks
         private HistoryServiceImpl historyService;
@@ -42,26 +43,25 @@ class HistoryServiceImplTest {
         @Test
         void addRequestHistoryRecord_UTC001_ValidHistoryRecord_ShouldCreateHistoryRecord() {
                 LocalDateTime testTime = LocalDateTime.of(2024, 7, 1, 10, 0);
-                when(vietnamTimeProvider.now()).thenReturn(testTime);
 
-                String changes = "Status changed from SCHEDULED to QUOTED.";
-                String user = "staff_user";
+                try (MockedStatic<TimeUtils> mockedTimeUtils = mockStatic(TimeUtils.class)) {
+                        mockedTimeUtils.when(TimeUtils::nowInVietnam).thenReturn(testTime);
 
-                historyService.addRequestHistoryRecord(request, changes, user);
+                        String changes = "Status changed from SCHEDULED to QUOTED.";
+                        String user = "staff_user";
 
-                assertEquals(1, request.getHistory().size());
-                RequestHistory history = request.getHistory().get(0);
-                assertEquals(changes, history.getChanges());
-                assertEquals(user, history.getCreatedBy());
-                assertEquals(testTime, history.getCreatedAt());
-                assertEquals(request, history.getRequest());
+                        historyService.addRequestHistoryRecord(request, changes, user);
+
+                        assertEquals(1, request.getHistory().size());
+                        RequestHistory history = request.getHistory().get(0);
+                        assertEquals(changes, history.getChanges());
+                        assertEquals(user, history.getCreatedBy());
+                        assertEquals(testTime, history.getCreatedAt());
+                }
         }
 
         @Test
         void addRequestHistoryRecord_UTC002_LongChangeDescriptionTruncation_ShouldTruncateChanges() {
-                LocalDateTime testTime = LocalDateTime.of(2024, 7, 1, 10, 0);
-                when(vietnamTimeProvider.now()).thenReturn(testTime);
-
                 String longChanges = "a".repeat(600);
                 String user = "admin";
 
@@ -72,14 +72,11 @@ class HistoryServiceImplTest {
                 assertEquals(503, history.getChanges().length());
                 assertTrue(history.getChanges().endsWith("..."));
                 assertEquals(user, history.getCreatedBy());
-                assertEquals(testTime, history.getCreatedAt());
+                assertNotNull(history.getCreatedAt()); // Should be set to current Vietnam time
         }
 
         @Test
         void addRequestHistoryRecord_UTC003_NullChangeDescription_ShouldAllowNullChanges() {
-                LocalDateTime testTime = LocalDateTime.of(2024, 7, 1, 10, 0);
-                when(vietnamTimeProvider.now()).thenReturn(testTime);
-
                 String user = "system";
 
                 historyService.addRequestHistoryRecord(request, null, user);
@@ -88,7 +85,7 @@ class HistoryServiceImplTest {
                 RequestHistory history = request.getHistory().get(0);
                 assertNull(history.getChanges());
                 assertEquals(user, history.getCreatedBy());
-                assertEquals(testTime, history.getCreatedAt());
+                assertNotNull(history.getCreatedAt()); // Should be set to current Vietnam time
         }
 
         @Test

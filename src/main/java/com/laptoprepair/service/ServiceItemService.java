@@ -1,7 +1,7 @@
 package com.laptoprepair.service;
 
 import com.laptoprepair.entity.ServiceItem;
-import com.laptoprepair.exception.CSVImportException;
+import com.laptoprepair.exception.ValidationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,7 +22,7 @@ public interface ServiceItemService {
 
     ServiceItem update(UUID id, ServiceItem serviceItem);
 
-    void importCSV(MultipartFile file) throws CSVImportException;
+    void importCSV(MultipartFile file) throws ValidationException;
 
     byte[] exportCSV();
 }

@@ -1,15 +1,14 @@
 package com.laptoprepair.service.impl;
 
 import com.laptoprepair.entity.ServiceItem;
-import com.laptoprepair.exception.CSVImportException;
 import com.laptoprepair.exception.NotFoundException;
+import com.laptoprepair.exception.ValidationException;
 import com.laptoprepair.repository.ServiceItemRepository;
 
 import com.laptoprepair.service.ServiceItemService;
-import com.laptoprepair.validation.ServiceItemValidator;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -25,16 +24,10 @@ import java.math.BigDecimal;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Implementation of the {@link ServiceItemService} interface.
- * Provides business logic for managing service items, including CRUD
- * operations,
- * and CSV import/export functionalities.
- */
-@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -46,8 +39,14 @@ public class ServiceItemServiceImpl implements ServiceItemService {
     private static final String WARRANTY_DAYS_FIELD = "warrantyDays";
     private static final String ACTIVE_FIELD = "active";
 
+    // Accepted CSV MIME types
+    private static final List<String> ACCEPTED_CSV_MIME_TYPES = Arrays.asList(
+            "text/csv", "application/csv", "text/plain");
+
+    // Maximum CSV file size (5MB)
+    private static final long MAX_CSV_FILE_SIZE = 5_000_000L;
+
     private final ServiceItemRepository serviceItemRepository;
-    private final ServiceItemValidator serviceItemValidator;
 
     /**
      * Creates a new service item.
@@ -57,7 +56,10 @@ public class ServiceItemServiceImpl implements ServiceItemService {
      */
     @Override
     public ServiceItem create(ServiceItem serviceItem) {
-        serviceItemValidator.validateUniqueNameOnCreate(serviceItem.getName());
+        // Validate unique name on create
+        if (serviceItemRepository.findByName(serviceItem.getName()).isPresent()) {
+            throw new ValidationException("Tên dịch vụ đã tồn tại. Vui lòng chọn tên khác");
+        }
         return serviceItemRepository.save(serviceItem);
     }
 
@@ -70,7 +72,7 @@ public class ServiceItemServiceImpl implements ServiceItemService {
      */
     @Override
     @Transactional(readOnly = true)
-    public ServiceItem findById(UUID id) {
+    public ServiceItem findById(@NonNull UUID id) {
         return serviceItemRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy dịch vụ với ID: " + id));
     }
@@ -83,10 +85,13 @@ public class ServiceItemServiceImpl implements ServiceItemService {
      * @return The updated ServiceItem.
      */
     @Override
-    public ServiceItem update(UUID id, ServiceItem incomingServiceItem) {
-        ServiceItem existingServiceItem = this.findById(id);
+    public ServiceItem update(@NonNull UUID id, ServiceItem incomingServiceItem) {
+        ServiceItem existingServiceItem = loadAndValidateServiceItem(id);
 
-        serviceItemValidator.validateUniqueNameOnUpdate(id, incomingServiceItem.getName());
+        // Validate unique name on update
+        if (serviceItemRepository.existsByNameAndIdNot(incomingServiceItem.getName(), id)) {
+            throw new ValidationException("Tên dịch vụ đã tồn tại. Vui lòng chọn tên khác");
+        }
 
         // Update fields directly
         existingServiceItem.setName(incomingServiceItem.getName());
@@ -118,19 +123,29 @@ public class ServiceItemServiceImpl implements ServiceItemService {
      * Imports service items from a CSV file.
      * 
      * @param file The MultipartFile representing the CSV file to import.
-     * @throws CSVImportException if there is an error during CSV parsing or data
-     *                            validation.
+     * @throws ValidationException if there is an error during CSV parsing or data
+     *                             validation.
      */
     @Override
-    public void importCSV(MultipartFile file) throws CSVImportException {
-        serviceItemValidator.validateCSVFile(file);
+    public void importCSV(MultipartFile file) throws ValidationException {
+        // Validate CSV file
+        if (file == null || file.isEmpty()) {
+            throw new ValidationException("File CSV trống hoặc không hợp lệ");
+        }
+
+        validateFileExtension(file);
+        validateFileMimeType(file);
+        validateFileSize(file);
+        validateCSVStructure(file);
 
         List<ServiceItem> serviceItemsToBeSaved = new ArrayList<>();
 
         try (Reader reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8);
-                CSVParser parser = new CSVParser(reader, CSVFormat.Builder.create()
+                CSVParser parser = CSVParser.parse(reader, CSVFormat.DEFAULT
+                        .builder()
                         .setHeader(NAME_FIELD, PRICE_FIELD, VAT_RATE_FIELD, WARRANTY_DAYS_FIELD, ACTIVE_FIELD)
-                        .setSkipHeaderRecord(true).build())) {
+                        .setSkipHeaderRecord(true)
+                        .get())) {
 
             int rowNumber = 1;
             for (CSVRecord csvRecord : parser) {
@@ -145,12 +160,12 @@ public class ServiceItemServiceImpl implements ServiceItemService {
 
             serviceItemRepository.saveAll(serviceItemsToBeSaved);
 
-        } catch (CSVImportException e) {
+        } catch (ValidationException e) {
             throw e;
         } catch (IOException e) {
-            throw new CSVImportException("Lỗi đọc file CSV: " + e.getMessage());
+            throw new ValidationException("Lỗi đọc file CSV: " + e.getMessage());
         } catch (Exception e) {
-            throw new CSVImportException("Lỗi không xác định khi import CSV: " + e.getMessage());
+            throw new ValidationException("Lỗi không xác định khi import CSV: " + e.getMessage());
         }
     }
 
@@ -165,9 +180,10 @@ public class ServiceItemServiceImpl implements ServiceItemService {
         try {
             StringWriter stringWriter = new StringWriter();
             try (CSVPrinter csvPrinter = new CSVPrinter(stringWriter,
-                    CSVFormat.Builder.create()
+                    CSVFormat.DEFAULT
+                            .builder()
                             .setHeader(NAME_FIELD, PRICE_FIELD, VAT_RATE_FIELD, WARRANTY_DAYS_FIELD, ACTIVE_FIELD)
-                            .build())) {
+                            .get())) {
                 for (ServiceItem serviceItem : serviceItemRepository.findAll()) {
                     csvPrinter.printRecord(
                             serviceItem.getName(),
@@ -194,28 +210,36 @@ public class ServiceItemServiceImpl implements ServiceItemService {
         return result;
     }
 
-    private ServiceItem copyCSVRecordFields(CSVRecord csvRecord, int rowNumber) throws CSVImportException {
+    private ServiceItem copyCSVRecordFields(CSVRecord csvRecord, int rowNumber) throws ValidationException {
         ServiceItem serviceItem = new ServiceItem();
 
         try {
             // Parse name
             String name = csvRecord.get(NAME_FIELD);
-            serviceItemValidator.validateCSVName(name, rowNumber);
+            if (name == null || name.trim().isEmpty()) {
+                throw new ValidationException("Tên dịch vụ không được để trống (dòng " + rowNumber + ")");
+            }
             serviceItem.setName(name.trim());
 
             // Parse price
             BigDecimal price = new BigDecimal(csvRecord.get(PRICE_FIELD));
-            serviceItemValidator.validateCSVPrice(price, rowNumber);
+            if (price.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new ValidationException("Giá dịch vụ phải lớn hơn 0 (dòng " + rowNumber + ")");
+            }
             serviceItem.setPrice(price);
 
             // Parse vatRate
             BigDecimal vatRate = new BigDecimal(csvRecord.get(VAT_RATE_FIELD));
-            serviceItemValidator.validateCSVVatRate(vatRate, rowNumber);
+            if (vatRate.compareTo(BigDecimal.ZERO) < 0) {
+                throw new ValidationException("Thuế VAT không được là số âm (dòng " + rowNumber + ")");
+            }
             serviceItem.setVatRate(vatRate);
 
             // Parse warrantyDays
             int warrantyDays = Integer.parseInt(csvRecord.get(WARRANTY_DAYS_FIELD));
-            serviceItemValidator.validateCSVWarrantyDays(warrantyDays, rowNumber);
+            if (warrantyDays < 0) {
+                throw new ValidationException("Số ngày bảo hành không được là số âm (dòng " + rowNumber + ")");
+            }
             serviceItem.setWarrantyDays(warrantyDays);
 
             // Parse active (default to true if not specified or invalid)
@@ -225,9 +249,98 @@ public class ServiceItemServiceImpl implements ServiceItemService {
 
             return serviceItem;
         } catch (NumberFormatException e) {
-            throw new CSVImportException("Dữ liệu số không hợp lệ", rowNumber);
+            throw new ValidationException("Dữ liệu số không hợp lệ (dòng " + rowNumber + ")");
         } catch (IllegalArgumentException e) {
-            throw new CSVImportException("Cột không tồn tại trong file CSV", rowNumber);
+            throw new ValidationException("Cột không tồn tại trong file CSV (dòng " + rowNumber + ")");
+        }
+    }
+
+    /**
+     * Validates that the file has a .csv extension
+     */
+    private void validateFileExtension(MultipartFile file) throws ValidationException {
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null || originalFilename.trim().isEmpty()) {
+            throw new ValidationException("Tên file không hợp lệ");
+        }
+
+        String fileExtension = originalFilename.toLowerCase();
+        if (!fileExtension.endsWith(".csv")) {
+            throw new ValidationException("Chỉ chấp nhận file có định dạng .csv. File được chọn: " + originalFilename);
+        }
+    }
+
+    /**
+     * Validates the MIME content type of the file
+     */
+    private void validateFileMimeType(MultipartFile file) throws ValidationException {
+        String contentType = file.getContentType();
+        if (contentType == null || !ACCEPTED_CSV_MIME_TYPES.contains(contentType.toLowerCase())) {
+            throw new ValidationException("Loại file không được hỗ trợ. Chỉ chấp nhận file CSV. Loại file hiện tại: " +
+                    (contentType != null ? contentType : "không xác định"));
+        }
+    }
+
+    /**
+     * Validates the file size
+     */
+    private void validateFileSize(MultipartFile file) throws ValidationException {
+        if (file.getSize() > MAX_CSV_FILE_SIZE) {
+            throw new ValidationException("File CSV quá lớn. Kích thước tối đa cho phép: " +
+                    (MAX_CSV_FILE_SIZE / 1_000_000) + "MB");
+        }
+    }
+
+    /**
+     * Validates the CSV file structure and headers using the same format as the
+     * actual import
+     */
+    private void validateCSVStructure(MultipartFile file) throws ValidationException {
+        try (Reader reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8);
+                CSVParser parser = CSVParser.parse(reader, CSVFormat.DEFAULT
+                        .builder()
+                        .setHeader(NAME_FIELD, PRICE_FIELD, VAT_RATE_FIELD, WARRANTY_DAYS_FIELD, ACTIVE_FIELD)
+                        .setSkipHeaderRecord(true)
+                        .get())) {
+
+            // Try to read first data record to ensure file has data after header
+            boolean hasDataRows = parser.iterator().hasNext();
+            if (!hasDataRows) {
+                throw new ValidationException(
+                        "File CSV không có dữ liệu. Vui lòng thêm ít nhất một dòng dữ liệu sau header.");
+            }
+
+            // Try to access each expected field from first record to validate header
+            // structure
+            CSVRecord firstRecord = parser.iterator().next();
+            validateCSVHeaders(firstRecord);
+
+        } catch (IOException e) {
+            throw new ValidationException("Lỗi đọc file CSV: " + e.getMessage());
+        } catch (ValidationException e) {
+            // Re-throw our custom exceptions
+            throw e;
+        } catch (Exception e) {
+            throw new ValidationException("Định dạng file CSV không hợp lệ: " + e.getMessage());
+        }
+    }
+
+    private ServiceItem loadAndValidateServiceItem(@NonNull UUID id) {
+        return serviceItemRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy dịch vụ với ID: " + id));
+    }
+
+    private void validateCSVHeaders(CSVRecord firstRecord) throws ValidationException {
+        try {
+            firstRecord.get(NAME_FIELD);
+            firstRecord.get(PRICE_FIELD);
+            firstRecord.get(VAT_RATE_FIELD);
+            firstRecord.get(WARRANTY_DAYS_FIELD);
+            firstRecord.get(ACTIVE_FIELD);
+        } catch (IllegalArgumentException e) {
+            throw new ValidationException("File CSV thiếu hoặc sai tên cột. " +
+                    "Các cột bắt buộc phải có tên chính xác: " +
+                    String.join(", ", NAME_FIELD, PRICE_FIELD, VAT_RATE_FIELD, WARRANTY_DAYS_FIELD, ACTIVE_FIELD));
         }
     }
 }

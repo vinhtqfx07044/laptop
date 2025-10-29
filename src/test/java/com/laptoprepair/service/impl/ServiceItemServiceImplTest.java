@@ -1,11 +1,9 @@
 package com.laptoprepair.service.impl;
 
 import com.laptoprepair.entity.ServiceItem;
-import com.laptoprepair.exception.CSVImportException;
 import com.laptoprepair.exception.NotFoundException;
 import com.laptoprepair.exception.ValidationException;
 import com.laptoprepair.repository.ServiceItemRepository;
-import com.laptoprepair.validation.ServiceItemValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,7 +26,6 @@ class ServiceItemServiceImplTest {
         @Mock
         private ServiceItemRepository serviceItemRepository;
 
-        private ServiceItemValidator serviceItemValidator;
         private ServiceItemServiceImpl serviceItemService;
 
         private ServiceItem testServiceItem;
@@ -36,11 +33,8 @@ class ServiceItemServiceImplTest {
 
         @BeforeEach
         void setUp() {
-                // Create real validator with mock repository
-                serviceItemValidator = new ServiceItemValidator(serviceItemRepository);
-
-                // Create service with mock repository and real validator
-                serviceItemService = new ServiceItemServiceImpl(serviceItemRepository, serviceItemValidator);
+                // Create service with mock repository
+                serviceItemService = new ServiceItemServiceImpl(serviceItemRepository);
 
                 testServiceItemId = UUID.randomUUID();
                 testServiceItem = new ServiceItem();
@@ -52,6 +46,7 @@ class ServiceItemServiceImplTest {
                 testServiceItem.setActive(true);
         }
 
+        @SuppressWarnings("null")
         @Test
         void create_UTC001_ValidServiceItem_ShouldReturnSavedServiceItem() {
                 // Arrange
@@ -64,7 +59,7 @@ class ServiceItemServiceImplTest {
 
                 // Mock repository to simulate name doesn't exist (allowing creation)
                 when(serviceItemRepository.findByName("Laptop Cleaning")).thenReturn(Optional.empty());
-                when(serviceItemRepository.save(eq(inputServiceItem))).thenReturn(inputServiceItem);
+                when(serviceItemRepository.save(inputServiceItem)).thenReturn(inputServiceItem);
 
                 // Act
                 ServiceItem result = serviceItemService.create(inputServiceItem);
@@ -82,6 +77,7 @@ class ServiceItemServiceImplTest {
                 verify(serviceItemRepository).save(inputServiceItem);
         }
 
+        @SuppressWarnings("null")
         @Test
         void create_UTC002_DuplicateName_ShouldThrowValidationException() {
                 // Arrange
@@ -106,6 +102,7 @@ class ServiceItemServiceImplTest {
                 verify(serviceItemRepository, never()).save(any(ServiceItem.class));
         }
 
+        @SuppressWarnings("null")
         @Test
         void update_UTC001_ValidUpdate_ShouldReturnUpdatedServiceItem() {
                 // Arrange
@@ -125,7 +122,7 @@ class ServiceItemServiceImplTest {
                 incomingServiceItem.setActive(false);
 
                 // Mock repository behaviors for successful update
-                when(serviceItemRepository.findById(eq(testServiceItemId)))
+                when(serviceItemRepository.findById(testServiceItemId))
                                 .thenReturn(Optional.of(existingServiceItem));
                 // Mock uniqueness check to return false (no other item has this name)
                 when(serviceItemRepository.existsByNameAndIdNot("Updated Cleaning Service", testServiceItemId))
@@ -149,13 +146,14 @@ class ServiceItemServiceImplTest {
                 verify(serviceItemRepository).save(any(ServiceItem.class));
         }
 
+        @SuppressWarnings("null")
         @Test
         void update_UTC002_ServiceItemNotFound_ShouldThrowNotFoundException() {
                 // Arrange
                 UUID nonExistentId = UUID.randomUUID();
                 ServiceItem incomingServiceItem = new ServiceItem();
 
-                when(serviceItemRepository.findById(eq(nonExistentId))).thenReturn(Optional.empty());
+                when(serviceItemRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
                 // Act & Assert
                 NotFoundException exception = assertThrows(NotFoundException.class,
@@ -167,6 +165,7 @@ class ServiceItemServiceImplTest {
                 verify(serviceItemRepository).findById(nonExistentId);
         }
 
+        @SuppressWarnings("null")
         @Test
         void update_UTC003_DuplicateNameAnotherItem_ShouldThrowValidationException() {
                 // Arrange
@@ -178,7 +177,7 @@ class ServiceItemServiceImplTest {
                 incomingServiceItem.setName("Name of another existing service");
 
                 // Mock repository behaviors for duplicate name scenario
-                when(serviceItemRepository.findById(eq(testServiceItemId)))
+                when(serviceItemRepository.findById(testServiceItemId))
                                 .thenReturn(Optional.of(existingServiceItem));
                 // Mock uniqueness check to return true (another item has this name)
                 when(serviceItemRepository.existsByNameAndIdNot("Name of another existing service", testServiceItemId))
@@ -196,6 +195,7 @@ class ServiceItemServiceImplTest {
                 verify(serviceItemRepository, never()).save(any(ServiceItem.class));
         }
 
+        @SuppressWarnings("null")
         @Test
         void update_UTC004_UpdateWithSameExistingName_ShouldReturnUpdatedServiceItem() {
                 // Arrange
@@ -211,7 +211,7 @@ class ServiceItemServiceImplTest {
                 incomingServiceItem.setActive(false); // Updated active status
 
                 // Mock repository behaviors for same name update
-                when(serviceItemRepository.findById(eq(testServiceItemId)))
+                when(serviceItemRepository.findById(testServiceItemId))
                                 .thenReturn(Optional.of(existingServiceItem));
                 // Mock uniqueness check to return false (same item name, different ID excluded)
                 when(serviceItemRepository.existsByNameAndIdNot("Original Service Name", testServiceItemId))
@@ -233,18 +233,21 @@ class ServiceItemServiceImplTest {
                 verify(serviceItemRepository).save(any(ServiceItem.class));
         }
 
+        @SuppressWarnings("null")
         @Test
-        void importCSV_UTC001_ValidCSVNewItems_ShouldCompleteSuccessfully() throws Exception {
+        void importCSV_UTC001_ValidCSVNewItems_ShouldCompleteSuccessfully() {
                 // Arrange
-                String csvContent = "Name,Price,VatRate,WarrantyDays,Active\n" +
-                                "New Service A,100000,0.1,7,true\n" +
-                                "New Service B,200000,0.08,30,true";
+                String csvContent = """
+                                Name,Price,VatRate,WarrantyDays,Active
+                                New Service A,100000,0.1,7,true
+                                New Service B,200000,0.08,30,true
+                                """;
                 MockMultipartFile file = new MockMultipartFile("test.csv", "test.csv", "text/csv",
                                 csvContent.getBytes());
 
                 // Mock repository to simulate all items are new (don't exist yet)
-                when(serviceItemRepository.findByName(eq("New Service A"))).thenReturn(Optional.empty());
-                when(serviceItemRepository.findByName(eq("New Service B"))).thenReturn(Optional.empty());
+                when(serviceItemRepository.findByName("New Service A")).thenReturn(Optional.empty());
+                when(serviceItemRepository.findByName("New Service B")).thenReturn(Optional.empty());
                 when(serviceItemRepository.saveAll(anyList())).thenReturn(List.of());
 
                 // Act & Assert
@@ -256,12 +259,15 @@ class ServiceItemServiceImplTest {
                 verify(serviceItemRepository).saveAll(anyList());
         }
 
+        @SuppressWarnings("null")
         @Test
-        void importCSV_UTC002_ValidCSVMixedNewAndUpdate_ShouldCompleteSuccessfully() throws Exception {
+        void importCSV_UTC002_ValidCSVMixedNewAndUpdate_ShouldCompleteSuccessfully() {
                 // Arrange
-                String csvContent = "Name,Price,VatRate,WarrantyDays,Active\n" +
-                                "Existing Service C,150000,0.1,15,false\n" +
-                                "New Service D,300000,0.08,60,true";
+                String csvContent = """
+                                Name,Price,VatRate,WarrantyDays,Active
+                                Existing Service C,150000,0.1,15,false
+                                New Service D,300000,0.08,60,true
+                                """;
                 MockMultipartFile file = new MockMultipartFile("test.csv", "test.csv", "text/csv",
                                 csvContent.getBytes());
 
@@ -270,9 +276,9 @@ class ServiceItemServiceImplTest {
                 existingServiceC.setName("Existing Service C");
 
                 // Mock repository to simulate mixed scenario: one existing, one new
-                when(serviceItemRepository.findByName(eq("Existing Service C")))
+                when(serviceItemRepository.findByName("Existing Service C"))
                                 .thenReturn(Optional.of(existingServiceC));
-                when(serviceItemRepository.findByName(eq("New Service D"))).thenReturn(Optional.empty());
+                when(serviceItemRepository.findByName("New Service D")).thenReturn(Optional.empty());
                 when(serviceItemRepository.saveAll(anyList())).thenReturn(List.of());
 
                 // Act & Assert
@@ -285,20 +291,20 @@ class ServiceItemServiceImplTest {
         }
 
         @Test
-        void importCSV_UTC003_EmptyCSVFile_ShouldThrowCSVImportException() throws Exception {
+        void importCSV_UTC003_EmptyCSVFile_ShouldThrowValidationException() {
                 // Arrange
                 MockMultipartFile file = new MockMultipartFile("test.csv", "test.csv", "text/csv", "".getBytes());
 
                 // Act & Assert
                 // Real validator will detect empty file and throw exception
-                CSVImportException exception = assertThrows(CSVImportException.class,
+                ValidationException exception = assertThrows(ValidationException.class,
                                 () -> serviceItemService.importCSV(file));
 
                 assertEquals("File CSV trống hoặc không hợp lệ", exception.getMessage());
         }
 
         @Test
-        void importCSV_UTC004_InvalidPriceInCSV_ShouldThrowCSVImportException() throws Exception {
+        void importCSV_UTC004_InvalidPriceInCSV_ShouldThrowValidationException() {
                 // Arrange
                 String csvContent = "Name,Price,VatRate,WarrantyDays,Active\n" +
                                 "Service 1,invalid_price,0.1,7,true";
@@ -306,15 +312,15 @@ class ServiceItemServiceImplTest {
                                 csvContent.getBytes());
 
                 // Act & Assert
-                // NumberFormatException will be caught and converted to CSVImportException
-                CSVImportException exception = assertThrows(CSVImportException.class,
+                // NumberFormatException will be caught and converted to ValidationException
+                ValidationException exception = assertThrows(ValidationException.class,
                                 () -> serviceItemService.importCSV(file));
 
-                assertEquals("Dữ liệu số không hợp lệ", exception.getMessage());
+                assertEquals("Dữ liệu số không hợp lệ (dòng 2)", exception.getMessage());
         }
 
         @Test
-        void importCSV_UTC005_PriceIsZero_ShouldThrowCSVImportException() throws Exception {
+        void importCSV_UTC005_PriceIsZero_ShouldThrowValidationException() {
                 // Arrange
                 String csvContent = "Name,Price,VatRate,WarrantyDays,Active\n" +
                                 "Service 1,0,0.1,7,true";
@@ -323,9 +329,9 @@ class ServiceItemServiceImplTest {
 
                 // Act & Assert
                 // Real validator will detect price = 0 and throw exception
-                CSVImportException exception = assertThrows(CSVImportException.class,
+                ValidationException exception = assertThrows(ValidationException.class,
                                 () -> serviceItemService.importCSV(file));
 
-                assertEquals("Giá dịch vụ phải lớn hơn 0", exception.getMessage());
+                assertEquals("Giá dịch vụ phải lớn hơn 0 (dòng 2)", exception.getMessage());
         }
 }

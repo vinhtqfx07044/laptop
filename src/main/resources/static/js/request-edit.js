@@ -10,13 +10,11 @@ function escapeHtml(text) {
 
 
 // Calculates the line total with the same logic as the backend CurrencyUtils.
-function calculateLineTotal(price, discount, quantity, vatRate) {
+function calculateLineTotal(price, quantity, discount = 0, vatRate = 0) {
     if (!price) return 0;
 
-    const safeDiscount = discount || 0;
-    const safeVatRate = vatRate || 0;
-    const net = (price - safeDiscount) * quantity;
-    const withVat = net + (net * safeVatRate);
+    const net = (price - discount) * quantity;
+    const withVat = net + (net * vatRate);
 
     // Rounds to match backend (HALF_UP, 0 decimal places).
     return Math.round(withVat);
@@ -45,8 +43,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Initializes items from server-provided data if available.
-    if (window.serverItems?.length) {
-        items = window.serverItems;
+    if (globalThis.serverItems?.length) {
+        items = globalThis.serverItems;
         renderTable();
     }
 
@@ -65,8 +63,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Adds event listeners for image validation and updating image slots.
     newImages?.addEventListener('change', validateMaxImageSlots);
-    document.querySelectorAll('input[name="toDelete"]').forEach(cb =>
-        cb.addEventListener('change', updateImageSlots));
+    for (const cb of document.querySelectorAll('input[name="toDelete"]')) {
+        cb.addEventListener('change', updateImageSlots);
+    }
 });
 
 function searchAndUpdateDatalist(query) {
@@ -88,7 +87,7 @@ function updateDatalist(services) {
     datalist.innerHTML = '';
 
     // Create options properly using DOM methods to avoid HTML escaping issues
-    services.forEach(service => {
+    for (const service of services) {
         const option = document.createElement('option');
         const price = formatVietnameseCurrency(service.price);
         const vat = (service.vatRate * 100).toFixed(1) + '%';
@@ -97,15 +96,15 @@ function updateDatalist(services) {
         // Set properties directly to avoid HTML attribute escaping issues
         option.value = service.name;
         option.label = `${service.name} - ${price} - VAT ${vat} - BH ${warranty}`;
-        option.setAttribute('data-service', JSON.stringify(service));
+        option.dataset.service = JSON.stringify(service);
 
         datalist.appendChild(option);
-    });
+    }
 }
 
 function addItem() {
     // Prevents adding items if the request is locked.
-    if (window.isRequestLocked) return alert('Không thể thêm hạng mục khi phiếu đã được khóa');
+    if (globalThis.isRequestLocked) return alert('Không thể thêm hạng mục khi phiếu đã được khóa');
 
     const serviceInput = document.getElementById('serviceInput');
     const datalist = document.getElementById('serviceList');
@@ -115,7 +114,7 @@ function addItem() {
     // Alerts if no service is selected from the list.
     if (!selectedOption) return alert('Vui lòng chọn dịch vụ từ danh sách');
 
-    const selectedService = JSON.parse(selectedOption.getAttribute('data-service'));
+    const selectedService = JSON.parse(selectedOption.dataset.service);
     // Checks if the selected service already exists in the items list.
     const existingItem = items.find(item => item.serviceItemId === selectedService.id);
 
@@ -129,8 +128,8 @@ function addItem() {
         price: selectedService.price,
         vatRate: selectedService.vatRate,
         warrantyDays: selectedService.warrantyDays,
-        quantity: parseInt(document.getElementById('newQty').value) || 1,
-        discount: parseFloat(document.getElementById('newDisc').value) || 0
+        quantity: Number.parseInt(document.getElementById('newQty').value) || 1,
+        discount: Number.parseFloat(document.getElementById('newDisc').value) || 0
     });
 
     renderTable();
@@ -141,7 +140,7 @@ function addItem() {
 
 function removeItem(i) {
     // Prevents removing items if the request is locked.
-    if (window.isRequestLocked) return alert('Không thể xóa hạng mục khi phiếu đã được khóa');
+    if (globalThis.isRequestLocked) return alert('Không thể xóa hạng mục khi phiếu đã được khóa');
     // Confirms deletion with the user.
     if (!confirm('Bạn có chắc chắn muốn xóa dịch vụ này?')) return;
     items.splice(i, 1);
@@ -155,11 +154,11 @@ function renderTable() {
     let total = 0;
     // Generates table rows for each item in the 'items' array.
     tbody.innerHTML = items.map((it, i) => {
-        const line = calculateLineTotal(it.price, it.discount, it.quantity, it.vatRate);
+        const line = calculateLineTotal(it.price, it.quantity, it.discount, it.vatRate);
         total += line;
 
         // Determines if the delete button should be shown or a lock icon based on request lock status.
-        const deleteBtn = window.isRequestLocked ?
+        const deleteBtn = globalThis.isRequestLocked ?
             `<span class="text-muted"><i class="fas fa-lock"></i></span>` :
             `<button type="button" class="btn btn-sm btn-danger" onclick="removeItem(${i})"><i class="fas fa-trash"></i></button>`;
 
@@ -179,7 +178,7 @@ function renderTable() {
 
                 const stringValue = String(value);
                 // Use proper HTML attribute escaping for double quotes
-                const escapedValue = stringValue.replace(/"/g, '&quot;');
+                const escapedValue = stringValue.replaceAll('"', '&quot;');
                 return `<input type="hidden" name="items[${i}].${field}" value="${escapedValue}">`;
             })
             .join('');
@@ -214,7 +213,7 @@ function removeExistingItem(button) {
     const hiddenInput = document.createElement('input');
     hiddenInput.type = 'hidden';
     hiddenInput.name = 'deletedItems[]';
-    hiddenInput.value = row.getAttribute('data-index');
+    hiddenInput.value = row.dataset.index;
     document.querySelector('#requestForm').appendChild(hiddenInput);
 }
 
@@ -223,7 +222,9 @@ function submitForm() {
     const note = document.getElementById('confirmNote').value;
 
     // Removes any existing hidden note inputs to prevent duplicates.
-    form.querySelectorAll('input[name="note"]').forEach(input => input.remove());
+    for (const input of form.querySelectorAll('input[name="note"]')) {
+        input.remove();
+    }
 
     // Creates a new hidden input for the confirmation note and appends it to the form.
     const hiddenNote = document.createElement('input');

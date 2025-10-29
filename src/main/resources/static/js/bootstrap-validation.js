@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('form.needs-validation').forEach(form => {
+    for (const form of document.querySelectorAll('form.needs-validation')) {
         const inputs = form.querySelectorAll('input, textarea, select');
         // Tracks inputs that have been interacted with by the user.
         const interactedInputs = new Set();
@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         // Attaches event listeners to each input for real-time validation.
-        inputs.forEach(input => {
+        for (const input of inputs) {
             input.addEventListener('focus', () => interactedInputs.add(input));
             // Handles validation on blur and input events if the input has been interacted with.
             const handleValidationEvent = () => {
@@ -23,15 +23,15 @@ document.addEventListener('DOMContentLoaded', function () {
             };
             input.addEventListener('blur', handleValidationEvent);
             input.addEventListener('input', handleValidationEvent);
-        });
+        }
 
         // Handles form submission.
         form.addEventListener('submit', function (event) {
             // Validates all inputs on submit, marking them as interacted.
-            inputs.forEach(input => {
+            for (const input of inputs) {
                 interactedInputs.add(input);
                 validateInput(input);
-            });
+            }
 
             // Prevents form submission if validation fails.
             if (!form.checkValidity()) {
@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Adds 'was-validated' class to show validation feedback.
             form.classList.add('was-validated');
         });
-    });
+    }
 });
 
 /**
@@ -60,8 +60,9 @@ function validateAndOpenModal(formId = 'requestForm', modalId = 'confirmModal') 
     if (!form) return; // Exits if the form is not found.
 
     // Adds 'was-validated' class to all required inputs to show immediate feedback.
-    form.querySelectorAll('input[required], textarea[required], select[required]')
-        .forEach(input => input.classList.add('was-validated'));
+    for (const input of form.querySelectorAll('input[required], textarea[required], select[required]')) {
+        input.classList.add('was-validated');
+    }
 
     // Checks form validity.
     if (form.checkValidity()) {
@@ -79,4 +80,4 @@ function validateAndOpenModal(formId = 'requestForm', modalId = 'confirmModal') 
 }
 
 // Makes the function globally accessible.
-window.validateAndOpenModal = validateAndOpenModal;
+globalThis.validateAndOpenModal = validateAndOpenModal;

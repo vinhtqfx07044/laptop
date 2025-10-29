@@ -13,9 +13,6 @@ target/
 # Ignore logs
 logs/
 
-# Ignore uploads directory (will be created by container)
-uploads/
-
 # Ignore temporary files
 *.tmp
 *.log

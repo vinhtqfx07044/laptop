@@ -1,6 +1,6 @@
 package com.laptoprepair.interceptor;
 
-import com.laptoprepair.exception.RateLimitExceededException;
+import com.laptoprepair.exception.SystemException;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,8 +11,6 @@ import org.springframework.lang.NonNull;
 
 /**
  * Interceptor for applying rate limiting to incoming requests.
- * Prevents abuse by limiting the number of requests from a single source within
- * a time window.
  */
 @Component
 @RequiredArgsConstructor
@@ -24,7 +22,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
             @NonNull Object handler) throws Exception {
         if (!rateLimiter.isAllowed(request, "public")) {
-            throw new RateLimitExceededException("Quá nhiều yêu cầu. Vui lòng đợi một chút trước khi thử lại.");
+            throw new SystemException("Quá nhiều yêu cầu. Vui lòng đợi một chút trước khi thử lại.");
         }
         return true;
     }

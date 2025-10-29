@@ -27,7 +27,7 @@
                                 <select name="status" id="status" class="form-select">
                                     <option value="">Tất cả</option>
                                     <!-- Iterates over RequestStatus enum values to populate options -->
-                                    <option th:each="s : ${T(com.laptoprepair.enums.RequestStatus).values()}"
+                                    <option th:each="s : ${T(com.laptoprepair.entity.Request.RequestStatus).values()}"
                                         th:value="${s.name()}" th:text="${s.getValue()}"
                                         th:selected="${status != null and status.name() == s.name()}"></option>
                                 </select>
@@ -131,9 +131,10 @@
                                         </td>
                                         <!-- Status Column -->
                                         <td>
-                                            <span th:if="${request.status != null}"
-                                                th:class="${request.status.badgeClass}"
-                                                th:text="${request.status.value}"></span>
+                                            <th:block th:if="${request.status != null}">
+                                                <span
+                                                    th:replace="~{fragments/status-utils :: status-badge(${request.status})}"></span>
+                                            </th:block>
                                             <span th:unless="${request.status != null}" class="badge bg-secondary">Không
                                                 xác định</span>
                                         </td>
@@ -210,6 +211,7 @@
     </main>
 
     <div th:insert="~{fragments/footer :: footer}"></div>
+    <div th:replace="~{fragments/chat :: chatWidget}"></div>
 </body>
 
 </html>

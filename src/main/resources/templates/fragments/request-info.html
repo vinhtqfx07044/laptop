@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="vi" xml:lang="vi">
 
+<head>
+    <title>Request Information</title>
+</head>
+
 <th:block th:fragment="requestInfoCards(request, isEditMode, isStaff)">
     <!--
         Overview Card: Displays general information about the repair request.
@@ -41,13 +45,13 @@
                     <!-- Conditional rendering for status -->
                     <div th:if="${isEditMode}" class="mb-3">
                         <select id="status" th:field="*{status}" class="form-select">
-                            <option th:each="s: ${T(com.laptoprepair.enums.RequestStatus).values()}"
+                            <option th:each="s: ${T(com.laptoprepair.entity.Request.RequestStatus).values()}"
                                 th:value="${s.name()}" th:text="${s.value}"></option>
                         </select>
                     </div>
                     <!-- If `isEditMode` is false, display the status as a badge -->
                     <p th:unless="${isEditMode}" class="form-control-plaintext">
-                        <span th:class="${request.status.badgeClass}" th:text="${request.status.value}"></span>
+                        <span th:replace="~{fragments/status-utils :: status-badge(${request.status})}"></span>
                     </p>
                 </div>
             </div>

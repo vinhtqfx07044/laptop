@@ -1,29 +1,25 @@
 package com.laptoprepair.service.impl;
 
+import java.util.HashSet;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
 import com.laptoprepair.entity.Request;
 import com.laptoprepair.entity.RequestHistory;
 import com.laptoprepair.entity.RequestItem;
 import com.laptoprepair.service.HistoryService;
-import com.laptoprepair.config.VietnamTimeProvider;
+import com.laptoprepair.utils.TimeUtils;
 
-import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 
-import java.util.HashSet;
-import java.util.List;
-import lombok.extern.slf4j.Slf4j;
-
-/**
- * Implementation of the {@link HistoryService} interface.
- * Provides methods for adding request history records and computing changes
- * between request states.
- */
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class HistoryServiceImpl implements HistoryService {
 
-    private final VietnamTimeProvider vietnamTimeProvider;
+    private static final Logger log = LoggerFactory.getLogger(HistoryServiceImpl.class);
 
     /**
      * Adds a new history record to a request.
@@ -39,7 +35,7 @@ public class HistoryServiceImpl implements HistoryService {
         String finalChanges = (changes != null && changes.length() > 500) ? changes.substring(0, 500) + "..." : changes;
 
         history.setChanges(finalChanges);
-        history.setCreatedAt(vietnamTimeProvider.now());
+        history.setCreatedAt(TimeUtils.nowInVietnam());
         history.setCreatedBy(user);
         history.setRequest(request);
 

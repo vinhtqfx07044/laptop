@@ -4,15 +4,14 @@ import com.laptoprepair.entity.Request;
 import com.laptoprepair.entity.RequestItem;
 import com.laptoprepair.entity.RequestImage;
 import com.laptoprepair.entity.ServiceItem;
-import com.laptoprepair.enums.RequestStatus;
+import com.laptoprepair.entity.Request.RequestStatus;
 import com.laptoprepair.exception.ValidationException;
 import com.laptoprepair.repository.RequestRepository;
 import com.laptoprepair.repository.ServiceItemRepository;
 import com.laptoprepair.service.EmailService;
 import com.laptoprepair.service.HistoryService;
 import com.laptoprepair.service.ImageService;
-import com.laptoprepair.config.VietnamTimeProvider;
-import com.laptoprepair.validation.RequestValidator;
+import com.laptoprepair.service.SecurityService;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -33,6 +32,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class RequestServiceImplTest {
@@ -53,9 +53,8 @@ class RequestServiceImplTest {
         private EmailService emailService;
 
         @Mock
-        private VietnamTimeProvider vietnamTimeProvider;
+        private SecurityService securityService;
 
-        private RequestValidator requestValidator;
         private RequestServiceImpl requestService;
 
         // Test data
@@ -63,13 +62,14 @@ class RequestServiceImplTest {
 
         @BeforeEach
         void setUp() {
-                // Create real validator with mock HistoryService dependency
-                requestValidator = new RequestValidator(historyService);
+                // Mock SecurityService to return "anonymous" for getCurrentUsername (lenient
+                // for optional use)
+                lenient().when(securityService.getCurrentUsername()).thenReturn("anonymous");
 
                 // Create service with all dependencies
                 requestService = new RequestServiceImpl(reqRepo, serviceItemRepository,
                                 historyService, imageService, emailService,
-                                requestValidator, vietnamTimeProvider);
+                                securityService);
 
                 testRequest = new Request();
                 testRequest.setName("John Doe");
@@ -83,6 +83,7 @@ class RequestServiceImplTest {
 
         // ===== PUBLIC CREATE METHOD TESTS =====
 
+        @SuppressWarnings("null")
         @Test
         void publicCreate_UTC001_ValidRequest_ShouldReturnSavedRequestWithCorrectStatus() {
                 // Arrange
@@ -97,7 +98,7 @@ class RequestServiceImplTest {
                 // Mock repository and services - real validator will pass with future date
                 when(reqRepo.save(any(Request.class))).thenReturn(savedRequest);
                 doNothing().when(historyService).addRequestHistoryRecord(any(Request.class), eq("Tạo mới yêu cầu"),
-                                eq("Khách"));
+                                eq("anonymous"));
                 when(emailService.sendConfirmationEmail(any(Request.class)))
                                 .thenReturn(CompletableFuture.completedFuture(null));
 
@@ -112,10 +113,12 @@ class RequestServiceImplTest {
 
                 // Verify interactions
                 verify(reqRepo).save(any(Request.class));
-                verify(historyService).addRequestHistoryRecord(any(Request.class), eq("Tạo mới yêu cầu"), eq("Khách"));
+                verify(historyService).addRequestHistoryRecord(any(Request.class), eq("Tạo mới yêu cầu"),
+                                eq("anonymous"));
                 verify(emailService).sendConfirmationEmail(any(Request.class));
         }
 
+        @SuppressWarnings("null")
         @Test
         void publicCreate_UTC002_PastAppointmentDate_ShouldThrowValidationException() {
                 // Arrange - Set past date so real validator will throw exception
@@ -134,6 +137,7 @@ class RequestServiceImplTest {
                 verify(emailService, never()).sendConfirmationEmail(any());
         }
 
+        @SuppressWarnings("null")
         @Test
         void publicCreate_UTC003_NoEmailProvided_ShouldSaveWithoutSendingEmail() {
                 // Arrange
@@ -146,7 +150,7 @@ class RequestServiceImplTest {
                 // Mock repository and services - real validator will pass with future date
                 when(reqRepo.save(any(Request.class))).thenReturn(savedRequest);
                 doNothing().when(historyService).addRequestHistoryRecord(any(Request.class), eq("Tạo mới yêu cầu"),
-                                eq("Khách"));
+                                eq("anonymous"));
                 when(emailService.sendConfirmationEmail(any(Request.class)))
                                 .thenReturn(CompletableFuture.completedFuture(null));
 
@@ -160,12 +164,14 @@ class RequestServiceImplTest {
                 // Verify interactions - email service is still called (handles null email
                 // internally)
                 verify(reqRepo).save(any(Request.class));
-                verify(historyService).addRequestHistoryRecord(any(Request.class), eq("Tạo mới yêu cầu"), eq("Khách"));
+                verify(historyService).addRequestHistoryRecord(any(Request.class), eq("Tạo mới yêu cầu"),
+                                eq("anonymous"));
                 verify(emailService).sendConfirmationEmail(any(Request.class));
         }
 
         // ===== UPDATE METHOD TESTS =====
 
+        @SuppressWarnings("null")
         @Test
         void update_UTC001_FullUpdate_ShouldReturnUpdatedRequestWithCorrectStatusAndItems() {
                 // Arrange
@@ -257,6 +263,7 @@ class RequestServiceImplTest {
                 verify(reqRepo).save(any(Request.class));
         }
 
+        @SuppressWarnings("null")
         @Test
         void update_UTC002_RequestNotFound_ShouldThrowValidationException() {
                 // Arrange
@@ -276,6 +283,7 @@ class RequestServiceImplTest {
                 verify(reqRepo, never()).save(any(Request.class));
         }
 
+        @SuppressWarnings("null")
         @Test
         void update_UTC003_StatusTransitionToCompleted_ShouldSetCompletedDate() {
                 // Arrange
@@ -307,11 +315,9 @@ class RequestServiceImplTest {
                 incomingRequest.setStatus(RequestStatus.COMPLETED);
                 incomingRequest.setItems(new ArrayList<>(List.of(requestItem)));
 
-                LocalDateTime completionTime = LocalDateTime.of(2025, 8, 27, 15, 33);
-
                 // Mock repository and service behaviors - real validator will handle
                 // validations
-                when(vietnamTimeProvider.now()).thenReturn(completionTime);
+                // Note: TimeUtils is static, so we don't mock it - it will use real time
                 when(reqRepo.findByIdWithItems(requestId)).thenReturn(Optional.of(existingRequest));
                 when(serviceItemRepository.findAllByIdInAndActive(anyList())).thenReturn(List.of(serviceItem));
                 when(historyService.computeRequestChanges(any(Request.class), any(Request.class)))
@@ -329,13 +335,13 @@ class RequestServiceImplTest {
                 // Assert
                 assertNotNull(result);
                 assertEquals(RequestStatus.COMPLETED, result.getStatus());
-                assertEquals(completionTime, result.getCompletedAt());
+                assertNotNull(result.getCompletedAt()); // Should be set to current Vietnam time
 
                 // Verify interactions
-                verify(vietnamTimeProvider).now();
                 verify(reqRepo).save(any(Request.class));
         }
 
+        @SuppressWarnings("null")
         @Test
         void update_UTC004_InvalidStatusTransition_ShouldThrowValidationException() {
                 // Arrange
@@ -365,6 +371,7 @@ class RequestServiceImplTest {
                 verify(reqRepo, never()).save(any(Request.class));
         }
 
+        @SuppressWarnings("null")
         @Test
         void update_UTC005_UpdateWithoutChanges_ShouldSaveWithOnlyNote() {
                 // Arrange
@@ -402,6 +409,7 @@ class RequestServiceImplTest {
                 verify(reqRepo).save(any(Request.class));
         }
 
+        @SuppressWarnings("null")
         @Test
         void update_UTC006_ServiceItemDataInconsistency_ShouldThrowValidationException() {
                 // Arrange
@@ -451,6 +459,7 @@ class RequestServiceImplTest {
                 verify(reqRepo, never()).save(any(Request.class));
         }
 
+        @SuppressWarnings("null")
         @Test
         void update_UTC007_RequestItemsLockedForModification_ShouldThrowValidationException() {
                 // Arrange

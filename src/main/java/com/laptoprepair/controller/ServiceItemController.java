@@ -1,7 +1,6 @@
 package com.laptoprepair.controller;
 
 import com.laptoprepair.entity.ServiceItem;
-import com.laptoprepair.exception.CSVImportException;
 import com.laptoprepair.exception.ValidationException;
 import com.laptoprepair.exception.NotFoundException;
 import com.laptoprepair.service.ServiceItemService;
@@ -36,6 +35,9 @@ import java.util.UUID;
 public class ServiceItemController {
 
     private static final int DEFAULT_PAGE_SIZE = 10;
+    private static final String SUCCESS_MESSAGE_ATTRIBUTE = "successMessage";
+    private static final String ERROR_MESSAGE_ATTRIBUTE = "errorMessage";
+    private static final String SERVICE_ITEMS_REDIRECT = "redirect:/staff/service-items";
 
     private final ServiceItemService serviceItemService;
     private final ValidationErrorUtil validationErrorUtil;
@@ -57,7 +59,7 @@ public class ServiceItemController {
         model.addAttribute("activeOnly", activeOnly);
         model.addAttribute("search", search);
         model.addAttribute("newServiceItem", new ServiceItem());
-        return "staff/service-items";
+        return "staff/service-list";
     }
 
     @GetMapping("/export")
@@ -73,13 +75,12 @@ public class ServiceItemController {
             RedirectAttributes redirectAttributes,
             Model model) {
 
-        // FIX: Local error handling thay vì GlobalExceptionHandler
         try {
             serviceItemService.importCSV(file);
-            redirectAttributes.addFlashAttribute("successMessage", "Import CSV thành công!");
-            return "redirect:/staff/service-items";
-        } catch (CSVImportException ex) {
-            model.addAttribute("errorMessage", ex.getMessage());
+            redirectAttributes.addFlashAttribute(SUCCESS_MESSAGE_ATTRIBUTE, "Import CSV thành công!");
+            return SERVICE_ITEMS_REDIRECT;
+        } catch (ValidationException ex) {
+            model.addAttribute(ERROR_MESSAGE_ATTRIBUTE, ex.getMessage());
             return list(0, null, null, null, model);
         }
     }
@@ -90,21 +91,17 @@ public class ServiceItemController {
             Model model,
             RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
-            // Add centralized error messages for header display
             model.addAttribute("errorMessages", validationErrorUtil.extractErrorMessages(bindingResult));
-
-            // Add field-specific error status for enhanced styling
             model.addAttribute("fieldHasErrors", validationErrorUtil.getFieldErrorStatus(bindingResult));
-
             return list(0, null, null, null, model);
         }
 
         try {
             serviceItemService.create(serviceItem);
-            redirectAttributes.addFlashAttribute("successMessage", "Dịch vụ đã được tạo thành công!");
-            return "redirect:/staff/service-items";
+            redirectAttributes.addFlashAttribute(SUCCESS_MESSAGE_ATTRIBUTE, "Dịch vụ đã được tạo thành công!");
+            return SERVICE_ITEMS_REDIRECT;
         } catch (ValidationException ex) {
-            model.addAttribute("errorMessage", ex.getMessage());
+            model.addAttribute(ERROR_MESSAGE_ATTRIBUTE, ex.getMessage());
             return list(0, null, null, null, model);
         }
     }
@@ -116,21 +113,17 @@ public class ServiceItemController {
             Model model,
             RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
-            // Add centralized error messages for header display
             model.addAttribute("errorMessages", validationErrorUtil.extractErrorMessages(bindingResult));
-
-            // Add field-specific error status for enhanced styling
             model.addAttribute("fieldHasErrors", validationErrorUtil.getFieldErrorStatus(bindingResult));
-
             return list(0, null, null, null, model);
         }
 
         try {
             serviceItemService.update(id, serviceItem);
-            redirectAttributes.addFlashAttribute("successMessage", "Dịch vụ đã được cập nhật thành công!");
-            return "redirect:/staff/service-items";
+            redirectAttributes.addFlashAttribute(SUCCESS_MESSAGE_ATTRIBUTE, "Dịch vụ đã được cập nhật thành công!");
+            return SERVICE_ITEMS_REDIRECT;
         } catch (ValidationException | NotFoundException ex) {
-            model.addAttribute("errorMessage", ex.getMessage());
+            model.addAttribute(ERROR_MESSAGE_ATTRIBUTE, ex.getMessage());
             return list(0, null, null, null, model);
         }
     }
@@ -144,7 +137,6 @@ public class ServiceItemController {
         if (size == null) {
             size = DEFAULT_PAGE_SIZE;
         }
-        // Only return active items for search
         return serviceItemService.list(query, true, PageRequest.of(page, size));
     }
 }

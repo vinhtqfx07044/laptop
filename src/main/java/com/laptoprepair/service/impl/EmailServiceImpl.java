@@ -12,42 +12,36 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * SendGrid-based implementation of the {@link EmailService} interface for
- * production.
- * Handles sending various email notifications related to repair requests using
- * SendGrid.
- */
 @Service
-@Profile("prod")
 @RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService {
 
     private static final Logger log = LoggerFactory.getLogger(EmailServiceImpl.class);
 
-    @Value("${app.public-request-base-url}")
-    private String publicRequestBaseUrl;
-
-    @Value("${app.email.from}")
-    private String fromEmail;
-
-    @Value("${app.email.cc}")
-    private String ccEmail;
-
-    @Value("${app.shop.name}")
-    private String shopName;
-
-    @Value("${sendgrid.api.key}")
+    @Value("${laptoprepair.notification.email.sendgrid.api-key}")
     private String sendGridApiKey;
 
+    @Value("${laptoprepair.business.shop.name}")
+    private String shopName;
+
+    @Value("${laptoprepair.business.shop.public-request-base-url}")
+    private String publicRequestBaseUrl;
+
+    @Value("${laptoprepair.notification.email.from}")
+    private String emailFrom;
+
+    @Value("${laptoprepair.notification.email.cc}")
+    private String emailCc;
+
     private static final String THANK_YOU_MESSAGE = "Cảm ơn bạn đã sử dụng dịch vụ!";
+    private static final String REQUEST_ID_LABEL = "Mã ID: ";
+    private static final String TRACKING_LINK_LABEL = "Link tra cứu: ";
     private static final String CONFIRMATION_SUBJECT = "Xác nhận yêu cầu sửa chữa tại %s";
     private static final String UPDATE_SUBJECT = "Cập nhật về yêu cầu sửa chữa của bạn tại %s";
     private static final String RECOVER_SUBJECT = "Khôi phục mã tra cứu tại %s";
@@ -65,8 +59,8 @@ public class EmailServiceImpl implements EmailService {
             return CompletableFuture.completedFuture(null);
         }
         StringBuilder body = new StringBuilder("Yêu cầu của bạn đã được tiếp nhận.\n\n");
-        body.append("Mã ID: " + request.getId() + "\n");
-        body.append("Link tra cứu: " + publicRequestBaseUrl + request.getId() + "\n");
+        body.append(REQUEST_ID_LABEL + request.getId() + "\n");
+        body.append(TRACKING_LINK_LABEL + publicRequestBaseUrl + request.getId() + "\n");
         body.append("\n").append(THANK_YOU_MESSAGE);
         String subject = String.format(CONFIRMATION_SUBJECT, shopName);
         return sendEmailAsync(request.getEmail(), subject, body.toString());
@@ -86,8 +80,8 @@ public class EmailServiceImpl implements EmailService {
             return CompletableFuture.completedFuture(null);
         }
         StringBuilder body = new StringBuilder("Yêu cầu sửa chữa của bạn đã được cập nhật:\n\n");
-        body.append("Mã ID: " + request.getId() + "\n");
-        body.append("Link tra cứu: ").append(publicRequestBaseUrl).append(request.getId()).append("\n");
+        body.append(REQUEST_ID_LABEL + request.getId() + "\n");
+        body.append(TRACKING_LINK_LABEL).append(publicRequestBaseUrl).append(request.getId()).append("\n");
         body.append(changes + "\n");
         body.append("\n").append(THANK_YOU_MESSAGE);
         String subject = String.format(UPDATE_SUBJECT, shopName);
@@ -106,8 +100,8 @@ public class EmailServiceImpl implements EmailService {
     public CompletableFuture<Void> sendRecoverEmail(String email, List<Request> requests) {
         StringBuilder body = new StringBuilder("Danh sách yêu cầu của bạn:\n\n");
         for (Request request : requests) {
-            body.append("Mã ID: ").append(request.getId()).append("\n");
-            body.append("Link tra cứu: ").append(publicRequestBaseUrl).append(request.getId()).append("\n");
+            body.append(REQUEST_ID_LABEL).append(request.getId()).append("\n");
+            body.append(TRACKING_LINK_LABEL).append(publicRequestBaseUrl).append(request.getId()).append("\n");
             body.append("Ngày tạo: ").append(request.getCreatedAt().toLocalDate()).append("\n");
             body.append("Tình trạng: ").append(request.getStatus()).append("\n\n");
         }
@@ -125,13 +119,13 @@ public class EmailServiceImpl implements EmailService {
             try {
                 log.debug("Sending email to: {} with subject: {}", toEmail, subject);
 
-                Email from = new Email(fromEmail);
+                Email from = new Email(emailFrom);
                 Email to = new Email(toEmail);
                 Content content = new Content("text/plain", body);
                 Mail mail = new Mail(from, subject, to, content);
 
-                if (ccEmail != null && !ccEmail.trim().isEmpty()) {
-                    Email cc = new Email(ccEmail);
+                if (emailCc != null && !emailCc.trim().isEmpty()) {
+                    Email cc = new Email(emailCc);
                     mail.personalization.get(0).addCc(cc);
                 }
 

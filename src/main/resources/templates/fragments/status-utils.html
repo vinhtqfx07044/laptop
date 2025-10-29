@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi" xml:lang="vi">
+
+<head>
+    <title>Status Utilities</title>
+</head>
+
+<body>
+    <th:block th:fragment="status-badge(status)">
+        <span th:if="${status != null}" th:class="${status.name() == 'SCHEDULED' ? 'badge bg-info' :
+                      status.name() == 'QUOTED' ? 'badge bg-warning' :
+                      status.name() == 'APPROVE_QUOTED' ? 'badge bg-warning' :
+                      status.name() == 'IN_PROGRESS' ? 'badge bg-warning' :
+                      status.name() == 'COMPLETED' ? 'badge bg-success' :
+                      status.name() == 'UNDER_WARRANTY' ? 'badge bg-primary' :
+                      status.name() == 'CANCELLED' ? 'badge bg-danger' : 'badge bg-secondary'}"
+            th:text="${status.value}"></span>
+    </th:block>
+</body>
+
+</html>
