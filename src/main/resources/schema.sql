@@ -1,5 +1,5 @@
 -- =================================================================================================
--- COMPLETE DATABASE MIGRATION SCRIPT FOR LAPTOP REPAIR APPLICATION
+-- DATABASE MIGRATION SCRIPT FOR LAPTOP REPAIR APPLICATION
 -- =================================================================================================
 
 -- -------------------------------------------------------------------------------------------------
@@ -16,16 +16,7 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS unaccent;
 
 -- -------------------------------------------------------------------------------------------------
--- STEP 2: CREATE IMMUTABLE UNACCENT WRAPPER FUNCTION
--- -------------------------------------------------------------------------------------------------
--- The default unaccent() function is STABLE, not IMMUTABLE, so we can't use it directly in indexes.
--- This wrapper function is marked IMMUTABLE so it can be used in functional indexes.
-CREATE OR REPLACE FUNCTION immutable_unaccent(text) RETURNS text AS $$
-    SELECT unaccent('unaccent', $1);
-$$ LANGUAGE SQL IMMUTABLE PARALLEL SAFE STRICT;
-
--- -------------------------------------------------------------------------------------------------
--- STEP 3: CREATE CORE APPLICATION TABLES
+-- STEP 2: CREATE CORE APPLICATION TABLES
 -- -------------------------------------------------------------------------------------------------
 
 -- Service Item table
@@ -105,7 +96,7 @@ CREATE TABLE IF NOT EXISTS request_images (
 );
 
 -- -------------------------------------------------------------------------------------------------
--- STEP 4: CREATE SPRING AI EXTENSION TABLES
+-- STEP 3: CREATE SPRING AI EXTENSION TABLES
 -- -------------------------------------------------------------------------------------------------
 
 -- Spring AI Chat Memory table for conversation history
@@ -147,7 +138,7 @@ CREATE TABLE IF NOT EXISTS document (
 );
 
 -- -------------------------------------------------------------------------------------------------
--- STEP 5: CREATE ESSENTIAL INDEXES ONLY
+-- STEP 4: CREATE ESSENTIAL INDEXES ONLY
 -- -------------------------------------------------------------------------------------------------
 
 -- Primary foreign key indexes
@@ -168,10 +159,3 @@ ON SPRING_AI_CHAT_MEMORY(conversation_id, "timestamp");
 -- Spring AI Vector Store HNSW index for efficient similarity search
 CREATE INDEX IF NOT EXISTS vector_store_embedding_idx
 ON vector_store USING hnsw (embedding vector_cosine_ops);
-
--- Essential fuzzy search indexes (Vietnamese support)
-CREATE INDEX IF NOT EXISTS idx_request_name_unaccent_trgm
-    ON request USING gin(immutable_unaccent(LOWER(name)) gin_trgm_ops);
-
-CREATE INDEX IF NOT EXISTS idx_service_item_name_unaccent_trgm
-    ON service_item USING gin(immutable_unaccent(LOWER(name)) gin_trgm_ops);
