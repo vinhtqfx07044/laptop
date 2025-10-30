@@ -27,8 +27,8 @@ RUN apk add --no-cache curl
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring
 
-# Nếu thư mục để upload, log
-RUN mkdir -p images documents logs
+# Thư mục để upload, log
+RUN mkdir -p /app/images /app/documents /app/logs && chown -R spring:spring /app
 
 COPY --from=build /app/target/*.jar app.jar
 
