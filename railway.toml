@@ -2,28 +2,25 @@
 builder = "DOCKERFILE"
 
 [[services]]
-name = "database"
-source = "database"
-[services.env]
-POSTGRES_DB = "laptop_repair"
-POSTGRES_USER = "postgres"
-[services.env.production]
-POSTGRES_PASSWORD = "${{RAILWAY_GENERATED_INSECURE_PASSWORD}}"
-
-[[services]]
 name = "app"
+start = "java $JAVA_OPTS -Dserver.port=${PORT} -jar app.jar"
+
 [services.env]
-SERVER_PORT = "8080"
-# Database connection variables
-PGHOST = "${{database.RAILWAY_PRIVATE_DOMAIN}}"
-PGPORT = "5432"
-PGDATABASE = "${{database.POSTGRES_DB}}"
-PGUSER = "postgres"
-PGPASSWORD = "${{database.POSTGRES_PASSWORD}}"
-[services.env.production]
-OPENAI_API_KEY = "${OPENAI_API_KEY}"
-SENDGRID_API_KEY = "${SENDGRID_API_KEY}"
-APP_SECURITY_STAFF_USERS = "${APP_SECURITY_STAFF_USERS}"
-APP_EMAIL_FROM = "${APP_EMAIL_FROM}"
-APP_EMAIL_CC = "${APP_EMAIL_CC}"
-APP_SHOP_NAME = "${APP_SHOP_NAME}"
+# Railway sẽ dùng PORT cho routing, nhưng đặt default để chạy local preview
+PORT = "8080"
+
+# Cấu hình Database đã có sẵn
+PGHOST = "${{PGHOST}}"
+PGPORT = "${{PGPORT}}"
+PGDATABASE = "${{PGDATABASE}}"
+PGUSER = "${{PGUSER}}"
+PGPASSWORD = "${{PGPASSWORD}}"
+
+# Các secrets khác
+OPENAI_API_KEY = "${{OPENAI_API_KEY}}"
+SENDGRID_API_KEY = "${{SENDGRID_API_KEY}}"
+APP_SECURITY_STAFF_USERS = "${{APP_SECURITY_STAFF_USERS}}"
+APP_EMAIL_FROM = "${{APP_EMAIL_FROM}}"
+APP_EMAIL_CC = "${{APP_EMAIL_CC}}"
+APP_SHOP_NAME = "${{APP_SHOP_NAME}}"
+PUBLIC_BASE_URL = "${{PUBLIC_BASE_URL}}"
