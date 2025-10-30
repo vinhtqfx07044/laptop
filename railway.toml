@@ -12,7 +12,7 @@ POSTGRES_PASSWORD = "${{RAILWAY_GENERATED_INSECURE_PASSWORD}}"
 
 [[services]]
 name = "app"
-source = "app"
+source = "src"
 [services.env]
 SERVER_PORT = "8080"
 [services.env.production]
