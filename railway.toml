@@ -1,0 +1,28 @@
+[build]
+builder = "DOCKERFILE"
+
+[[services]]
+name = "database"
+source = "database"
+[services.env]
+POSTGRES_DB = "laptop_repair"
+POSTGRES_USER = "postgres"
+[services.env.production]
+POSTGRES_PASSWORD = "${{RAILWAY_GENERATED_INSECURE_PASSWORD}}"
+
+[[services]]
+name = "app"
+source = "app"
+[services.env]
+SERVER_PORT = "8080"
+[services.env.production]
+OPENAI_API_KEY = "${OPENAI_API_KEY}"
+SENDGRID_API_KEY = "${SENDGRID_API_KEY}"
+
+# Database connection (Railway automatically creates these)
+[services.env.production]
+PGHOST = "${{database.RAILWAY_PRIVATE_DOMAIN}}"
+PGPORT = "5432"
+PGDATABASE = "${{database.POSTGRES_DB}}"
+PGUSER = "postgres"
+PGPASSWORD = "${{database.POSTGRES_PASSWORD}}"

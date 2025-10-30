@@ -1,8 +1,18 @@
+# Environment variables and sensitive configuration
+.env
+.env.local
+.env.production
+
+# Build outputs and dependencies
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
 
+# IDE files
 ### STS ###
 .apt_generated
 .classpath
@@ -24,21 +34,9 @@ target/
 /dist/
 /nbdist/
 /.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
 ### VS Code ###
 .vscode/
-
-# Environment variables and sensitive configuration
-.env
-.env.local
-.env.production
-
-# Uploads
-documents/
-images/
 
 # Logs
 logs/
@@ -46,6 +44,14 @@ log/
 *.log
 app.log
 
+# Uploads
+documents/
+images/
+
+# System files
+.DS_Store
+
+# Configuration and scripts
 .mcp.json
 config.json
 repo2txt.py
