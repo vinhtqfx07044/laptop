@@ -12,15 +12,17 @@ POSTGRES_PASSWORD = "${{RAILWAY_GENERATED_INSECURE_PASSWORD}}"
 
 [[services]]
 name = "app"
-source = "src"
 [services.env]
 SERVER_PORT = "8080"
 [services.env.production]
 OPENAI_API_KEY = "${OPENAI_API_KEY}"
 SENDGRID_API_KEY = "${SENDGRID_API_KEY}"
+APP_SECURITY_STAFF_USERS = "${APP_SECURITY_STAFF_USERS}"
+APP_EMAIL_FROM = "${APP_EMAIL_FROM}"
+APP_EMAIL_CC = "${APP_EMAIL_CC}"
+APP_SHOP_NAME = "${APP_SHOP_NAME}"
 
 # Database connection (Railway automatically creates these)
-[services.env.production]
 PGHOST = "${{database.RAILWAY_PRIVATE_DOMAIN}}"
 PGPORT = "5432"
 PGDATABASE = "${{database.POSTGRES_DB}}"
