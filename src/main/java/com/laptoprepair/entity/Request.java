@@ -125,6 +125,29 @@ public class Request extends BaseEntity {
             return this == COMPLETED || this == UNDER_WARRANTY || this == CANCELLED;
         }
 
+        // Check if status can transition to target status
+        public boolean canTransitionTo(RequestStatus target) {
+            if (this == target) {
+                return true; // Allow keeping same status
+            }
+
+            switch (this) {
+                case COMPLETED:
+                    return target == UNDER_WARRANTY;
+                case UNDER_WARRANTY:
+                    return target == COMPLETED;
+                case CANCELLED:
+                    return false; // Cannot transition from CANCELLED to any other status
+                default:
+                    return true; // Other statuses have no restrictions
+            }
+        }
+
+        // Check if all fields are locked (only note updates allowed)
+        public boolean isFieldsLocked() {
+            return this == COMPLETED || this == UNDER_WARRANTY;
+        }
+
         @Override
         public String toString() {
             return value;

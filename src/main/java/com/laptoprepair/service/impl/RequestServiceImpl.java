@@ -292,6 +292,18 @@ public class RequestServiceImpl implements RequestService {
                     "Không thể chỉnh sửa phiếu ở trạng thái \"" + existingRequest.getStatus().getValue() + "\"");
         }
 
+        // Validate status transition
+        if (incomingRequest != null && incomingRequest.getStatus() != null) {
+            RequestStatus currentStatus = existingRequest.getStatus();
+            RequestStatus newStatus = incomingRequest.getStatus();
+
+            if (!currentStatus.canTransitionTo(newStatus)) {
+                throw new ValidationException(
+                        String.format("Không thể chuyển trạng thái từ \"%s\" sang \"%s\"",
+                                currentStatus.getValue(), newStatus.getValue()));
+            }
+        }
+
         if (incomingRequest != null && incomingRequest.getStatus() != null) {
             RequestStatus status = incomingRequest.getStatus();
             if (status != RequestStatus.SCHEDULED && status != RequestStatus.CANCELLED
@@ -307,6 +319,35 @@ public class RequestServiceImpl implements RequestService {
             throw new ValidationException("Phiếu đã ở trạng thái \""
                     + existingRequest.getStatus().getValue()
                     + "\" và không thể thay đổi hạng mục.");
+        }
+
+        // Validate no fields changed when status is locked (except status itself)
+        if (existingRequest.getStatus().isFieldsLocked() && incomingRequest != null) {
+            validateNoFieldsChanged(existingRequest, incomingRequest);
+        }
+    }
+
+    /**
+     * Validates that no fields have been changed for locked requests.
+     * COMPLETED and UNDER_WARRANTY requests cannot have any field changes except status transitions.
+     *
+     * @param existing the existing request
+     * @param incoming the incoming request with potential changes
+     * @throws ValidationException if any field has been changed
+     */
+    private void validateNoFieldsChanged(Request existing, Request incoming) throws ValidationException {
+        // Check all request fields (excluding status which is handled separately)
+        if (!Objects.equals(existing.getName(), incoming.getName()) ||
+            !Objects.equals(existing.getPhone(), incoming.getPhone()) ||
+            !Objects.equals(existing.getEmail(), incoming.getEmail()) ||
+            !Objects.equals(existing.getAddress(), incoming.getAddress()) ||
+            !Objects.equals(existing.getBrandModel(), incoming.getBrandModel()) ||
+            !Objects.equals(existing.getSerialNumber(), incoming.getSerialNumber()) ||
+            !Objects.equals(existing.getAppointmentDate(), incoming.getAppointmentDate()) ||
+            !Objects.equals(existing.getDescription(), incoming.getDescription())) {
+            throw new ValidationException(
+                    String.format("Phiếu ở trạng thái \"%s\" không thể thay đổi thông tin",
+                            existing.getStatus().getValue()));
         }
     }
 
