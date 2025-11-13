@@ -239,7 +239,8 @@ public class RequestServiceImpl implements RequestService {
                 newImages, toDelete);
 
         if (incomingRequest != null && !existingRequest.getStatus().isRequestItemsLocked()) {
-            enrichRequestItems(incomingRequest.getItems());
+            // Pass existing items to validate immutability of existing items
+            enrichRequestItems(incomingRequest.getItems(), existingRequest.getItems());
         }
 
         copyRequest(existingRequest, incomingRequest, false, false);
@@ -335,17 +336,35 @@ public class RequestServiceImpl implements RequestService {
      *                             exceeds price
      */
     private void enrichRequestItems(List<RequestItem> items) {
+        enrichRequestItems(items, null);
+    }
+
+    /**
+     * Enriches request items with current service item data and validates
+     * consistency.
+     * For new items, copies latest service data and validates price/VAT/warranty
+     * consistency.
+     * For existing items, validates that no fields have been modified.
+     *
+     * @param items the list of request items to enrich and validate
+     * @param existingItems the list of existing request items from DB (for validation)
+     * @throws NotFoundException   if a service item is not found or inactive
+     * @throws ValidationException if data consistency validation fails or discount
+     *                             exceeds price
+     */
+    private void enrichRequestItems(List<RequestItem> items, List<RequestItem> existingItems) {
         if (items == null || items.isEmpty()) {
             return;
         }
 
         Map<UUID, ServiceItem> serviceItemMap = loadServiceItemsMap(items);
+        Map<UUID, RequestItem> existingItemMap = buildExistingItemMap(existingItems);
 
         for (RequestItem item : items) {
             if (item == null) {
                 continue;
             }
-            processRequestItem(item, serviceItemMap);
+            processRequestItem(item, serviceItemMap, existingItemMap);
         }
     }
 
@@ -361,7 +380,22 @@ public class RequestServiceImpl implements RequestService {
                 .collect(Collectors.toMap(ServiceItem::getId, serviceItem -> serviceItem));
     }
 
+    private Map<UUID, RequestItem> buildExistingItemMap(List<RequestItem> existingItems) {
+        if (existingItems == null || existingItems.isEmpty()) {
+            return Map.of();
+        }
+        return existingItems.stream()
+                .filter(Objects::nonNull)
+                .filter(item -> item.getId() != null)
+                .collect(Collectors.toMap(RequestItem::getId, item -> item));
+    }
+
     private void processRequestItem(RequestItem item, Map<UUID, ServiceItem> serviceItemMap) {
+        processRequestItem(item, serviceItemMap, Map.of());
+    }
+
+    private void processRequestItem(RequestItem item, Map<UUID, ServiceItem> serviceItemMap,
+            Map<UUID, RequestItem> existingItemMap) {
         ServiceItem serviceItem = serviceItemMap.get(item.getServiceItemId());
         if (serviceItem == null) {
             throw new NotFoundException("Không tìm dịch vụ sửa chửa: " + item.getName());
@@ -373,9 +407,40 @@ public class RequestServiceImpl implements RequestService {
 
         if (isNew) {
             validateAndCopyServiceItemData(item, serviceItem);
+        } else {
+            // Existing item - validate immutability
+            RequestItem existingItem = existingItemMap.get(item.getId());
+            if (existingItem != null) {
+                validateExistingItemImmutable(item, existingItem);
+            } else {
+                log.warn("Existing item not found in map for validation: id={}", item.getId());
+            }
         }
 
         validateDiscount(item);
+    }
+
+    /**
+     * Validates that an existing RequestItem remains immutable.
+     * Ensures no fields can be modified for existing items (Phương án 1).
+     * Only allows deletion of existing items or addition of new items.
+     *
+     * Uses RequestItem's equals() method to compare all fields.
+     *
+     * @param incomingItem the item from the frontend request
+     * @param existingItem the item loaded from database
+     * @throws ValidationException if any field has been modified
+     */
+    private void validateExistingItemImmutable(RequestItem incomingItem, RequestItem existingItem) {
+        if (!incomingItem.equals(existingItem)) {
+            String errorMsg = String.format(
+                "Không thể thay đổi thông tin của item '%s'. Vui lòng xóa item cũ và thêm item mới nếu cần thay đổi.",
+                existingItem.getName()
+            );
+            log.warn("Existing item immutability validation failed for item id={}", existingItem.getId());
+            throw new ValidationException(errorMsg);
+        }
+        log.debug("Existing item immutability validation passed for item id={}", existingItem.getId());
     }
 
     private void validateAndCopyServiceItemData(RequestItem item, ServiceItem serviceItem) {
