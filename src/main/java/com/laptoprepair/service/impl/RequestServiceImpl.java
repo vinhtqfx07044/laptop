@@ -559,7 +559,7 @@ public class RequestServiceImpl implements RequestService {
         }
 
         BeanUtils.copyProperties(source, target, "id", "items", "images", "history", "createdAt",
-                "updatedAt", "createdBy", "updatedBy");
+                "updatedAt", "createdBy", "updatedBy", "status");
 
         copyRequestItems(target, source, deepCopyCollections);
 
