@@ -6,6 +6,7 @@ import com.laptoprepair.service.tools.DocumentSearchTools;
 import com.laptoprepair.service.tools.ServiceItemTools;
 import com.laptoprepair.service.tools.RequestTools;
 import com.laptoprepair.service.tools.TimeTools;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -30,12 +31,14 @@ import java.util.List;
  * The agent can make multiple tool calls sequentially during processing.
  */
 @Service
+@RequiredArgsConstructor
 public class AgentChatServiceImpl implements AgentChatService {
 
     private static final Logger logger = LoggerFactory.getLogger(AgentChatServiceImpl.class);
 
     private static final String MINIMAL_SYSTEM_PROMPT = "Bạn là trợ lý AI cho cửa hàng sửa chữa laptop tại Việt Nam. Hãy trả lời bằng tiếng Việt.";
 
+    @Qualifier("agentChatClient")
     private final ChatClient agentChatClient;
     private final DocumentSearchTools documentSearchTools;
     private final ServiceItemTools serviceItemTools;
@@ -47,20 +50,6 @@ public class AgentChatServiceImpl implements AgentChatService {
     private String systemPromptFile;
 
     private String systemPrompt = MINIMAL_SYSTEM_PROMPT;
-
-    public AgentChatServiceImpl(@Qualifier("agentChatClient") ChatClient agentChatClient,
-            DocumentSearchTools documentSearchTools,
-            ServiceItemTools serviceItemTools,
-            RequestTools requestTools,
-            TimeTools timeTools,
-            SecurityService securityService) {
-        this.agentChatClient = agentChatClient;
-        this.documentSearchTools = documentSearchTools;
-        this.serviceItemTools = serviceItemTools;
-        this.requestTools = requestTools;
-        this.timeTools = timeTools;
-        this.securityService = securityService;
-    }
 
     @PostConstruct
     public void initializeSystemPrompt() {
