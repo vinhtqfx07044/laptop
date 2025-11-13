@@ -97,13 +97,16 @@ public interface RequestRepository extends JpaRepository<Request, UUID> {
                 r.appointment_date DESC
             LIMIT 10
             """, nativeQuery = true)
-    List<Request> fuzzySearchRequests(@Param("requestId") String requestId,
+    List<Request> fuzzySearchRequests(
+            @Param("requestId") String requestId,
             @Param("customerName") String customerName,
             @Param("customerPhone") String customerPhone,
             @Param("customerEmail") String customerEmail,
             @Param("customerAddress") String customerAddress,
-            @Param("brandModel") String brandModel, @Param("serialNumber") String serialNumber,
-            @Param("description") String description, @Param("status") String status,
+            @Param("brandModel") String brandModel,
+            @Param("serialNumber") String serialNumber,
+            @Param("description") String description,
+            @Param("status") String status,
             @Param("appointmentDateFrom") String appointmentDateFrom,
             @Param("appointmentDateTo") String appointmentDateTo,
             @Param("completedDateFrom") String completedDateFrom,
