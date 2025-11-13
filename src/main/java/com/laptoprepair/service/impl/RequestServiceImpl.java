@@ -85,7 +85,7 @@ public class RequestServiceImpl implements RequestService {
      * @return the merged existing request
      */
     public Request mergeFormRequestWithExisting(Request existingRequest, Request incomingRequest) {
-        copyRequest(existingRequest, incomingRequest, false, false);
+        copyRequest(existingRequest, incomingRequest, false, false, false);
         return existingRequest;
     }
 
@@ -243,7 +243,7 @@ public class RequestServiceImpl implements RequestService {
             enrichRequestItems(incomingRequest.getItems(), existingRequest.getItems());
         }
 
-        copyRequest(existingRequest, incomingRequest, false, false);
+        copyRequest(existingRequest, incomingRequest, false, false, true);
 
         if (existingRequest.getImages() == null) {
             existingRequest.setImages(new ArrayList<>());
@@ -360,7 +360,7 @@ public class RequestServiceImpl implements RequestService {
      */
     private Request snapshotRequest(Request existingRequest) {
         Request snapshot = new Request();
-        copyRequest(snapshot, existingRequest, true, false);
+        copyRequest(snapshot, existingRequest, true, false, true);
         return snapshot;
     }
 
@@ -553,13 +553,18 @@ public class RequestServiceImpl implements RequestService {
      *                            image processing
      */
     private void copyRequest(Request target, Request source, boolean deepCopyCollections,
-            boolean copyImages) {
+            boolean copyImages, boolean copyStatus) {
         if (target == null || source == null) {
             return;
         }
 
-        BeanUtils.copyProperties(source, target, "id", "items", "images", "history", "createdAt",
-                "updatedAt", "createdBy", "updatedBy", "status");
+        if (copyStatus) {
+            BeanUtils.copyProperties(source, target, "id", "items", "images", "history", "createdAt",
+                    "updatedAt", "createdBy", "updatedBy");
+        } else {
+            BeanUtils.copyProperties(source, target, "id", "items", "images", "history", "createdAt",
+                    "updatedAt", "createdBy", "updatedBy", "status");
+        }
 
         copyRequestItems(target, source, deepCopyCollections);
 
